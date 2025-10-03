@@ -33,7 +33,6 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
 
   const handleSave = () => {
     // When saving, we need to update both the string profile and the structured data
-    // For this simple case, we'll just update the biography part of the structured data
     // A more robust solution might involve parsing the string back into structured data
     const updatedProfileData = {
         ...(character.profileData || { biography: '', traits: '', hobbies: '', motivations: '', likes: [], dislikes: [] }),
@@ -68,15 +67,15 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
     setIsRegenerating(true);
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
     try {
-      // If profileData is missing, create a default empty structure.
+      // If profileData is missing, create a default empty structure that passes schema validation.
       // This allows regeneration to proceed, creating a new profile from scratch based on the prompt.
       const currentProfileData = character.profileData || {
         biography: character.profile, // Use existing text as a starting point if available
         traits: "",
         hobbies: "",
         motivations: "",
-        likes: [],
-        dislikes: [],
+        likes: ["", "", "", "", ""],
+        dislikes: ["", "", "", "", ""],
       };
 
       const { profile: newProfile, profileData: newProfileData } = await regenerateCharacterProfile(name, currentProfileData, regenPrompt);
