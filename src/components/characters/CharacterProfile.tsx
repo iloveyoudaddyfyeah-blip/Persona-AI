@@ -32,8 +32,13 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   }, [character]);
 
   const handleSave = () => {
-    // Note: profileData is not updated on manual edits, only on regeneration.
-    const updatedCharacter: Character = { ...character, name, profile };
+    const updatedCharacter: Character = { 
+        ...character, 
+        name, 
+        profile,
+        // Also update the biography in profileData to keep it in sync
+        profileData: character.profileData ? { ...character.profileData, biography: profile } : undefined,
+    };
     dispatch({ type: 'UPDATE_CHARACTER', payload: updatedCharacter });
     toast({
       title: 'Character Saved',
@@ -70,7 +75,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
       toast({
         variant: "destructive",
         title: "Regeneration Failed",
-        description: "Could not regenerate profile. Please try again.",
+        description: (error as Error).message || "Could not regenerate profile. Please try again.",
       });
     } finally {
       setIsRegenerating(false);
@@ -121,7 +126,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
               className="text-lg"
               disabled={isRegenerating || state.isGenerating}
             />
-            <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRegenerating || state.isGenerating}>
+            <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRegenerating || state.isGenerating || !character.profileData}>
               {isRegenerating ? (
                 <Loader2 className="mr-2 h-6 w-6 animate-spin" />
               ) : (
