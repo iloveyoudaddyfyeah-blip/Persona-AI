@@ -20,6 +20,8 @@ const GeneratePersonalityProfileInputSchema = z.object({
     .describe(
       "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
+  tone: z.string().optional().default('default').describe("The tone of voice for the generation. Can be 'witty', 'serious', 'whimsical', 'poetic' or 'default'"),
+  charLimit: z.number().optional().default(3000).describe("The minimum character length for the biography.")
 });
 export type GeneratePersonalityProfileInput = z.infer<
   typeof GeneratePersonalityProfileInputSchema
@@ -39,7 +41,11 @@ const prompt = ai.definePrompt({
   name: 'generatePersonalityProfilePrompt',
   input: {schema: GeneratePersonalityProfileInputSchema},
   output: {schema: GeneratePersonalityProfileOutputSchema},
-  prompt: `You are an AI that crafts highly detailed and rich personality profiles based on uploaded photos. The character's name is {{{name}}}. Analyze the photo and create an exceptionally detailed profile. The biography must be at least 3000 characters long, weaving a complex and compelling narrative. Also include traits, hobbies, motivations, and a list of 5 likes and 5 dislikes.
+  prompt: `You are an AI that crafts highly detailed and rich personality profiles based on uploaded photos. The character's name is {{{name}}}. 
+
+Your response should be in a {{{tone}}} tone.
+
+Analyze the photo and create an exceptionally detailed profile. The biography must be at least {{{charLimit}}} characters long, weaving a complex and compelling narrative. Also include traits, hobbies, motivations, and a list of 5 likes and 5 dislikes.
 
 Photo: {{media url=photoDataUri}}`,
 });

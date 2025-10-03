@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useCharacter } from '@/context/CharacterContext';
+import { useCharacter, Tone } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,13 +12,17 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload } from 'lucide-react';
 import type { Character } from '@/lib/types';
 import Image from 'next/image';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Slider } from '../ui/slider';
 
 export default function CharacterCreator() {
-  const { dispatch } = useCharacter();
+  const { state, dispatch } = useCharacter();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [photo, setPhoto] = useState<{ file: File; dataUri: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [charLimit, setCharLimit] = useState(state.settings.aiCharLimit);
+  const [tone, setTone] = useState<Tone>(state.settings.aiTone);
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,7 +58,7 @@ export default function CharacterCreator() {
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
 
     try {
-      const { profile, profileData } = await createCharacterFromPhoto(name, photo.dataUri);
+      const { profile, profileData } = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit);
       
       const newCharacter: Character = {
         id: crypto.randomUUID(),
@@ -77,7 +81,7 @@ export default function CharacterCreator() {
       toast({
         variant: "destructive",
         title: "Generation Failed",
-        description: "Could not create character. Please try again.",
+        description: (error as Error).message || "Could not create character. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -90,7 +94,7 @@ export default function CharacterCreator() {
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle className="text-3xl font-headline">Create New Character</CardTitle>
-          <CardDescription>Give your new character a name and a face.</CardDescription>
+          <CardDescription>Give your new character a name, a face, and a personality blueprint.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -112,6 +116,37 @@ export default function CharacterCreator() {
                 {photo && <Image src={photo.dataUri} alt="Preview" width={80} height={80} className="rounded-md border object-cover aspect-square" />}
                 <div className="w-full">
                   <Input id="photo" type="file" accept="image/*" onChange={handleFileChange} required className="text-lg file:text-lg file:mr-4 file:py-2 file:px-4"/>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tone" className="text-xl">AI Tone</Label>
+                 <Select value={tone} onValueChange={(value) => setTone(value as Tone)}>
+                    <SelectTrigger className="text-lg">
+                        <SelectValue placeholder="Select a tone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="default">Default</SelectItem>
+                        <SelectItem value="witty">Witty</SelectItem>
+                        <SelectItem value="serious">Serious</SelectItem>
+                        <SelectItem value="whimsical">Whimsical</SelectItem>
+                        <SelectItem value="poetic">Poetic</SelectItem>
+                    </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="char-limit" className="text-xl">Biography Length</Label>
+                <div className='flex items-center gap-4'>
+                    <Slider
+                        id="char-limit"
+                        min={500}
+                        max={5000}
+                        step={100}
+                        value={[charLimit]}
+                        onValueChange={(value) => setCharLimit(value[0])}
+                    />
+                    <span className='text-lg font-mono w-20 text-center'>{charLimit}</span>
                 </div>
               </div>
             </div>

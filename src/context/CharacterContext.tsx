@@ -6,11 +6,20 @@ import React, { createContext, useContext, useEffect, useReducer, ReactNode } fr
 
 type View = 'welcome' | 'creating' | 'viewing';
 
+export type Tone = "default" | "witty" | "serious" | "whimsical" | "poetic";
+
+type Settings = {
+  theme: "light" | "dark" | "system";
+  aiTone: Tone;
+  aiCharLimit: number;
+}
+
 type State = {
   characters: Character[];
   selectedCharacterId: string | null;
   view: View;
   isGenerating: boolean;
+  settings: Settings;
 };
 
 type Action =
@@ -21,13 +30,21 @@ type Action =
   | { type: 'SET_VIEW'; payload: View }
   | { type: 'ADD_MESSAGE'; payload: { characterId: string; message: ChatMessage } }
   | { type: 'SET_IS_GENERATING', payload: boolean }
-  | { type: 'LOAD_CHARACTERS', payload: Character[] };
+  | { type: 'LOAD_STATE', payload: Partial<State> }
+  | { type: 'SET_THEME', payload: Settings['theme'] }
+  | { type: 'SET_AI_TONE', payload: Tone }
+  | { type: 'SET_AI_CHAR_LIMIT', payload: number };
 
 const initialState: State = {
   characters: [],
   selectedCharacterId: null,
   view: 'welcome',
   isGenerating: false,
+  settings: {
+    theme: 'system',
+    aiTone: 'default',
+    aiCharLimit: 3000,
+  }
 };
 
 const CharacterContext = createContext<{
@@ -37,17 +54,17 @@ const CharacterContext = createContext<{
 
 function characterReducer(state: State, action: Action): State {
   switch (action.type) {
-    case 'LOAD_CHARACTERS':
-      const characters = action.payload;
-      const newState = { ...state, characters };
-      if (characters.length > 0) {
-        const firstId = characters[0].id;
-        newState.selectedCharacterId = firstId;
-        newState.view = 'viewing';
-      } else {
-        newState.view = 'welcome';
-      }
-      return newState;
+    case 'LOAD_STATE':
+        const characters = action.payload.characters || [];
+        const newState: State = { ...state, ...action.payload };
+        if (characters.length > 0 && !newState.selectedCharacterId) {
+            const firstId = characters[0].id;
+            newState.selectedCharacterId = firstId;
+            newState.view = 'viewing';
+        } else if (characters.length === 0) {
+            newState.view = 'welcome';
+        }
+        return newState;
     case 'ADD_CHARACTER':
       return { 
         ...state, 
@@ -100,6 +117,12 @@ function characterReducer(state: State, action: Action): State {
       };
     case 'SET_IS_GENERATING':
       return { ...state, isGenerating: action.payload };
+    case 'SET_THEME':
+        return { ...state, settings: { ...state.settings, theme: action.payload }};
+    case 'SET_AI_TONE':
+        return { ...state, settings: { ...state.settings, aiTone: action.payload }};
+    case 'SET_AI_CHAR_LIMIT':
+        return { ...state, settings: { ...state.settings, aiCharLimit: action.payload }};
     default:
       return state;
   }
@@ -110,27 +133,44 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const storedCharacters = localStorage.getItem('personaCraftCharacters');
-      if (storedCharacters) {
-        const characters: Character[] = JSON.parse(storedCharacters);
-        dispatch({ type: 'LOAD_CHARACTERS', payload: characters });
+      const storedState = localStorage.getItem('personaCraftState');
+      if (storedState) {
+        const loadedState = JSON.parse(storedState);
+        // Add migration for old data structure
+        if (Array.isArray(loadedState)) {
+             dispatch({ type: 'LOAD_STATE', payload: { characters: loadedState } });
+        } else {
+             dispatch({ type: 'LOAD_STATE', payload: loadedState });
+        }
       }
     } catch (error) {
-      console.error("Failed to load characters from localStorage", error);
+      console.error("Failed to load state from localStorage", error);
     }
   }, []);
 
   useEffect(() => {
     try {
-      if (state.characters.length > 0) {
-        localStorage.setItem('personaCraftCharacters', JSON.stringify(state.characters));
-      } else {
-        localStorage.removeItem('personaCraftCharacters');
-      }
+        const stateToSave = {
+            characters: state.characters,
+            settings: state.settings,
+            selectedCharacterId: state.selectedCharacterId,
+        };
+      localStorage.setItem('personaCraftState', JSON.stringify(stateToSave));
     } catch (error) {
-      console.error("Failed to save characters to localStorage", error);
+      console.error("Failed to save state to localStorage", error);
     }
-  }, [state.characters]);
+  }, [state.characters, state.settings, state.selectedCharacterId]);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    if (state.settings.theme === 'system') {
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        root.classList.add(systemTheme);
+    } else {
+        root.classList.add(state.settings.theme);
+    }
+  }, [state.settings.theme]);
 
 
   return (

@@ -8,6 +8,7 @@ import {
 import { modifyPersonalityProfile } from '@/ai/flows/modify-personality-profile';
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
 import type { Character, ChatMessage } from '@/lib/types';
+import { Tone } from '@/context/CharacterContext';
 
 function formatProfile(
   name: string,
@@ -39,10 +40,12 @@ ${motivations}
 
 export async function createCharacterFromPhoto(
   name: string,
-  photoDataUri: string
+  photoDataUri: string,
+  tone: Tone,
+  charLimit: number,
 ): Promise<Pick<Character, 'profile' | 'profileData'>> {
   try {
-    const profileData = await generatePersonalityProfile({ name, photoDataUri });
+    const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit });
     const profile = formatProfile(name, profileData);
     return { profile, profileData };
   } catch (error) {
