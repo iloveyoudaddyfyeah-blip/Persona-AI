@@ -10,9 +10,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
-        code: ['monospace'],
+        body: ['VT323', 'monospace'],
+        headline: ['VT323', 'monospace'],
+        code: ['VT323', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -87,6 +87,14 @@ export default {
           to: {
             height: '0',
           },
+        },
+        'typewriter': {
+          from: { width: '0' },
+          to: { width: '100%' },
+        },
+        'blink-caret': {
+          'from, to': { borderColor: 'transparent' },
+          '50%': { borderColor: 'hsl(var(--foreground))' },
         },
       },
       animation: {
