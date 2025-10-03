@@ -32,12 +32,12 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   }, [character]);
 
   const handleSave = () => {
+    // This is a minimal update, just keeping the text in sync.
+    // The full profile data object is what matters for regeneration.
     const updatedCharacter: Character = { 
         ...character, 
         name, 
         profile,
-        // Also update the biography in profileData to keep it in sync
-        profileData: character.profileData ? { ...character.profileData, biography: profile } : undefined,
     };
     dispatch({ type: 'UPDATE_CHARACTER', payload: updatedCharacter });
     toast({
