@@ -40,17 +40,11 @@ function characterReducer(state: State, action: Action): State {
     case 'LOAD_CHARACTERS':
       const characters = action.payload;
       const newState = { ...state, characters };
-      if (characters.length > 0 && !state.selectedCharacterId) {
-        // Find the first character that might not have profileData and fix it
-        const selectedId = characters[0].id;
-        const selectedChar = characters.find(c => c.id === selectedId);
-        if (selectedChar && !selectedChar.profileData) {
-            console.warn(`Character ${selectedId} is missing profileData. This might cause issues with regeneration.`);
-        }
-
-        newState.selectedCharacterId = selectedId;
+      if (characters.length > 0) {
+        const firstId = characters[0].id;
+        newState.selectedCharacterId = firstId;
         newState.view = 'viewing';
-      } else if (characters.length === 0) {
+      } else {
         newState.view = 'welcome';
       }
       return newState;
@@ -88,6 +82,10 @@ function characterReducer(state: State, action: Action): State {
         view: newView,
       };
     case 'SELECT_CHARACTER':
+      const selectedChar = state.characters.find(c => c.id === action.payload);
+      if (action.payload && selectedChar && !selectedChar.profileData) {
+          console.warn(`Character ${action.payload} is missing profileData. This might cause issues with regeneration.`);
+      }
       return {
         ...state,
         selectedCharacterId: action.payload,

@@ -43,8 +43,8 @@ Biography: {{{currentProfile.biography}}}
 Traits: {{{currentProfile.traits}}}
 Hobbies: {{{currentProfile.hobbies}}}
 Motivations: {{{currentProfile.motivations}}}
-Likes: {{{current.likes}}}
-Dislikes: {{{current.dislikes}}}
+Likes: {{{currentProfile.likes}}}
+Dislikes: {{{currentProfile.dislikes}}}
 
 User's instructions for modification:
 "{{{prompt}}}"
