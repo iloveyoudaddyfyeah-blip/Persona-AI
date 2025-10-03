@@ -36,7 +36,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
         toast({
             variant: "destructive",
             title: "Save Failed",
-            description: "Cannot save changes, profile data is missing.",
+            description: "Cannot save changes, profile data is missing. Try regenerating first.",
         });
         return;
     }
@@ -77,6 +77,11 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
     try {
       if (!character.profileData) {
+        // If profileData is missing, we can still try to regenerate.
+        // The modifyPersonalityProfile flow needs a currentProfile.
+        // We can't proceed if it's missing. A better UX might be to force a full regeneration.
+        // For now, we'll show an error if it's missing on an existing character.
+        // New characters should always have it.
         throw new Error("Character profile data is missing. Cannot regenerate.");
       }
       const { profile: newProfile, profileData: newProfileData } = await regenerateCharacterProfile(name, character.profileData, regenPrompt);
@@ -144,7 +149,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
               className="text-lg"
               disabled={isRegenerating || state.isGenerating}
             />
-            <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRegenerating || state.isGenerating || !character.profileData}>
+            <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRegenerating || state.isGenerating}>
               {isRegenerating ? (
                 <Loader2 className="mr-2 h-6 w-6 animate-spin" />
               ) : (
