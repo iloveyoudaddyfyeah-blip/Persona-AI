@@ -40,7 +40,11 @@ function characterReducer(state: State, action: Action): State {
     case 'LOAD_CHARACTERS':
       return { ...state, characters: action.payload };
     case 'ADD_CHARACTER':
-      return { ...state, characters: [...state.characters, action.payload] };
+      return { 
+        ...state, 
+        characters: [...state.characters, action.payload],
+        view: 'viewing' 
+      };
     case 'UPDATE_CHARACTER':
       return {
         ...state,
@@ -59,7 +63,7 @@ function characterReducer(state: State, action: Action): State {
       return {
         ...state,
         selectedCharacterId: action.payload,
-        view: action.payload ? 'viewing' : 'welcome',
+        view: action.payload ? 'viewing' : state.characters.length > 0 ? 'viewing' : 'welcome',
       };
     case 'SET_VIEW':
       return { ...state, view: action.payload };
