@@ -13,6 +13,6 @@ export type Character = {
   name: string;
   photoDataUri: string;
   profile: string;
-  profileData?: GeneratePersonalityProfileOutput; // Store the structured data
+  profileData: GeneratePersonalityProfileOutput; // This is no longer optional
   chatHistory: ChatMessage[];
 };

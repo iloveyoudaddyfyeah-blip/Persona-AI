@@ -32,12 +32,30 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   }, [character]);
 
   const handleSave = () => {
-    // This is a minimal update, just keeping the text in sync.
-    // The full profile data object is what matters for regeneration.
+    if (!character.profileData) {
+        toast({
+            variant: "destructive",
+            title: "Save Failed",
+            description: "Cannot save changes, profile data is missing.",
+        });
+        return;
+    }
+    // When saving, we need to update both the string profile and the structured data
+    // For this simple case, we'll just update the biography part of the structured data
+    // A more robust solution might involve parsing the string back into structured data
+    const updatedProfileData = {
+        ...character.profileData,
+        // This is a simplification. A real app would need a more robust way
+        // to map the free-text `profile` back to the structured `profileData`.
+        // For now, we'll assume most manual edits are to the biography.
+        biography: profile.split('**Biography:**\n')[1]?.split('\n\n**')[0] || character.profileData.biography
+    };
+
     const updatedCharacter: Character = { 
         ...character, 
         name, 
         profile,
+        profileData: updatedProfileData,
     };
     dispatch({ type: 'UPDATE_CHARACTER', payload: updatedCharacter });
     toast({

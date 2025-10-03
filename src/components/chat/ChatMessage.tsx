@@ -9,9 +9,10 @@ import Image from 'next/image';
 interface ChatMessageProps {
   message: ChatMessageType;
   characterPhoto: string;
+  characterName: string;
 }
 
-export default function ChatMessage({ message, characterPhoto }: ChatMessageProps) {
+export default function ChatMessage({ message, characterPhoto, characterName }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
   const displayedText = isCharacter ? useTypewriter(message.content) : message.content;
 
@@ -20,10 +21,11 @@ export default function ChatMessage({ message, characterPhoto }: ChatMessageProp
       {isCharacter && (
         <Image
           src={characterPhoto}
-          alt="Character"
+          alt={characterName}
+          title={characterName}
           width={40}
           height={40}
-          className="rounded-full border-2 border-foreground pixel-art object-cover aspect-square"
+          className="rounded-full border-2 border-primary pixel-art object-cover aspect-square"
         />
       )}
       <div
@@ -34,7 +36,7 @@ export default function ChatMessage({ message, characterPhoto }: ChatMessageProp
             : "bg-primary text-primary-foreground"
         )}
       >
-        <p className="whitespace-pre-wrap break-words">{displayedText}{isCharacter && <span className="inline-block w-2 h-4 bg-foreground animate-[blink-caret_1s_step-end_infinite] ml-1" />}</p>
+        <p className="whitespace-pre-wrap break-words">{displayedText}{isCharacter && <span className="inline-block w-0.5 h-4 bg-foreground animate-[blink-caret_1s_step-end_infinite] ml-1" />}</p>
       </div>
     </div>
   );

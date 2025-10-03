@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import ChatMessage from './ChatMessage';
 import { getChatResponse } from '@/app/actions';
 import { Loader2, Send } from 'lucide-react';
+import { Card } from '../ui/card';
 
 interface ChatInterfaceProps {
   character: Character;
@@ -49,31 +50,31 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
   };
 
   return (
-    <div className="bg-black text-white border-4 border-white p-4 rounded-lg flex flex-col h-[400px] font-code">
-        <div ref={scrollAreaRef} className="flex-grow overflow-y-auto pr-4 space-y-4">
+    <Card className="flex flex-col h-full">
+        <div ref={scrollAreaRef} className="flex-grow overflow-y-auto p-4 space-y-4">
             {character.chatHistory.map((msg, index) => (
-                <ChatMessage key={index} message={msg} characterPhoto={character.photoDataUri} />
+                <ChatMessage key={index} message={msg} characterPhoto={character.photoDataUri} characterName={character.name} />
             ))}
             {isTyping && (
                 <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-white" />
-                    <span className="text-white">...</span>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>{character.name} is typing...</span>
                 </div>
             )}
         </div>
-        <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
+        <form onSubmit={handleSubmit} className="p-4 border-t flex gap-2">
             <Input
             type="text"
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
             placeholder={`Talk to ${character.name}...`}
-            className="bg-black text-white border-white text-xl placeholder:text-gray-400 focus:ring-white"
+            className="text-lg"
             disabled={isTyping}
             />
-            <Button type="submit" variant="ghost" size="icon" className="border border-white h-12 w-12 text-white hover:bg-white hover:text-black" disabled={isTyping}>
+            <Button type="submit" size="icon" className="h-12 w-12" disabled={isTyping}>
               <Send className="h-6 w-6" />
             </Button>
       </form>
-    </div>
+    </Card>
   );
 }

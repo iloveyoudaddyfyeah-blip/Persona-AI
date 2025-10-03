@@ -82,10 +82,6 @@ function characterReducer(state: State, action: Action): State {
         view: newView,
       };
     case 'SELECT_CHARACTER':
-      const selectedChar = state.characters.find(c => c.id === action.payload);
-      if (action.payload && selectedChar && !selectedChar.profileData) {
-          console.warn(`Character ${action.payload} is missing profileData. This might cause issues with regeneration.`);
-      }
       return {
         ...state,
         selectedCharacterId: action.payload,
