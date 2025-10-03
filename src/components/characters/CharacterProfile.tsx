@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import type { Character } from '@/lib/types';
+import type { Character, GeneratePersonalityProfileOutput } from '@/lib/types';
 import { useCharacter } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,23 +32,15 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   }, [character]);
 
   const handleSave = () => {
-    if (!character.profileData) {
-        toast({
-            variant: "destructive",
-            title: "Save Failed",
-            description: "Cannot save changes, profile data is missing. Try regenerating first.",
-        });
-        return;
-    }
     // When saving, we need to update both the string profile and the structured data
     // For this simple case, we'll just update the biography part of the structured data
     // A more robust solution might involve parsing the string back into structured data
     const updatedProfileData = {
-        ...character.profileData,
+        ...(character.profileData || { biography: '', traits: '', hobbies: '', motivations: '', likes: [], dislikes: [] }),
         // This is a simplification. A real app would need a more robust way
         // to map the free-text `profile` back to the structured `profileData`.
         // For now, we'll assume most manual edits are to the biography.
-        biography: profile.split('**Biography:**\n')[1]?.split('\n\n**')[0] || character.profileData.biography
+        biography: profile.split('**Biography:**\n')[1]?.split('\n\n**')[0] || character.profileData?.biography || ''
     };
 
     const updatedCharacter: Character = { 
@@ -76,15 +68,18 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
     setIsRegenerating(true);
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
     try {
-      if (!character.profileData) {
-        // If profileData is missing, we can still try to regenerate.
-        // The modifyPersonalityProfile flow needs a currentProfile.
-        // We can't proceed if it's missing. A better UX might be to force a full regeneration.
-        // For now, we'll show an error if it's missing on an existing character.
-        // New characters should always have it.
-        throw new Error("Character profile data is missing. Cannot regenerate.");
-      }
-      const { profile: newProfile, profileData: newProfileData } = await regenerateCharacterProfile(name, character.profileData, regenPrompt);
+      // If profileData is missing, create a default empty structure.
+      // This allows regeneration to proceed, creating a new profile from scratch based on the prompt.
+      const currentProfileData = character.profileData || {
+        biography: character.profile, // Use existing text as a starting point if available
+        traits: "",
+        hobbies: "",
+        motivations: "",
+        likes: [],
+        dislikes: [],
+      };
+
+      const { profile: newProfile, profileData: newProfileData } = await regenerateCharacterProfile(name, currentProfileData, regenPrompt);
       const updatedCharacter: Character = { ...character, name, profile: newProfile, profileData: newProfileData };
       dispatch({ type: 'UPDATE_CHARACTER', payload: updatedCharacter });
       setProfile(newProfile); // update local state
