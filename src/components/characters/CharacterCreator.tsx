@@ -54,7 +54,7 @@ export default function CharacterCreator() {
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
 
     try {
-      const { profile } = await createCharacterFromPhoto(photo.dataUri);
+      const { profile } = await createCharacterFromPhoto(name, photo.dataUri);
       
       const newCharacter: Character = {
         id: crypto.randomUUID(),

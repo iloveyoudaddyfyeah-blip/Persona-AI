@@ -38,7 +38,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   const hasChanges = name !== character.name || profile !== character.profile;
 
   return (
-    <Card className="flex-grow flex flex-col">
+    <Card className="h-full flex flex-col">
       <CardHeader className="flex flex-row items-center gap-4">
         <Image src={character.photoDataUri} alt={character.name} width={100} height={100} className="rounded-lg border-2 pixel-art aspect-square object-cover" />
         <div className='w-full'>

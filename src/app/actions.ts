@@ -1,15 +1,48 @@
 
 'use server';
 
-import { generatePersonalityProfile } from '@/ai/flows/generate-personality-profile';
+import {
+  generatePersonalityProfile,
+  type GeneratePersonalityProfileOutput,
+} from '@/ai/flows/generate-personality-profile';
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
 import type { Character, ChatMessage } from '@/lib/types';
 
+function formatProfile(
+  name: string,
+  profileData: GeneratePersonalityProfileOutput
+): string {
+  const { biography, traits, hobbies, motivations, likes, dislikes } =
+    profileData;
+  return `**Name:** ${name}
+
+**Biography:**
+${biography}
+
+**Personality Traits:**
+${traits}
+
+**Hobbies:**
+${hobbies}
+
+**Motivations:**
+${motivations}
+
+**Likes:**
+- ${likes.join('\n- ')}
+
+**Dislikes:**
+- ${dislikes.join('\n- ')}
+`;
+}
+
 export async function createCharacterFromPhoto(
+  name: string,
   photoDataUri: string
 ): Promise<Pick<Character, 'profile'>> {
   try {
-    const { profile } = await generatePersonalityProfile({ photoDataUri });
+    const profileData = await generatePersonalityProfile({ name, photoDataUri });
+    const profile = formatProfile(name, profileData);
     return { profile };
   } catch (error) {
     console.error('Error generating personality profile:', error);

@@ -6,9 +6,7 @@ import Header from '@/components/layout/Header';
 import CharacterList from '@/components/characters/CharacterList';
 import CharacterCreator from '@/components/characters/CharacterCreator';
 import CharacterProfile from '@/components/characters/CharacterProfile';
-import ChatInterface from '@/components/chat/ChatInterface';
 import WelcomeScreen from './WelcomeScreen';
-import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 
 function AppContent() {
@@ -33,16 +31,7 @@ function AppContent() {
         return <CharacterCreator />;
       case 'viewing':
         if (selectedCharacter) {
-          return (
-            <div className="flex flex-col h-full gap-4">
-              <div className="flex-grow-[2] min-h-0">
-                <CharacterProfile character={selectedCharacter} />
-              </div>
-              <div className="flex-grow-[1] min-h-0">
-                <ChatInterface character={selectedCharacter} />
-              </div>
-            </div>
-          );
+          return <CharacterProfile character={selectedCharacter} />;
         }
         return <WelcomeScreen />; // Fallback if no character is selected
       case 'welcome':
