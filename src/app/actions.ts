@@ -47,7 +47,7 @@ export async function createCharacterFromPhoto(
     return { profile, profileData };
   } catch (error) {
     console.error('Error generating personality profile:', error);
-    throw new Error('Failed to generate character profile.');
+    throw new Error((error as Error).message || 'Failed to generate character profile.');
   }
 }
 
@@ -65,7 +65,7 @@ export async function regenerateCharacterProfile(
     return { profile, profileData: newProfileData };
   } catch (error) {
     console.error('Error regenerating personality profile:', error);
-    throw new Error('Failed to regenerate character profile.');
+    throw new Error((error as Error).message || 'Failed to regenerate character profile.');
   }
 }
 
