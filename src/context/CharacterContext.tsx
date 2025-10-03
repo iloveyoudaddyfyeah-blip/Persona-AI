@@ -38,7 +38,15 @@ const CharacterContext = createContext<{
 function characterReducer(state: State, action: Action): State {
   switch (action.type) {
     case 'LOAD_CHARACTERS':
-      return { ...state, characters: action.payload };
+      const characters = action.payload;
+      const newState = { ...state, characters };
+      if (characters.length > 0 && !state.selectedCharacterId) {
+        newState.selectedCharacterId = characters[0].id;
+        newState.view = 'viewing';
+      } else if (characters.length === 0) {
+        newState.view = 'welcome';
+      }
+      return newState;
     case 'ADD_CHARACTER':
       return { 
         ...state, 
@@ -53,17 +61,30 @@ function characterReducer(state: State, action: Action): State {
         ),
       };
     case 'DELETE_CHARACTER':
+        const remainingCharacters = state.characters.filter(c => c.id !== action.payload);
+        let newSelectedId = state.selectedCharacterId;
+        let newView = state.view;
+
+        if (state.selectedCharacterId === action.payload) {
+            if (remainingCharacters.length > 0) {
+                newSelectedId = remainingCharacters[0].id;
+                newView = 'viewing';
+            } else {
+                newSelectedId = null;
+                newView = 'welcome';
+            }
+        }
       return {
         ...state,
-        characters: state.characters.filter(c => c.id !== action.payload),
-        selectedCharacterId: state.selectedCharacterId === action.payload ? null : state.selectedCharacterId,
-        view: state.selectedCharacterId === action.payload ? 'welcome' : state.view,
+        characters: remainingCharacters,
+        selectedCharacterId: newSelectedId,
+        view: newView,
       };
     case 'SELECT_CHARACTER':
       return {
         ...state,
         selectedCharacterId: action.payload,
-        view: action.payload ? 'viewing' : state.characters.length > 0 ? 'viewing' : 'welcome',
+        view: action.payload ? 'viewing' : state.view,
       };
     case 'SET_VIEW':
       return { ...state, view: action.payload };
@@ -92,9 +113,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       if (storedCharacters) {
         const characters: Character[] = JSON.parse(storedCharacters);
         dispatch({ type: 'LOAD_CHARACTERS', payload: characters });
-        if (characters.length > 0 && !state.selectedCharacterId) {
-            dispatch({ type: 'SELECT_CHARACTER', payload: characters[0].id });
-        }
       }
     } catch (error) {
       console.error("Failed to load characters from localStorage", error);
