@@ -74,3 +74,9 @@
     image-rendering: crisp-edges;
   }
 }
+
+@layer components {
+  .bg-adaptive-img {
+    @apply mix-blend-multiply dark:mix-blend-screen;
+  }
+}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { HeartPulse } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function WelcomeScreen() {
     const { dispatch } = useCharacter();
@@ -22,10 +23,11 @@ export default function WelcomeScreen() {
                 <Image
                     src={welcomeImage.imageUrl}
                     alt={welcomeImage.description}
-                    width={200}
-                    height={200}
+                    width={256}
+                    height={256}
                     data-ai-hint={welcomeImage.imageHint}
-                    className="pixel-art mb-8"
+                    className={cn("mb-8 rounded-full", "bg-adaptive-img")}
+                    unoptimized
                 />
             )}
             <h2 className="text-5xl font-headline mb-4">Welcome to PersonaCraft AI</h2>
