@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Implements a flow for interactive chat with a generated character.
@@ -16,6 +17,7 @@ const InteractiveChatWithCharacterInputSchema = z.object({
     .describe('The generated character profile as a string.'),
   userMessage: z.string().describe('The user message to the character.'),
   chatHistory: z.string().optional().describe('Previous chat history'),
+  userPersona: z.string().describe("A description of the user's persona, which the character should react to.")
 });
 
 export type InteractiveChatWithCharacterInput = z.infer<
@@ -41,23 +43,27 @@ const prompt = ai.definePrompt({
   name: 'interactiveChatWithCharacterPrompt',
   input: {schema: InteractiveChatWithCharacterInputSchema},
   output: {schema: InteractiveChatWithCharacterOutputSchema},
-  prompt: `You are embodying the following character:
+  prompt: `You are an expert actor, embodying the following character with deep emotion and personality.
 
 Character Profile: {{{characterProfile}}}
 
-You are having a conversation with a user. Use the previous chat history to continue the conversation.
+You are having a conversation with a user who has this persona:
+User Persona: {{{userPersona}}}
 
-**IMPORTANT FORMATTING RULES:**
-- For spoken dialogue, enclose the text in double quotes. Example: "Hello, how are you?"
-- For actions or descriptions, enclose the text in asterisks. Example: *He smiles and waves.*
-- You can combine them. Example: *She looks up from her book.* "Did you need something?"
+Use the previous chat history and the user's persona to inform your response and continue the conversation.
+
+**VERY IMPORTANT FORMATTING RULES:**
+- For spoken dialogue, you MUST enclose the text in double quotes. Example: "Hello, how are you?"
+- For actions, thoughts, or descriptions, you MUST enclose the text in asterisks. Example: *He smiles and waves, a warm glint in his eye.*
+- You can and should combine them for rich, emotive responses. Example: *She looks up from her book, a little surprised.* "Oh, I didn't see you there. Did you need something?"
+- Be expressive and emotional in your responses, truly embodying the character.
 
 Previous Chat History:
 {{{chatHistory}}}
 
 User message: {{{userMessage}}}
 
-Respond as the character, following the formatting rules. Weave information from the character's profile into the AI generated answer where possible. The AI tool will make choices to either weave some information into the AI generated answer. The AI has a memory store.
+Respond as the character, strictly following the formatting rules. Weave information from the character's profile and the user's persona into your answer where possible. The AI has a memory store.
 
 Character response: `,
 });

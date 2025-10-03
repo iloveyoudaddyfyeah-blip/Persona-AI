@@ -12,9 +12,10 @@ interface ChatMessageProps {
   characterName: string;
 }
 
-const FormattedContent = ({ content }: { content: string }) => {
+const FormattedContent = ({ content, role }: { content: string; role: ChatMessageType['role'] }) => {
   const regex = /(\*[^*]+\*)|("[^"]+")/g;
   const parts = content.split(regex).filter(Boolean);
+  const isUser = role === 'user';
 
   return (
     <p className="whitespace-pre-wrap break-words">
@@ -28,7 +29,9 @@ const FormattedContent = ({ content }: { content: string }) => {
         }
         if (part.startsWith('"') && part.endsWith('"')) {
           return (
-            <span key={index} className="text-yellow-600 dark:text-yellow-400">
+            <span key={index} className={cn(
+              isUser ? "text-foreground" : "text-yellow-600 dark:text-yellow-400"
+            )}>
               {part}
             </span>
           );
@@ -64,7 +67,7 @@ export default function ChatMessage({ message, characterPhoto, characterName }: 
             : "bg-primary text-primary-foreground"
         )}
       >
-        <FormattedContent content={displayedText} />
+        <FormattedContent content={displayedText} role={message.role} />
         {isCharacter && displayedText.length === message.content.length && <span className="inline-block w-0.5 h-4 bg-foreground animate-[blink-caret_1s_step-end_infinite] ml-1" />}
       </div>
     </div>

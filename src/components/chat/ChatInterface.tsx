@@ -16,7 +16,7 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ character }: ChatInterfaceProps) {
-  const { dispatch } = useCharacter();
+  const { state, dispatch } = useCharacter();
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -37,7 +37,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     setIsTyping(true);
 
     try {
-      const response = await getChatResponse(character.profile, userInput, character.chatHistory);
+      const response = await getChatResponse(character.profile, userInput, character.chatHistory, state.userPersona);
       const characterMessage = { role: 'character' as const, content: response };
       dispatch({ type: 'ADD_MESSAGE', payload: { characterId: character.id, message: characterMessage } });
     } catch (error) {

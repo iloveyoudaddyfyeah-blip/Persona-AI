@@ -20,6 +20,7 @@ type State = {
   view: View;
   isGenerating: boolean;
   settings: Settings;
+  userPersona: string;
 };
 
 type Action =
@@ -33,7 +34,8 @@ type Action =
   | { type: 'LOAD_STATE', payload: Partial<State> }
   | { type: 'SET_THEME', payload: Settings['theme'] }
   | { type: 'SET_AI_TONE', payload: Tone }
-  | { type: 'SET_AI_CHAR_LIMIT', payload: number };
+  | { type: 'SET_AI_CHAR_LIMIT', payload: number }
+  | { type: 'SET_USER_PERSONA', payload: string };
 
 const initialState: State = {
   characters: [],
@@ -44,7 +46,8 @@ const initialState: State = {
     theme: 'dark',
     aiTone: 'default',
     aiCharLimit: 3000,
-  }
+  },
+  userPersona: 'A curious individual trying to get to know the characters.',
 };
 
 const CharacterContext = createContext<{
@@ -62,7 +65,7 @@ function characterReducer(state: State, action: Action): State {
             loadedSettings.theme = 'dark';
         }
         
-        const newState: State = { ...state, ...action.payload, settings: { ...state.settings, ...loadedSettings } };
+        const newState: State = { ...initialState, ...action.payload, settings: { ...initialState.settings, ...loadedSettings } };
 
         if (characters.length > 0 && !newState.selectedCharacterId) {
             const firstId = characters[0].id;
@@ -130,6 +133,8 @@ function characterReducer(state: State, action: Action): State {
         return { ...state, settings: { ...state.settings, aiTone: action.payload }};
     case 'SET_AI_CHAR_LIMIT':
         return { ...state, settings: { ...state.settings, aiCharLimit: action.payload }};
+    case 'SET_USER_PERSONA':
+        return { ...state, userPersona: action.payload };
     default:
       return state;
   }
@@ -161,12 +166,13 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
             characters: state.characters,
             settings: state.settings,
             selectedCharacterId: state.selectedCharacterId,
+            userPersona: state.userPersona,
         };
       localStorage.setItem('personaCraftState', JSON.stringify(stateToSave));
     } catch (error) {
       console.error("Failed to save state to localStorage", error);
     }
-  }, [state.characters, state.settings, state.selectedCharacterId]);
+  }, [state.characters, state.settings, state.selectedCharacterId, state.userPersona]);
 
   useEffect(() => {
     const root = window.document.documentElement;

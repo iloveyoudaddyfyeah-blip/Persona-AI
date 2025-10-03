@@ -75,7 +75,8 @@ export async function regenerateCharacterProfile(
 export async function getChatResponse(
   characterProfile: string,
   userMessage: string,
-  chatHistory: ChatMessage[]
+  chatHistory: ChatMessage[],
+  userPersona: string,
 ): Promise<string> {
   const historyString = (chatHistory || [])
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)
@@ -92,6 +93,7 @@ export async function getChatResponse(
       characterProfile,
       userMessage,
       chatHistory: truncatedHistory,
+      userPersona,
     });
     return response;
   } catch (error) {
