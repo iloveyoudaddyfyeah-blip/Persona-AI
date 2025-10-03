@@ -5,6 +5,7 @@ import {
   generatePersonalityProfile,
   type GeneratePersonalityProfileOutput,
 } from '@/ai/flows/generate-personality-profile';
+import { modifyPersonalityProfile } from '@/ai/flows/modify-personality-profile';
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
 import type { Character, ChatMessage } from '@/lib/types';
 
@@ -39,14 +40,32 @@ ${motivations}
 export async function createCharacterFromPhoto(
   name: string,
   photoDataUri: string
-): Promise<Pick<Character, 'profile'>> {
+): Promise<Pick<Character, 'profile' | 'profileData'>> {
   try {
     const profileData = await generatePersonalityProfile({ name, photoDataUri });
     const profile = formatProfile(name, profileData);
-    return { profile };
+    return { profile, profileData };
   } catch (error) {
     console.error('Error generating personality profile:', error);
     throw new Error('Failed to generate character profile.');
+  }
+}
+
+export async function regenerateCharacterProfile(
+  name: string,
+  currentProfileData: GeneratePersonalityProfileOutput,
+  prompt: string
+): Promise<Pick<Character, 'profile' | 'profileData'>> {
+  try {
+    const newProfileData = await modifyPersonalityProfile({
+      currentProfile: currentProfileData,
+      prompt,
+    });
+    const profile = formatProfile(name, newProfileData);
+    return { profile, profileData: newProfileData };
+  } catch (error) {
+    console.error('Error regenerating personality profile:', error);
+    throw new Error('Failed to regenerate character profile.');
   }
 }
 

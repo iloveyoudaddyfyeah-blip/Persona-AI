@@ -1,0 +1,24 @@
+
+/**
+ * @fileOverview Shared Zod schemas for AI flows.
+ */
+import {z} from 'genkit';
+
+export const GeneratePersonalityProfileOutputSchema = z.object({
+  biography: z
+    .string()
+    .describe('A detailed biography for the character, at least 3000 characters long.'),
+  traits: z.string().describe('The key personality traits of the character.'),
+  hobbies: z.string().describe('The hobbies and interests of the character.'),
+  motivations: z
+    .string()
+    .describe('The primary motivations of the character.'),
+  likes: z
+    .array(z.string())
+    .length(5)
+    .describe('A list of 5 things the character likes.'),
+  dislikes: z
+    .array(z.string())
+    .length(5)
+    .describe('A list of 5 things the character dislikes.'),
+});

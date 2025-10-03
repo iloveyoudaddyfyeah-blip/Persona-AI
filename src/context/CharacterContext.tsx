@@ -41,7 +41,14 @@ function characterReducer(state: State, action: Action): State {
       const characters = action.payload;
       const newState = { ...state, characters };
       if (characters.length > 0 && !state.selectedCharacterId) {
-        newState.selectedCharacterId = characters[0].id;
+        // Find the first character that might not have profileData and fix it
+        const selectedId = characters[0].id;
+        const selectedChar = characters.find(c => c.id === selectedId);
+        if (selectedChar && !selectedChar.profileData) {
+            console.warn(`Character ${selectedId} is missing profileData. This might cause issues with regeneration.`);
+        }
+
+        newState.selectedCharacterId = selectedId;
         newState.view = 'viewing';
       } else if (characters.length === 0) {
         newState.view = 'welcome';
