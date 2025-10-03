@@ -47,12 +47,17 @@ Character Profile: {{{characterProfile}}}
 
 You are having a conversation with a user. Use the previous chat history to continue the conversation.
 
+**IMPORTANT FORMATTING RULES:**
+- For spoken dialogue, enclose the text in double quotes. Example: "Hello, how are you?"
+- For actions or descriptions, enclose the text in asterisks. Example: *He smiles and waves.*
+- You can combine them. Example: *She looks up from her book.* "Did you need something?"
+
 Previous Chat History:
 {{{chatHistory}}}
 
 User message: {{{userMessage}}}
 
-Respond as the character, weaving information into the AI generated answer where possible. The AI tool will make choices to either weave some information into the AI generated answer. The AI has a memory store.
+Respond as the character, following the formatting rules. Weave information from the character's profile into the AI generated answer where possible. The AI tool will make choices to either weave some information into the AI generated answer. The AI has a memory store.
 
 Character response: `,
 });

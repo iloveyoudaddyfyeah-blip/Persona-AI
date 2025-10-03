@@ -12,6 +12,34 @@ interface ChatMessageProps {
   characterName: string;
 }
 
+const FormattedContent = ({ content }: { content: string }) => {
+  const regex = /(\*[^*]+\*)|("[^"]+")/g;
+  const parts = content.split(regex).filter(Boolean);
+
+  return (
+    <p className="whitespace-pre-wrap break-words">
+      {parts.map((part, index) => {
+        if (part.startsWith('*') && part.endsWith('*')) {
+          return (
+            <em key={index} className="text-muted-foreground not-italic">
+              {part}
+            </em>
+          );
+        }
+        if (part.startsWith('"') && part.endsWith('"')) {
+          return (
+            <span key={index} className="text-yellow-600 dark:text-yellow-400">
+              {part}
+            </span>
+          );
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </p>
+  );
+};
+
+
 export default function ChatMessage({ message, characterPhoto, characterName }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
   const displayedText = isCharacter ? useTypewriter(message.content) : message.content;
@@ -36,7 +64,8 @@ export default function ChatMessage({ message, characterPhoto, characterName }: 
             : "bg-primary text-primary-foreground"
         )}
       >
-        <p className="whitespace-pre-wrap break-words">{displayedText}{isCharacter && <span className="inline-block w-0.5 h-4 bg-foreground animate-[blink-caret_1s_step-end_infinite] ml-1" />}</p>
+        <FormattedContent content={displayedText} />
+        {isCharacter && displayedText.length === message.content.length && <span className="inline-block w-0.5 h-4 bg-foreground animate-[blink-caret_1s_step-end_infinite] ml-1" />}
       </div>
     </div>
   );
