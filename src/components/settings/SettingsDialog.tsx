@@ -29,10 +29,6 @@ export default function SettingsDialog() {
     dispatch({ type: 'SET_AI_CHAR_LIMIT', payload: value[0] });
   };
   
-  const handleThemeChange = (value: "light" | "dark" | "system") => {
-    dispatch({ type: 'SET_THEME', payload: value });
-  };
-
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -45,23 +41,10 @@ export default function SettingsDialog() {
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
-            Manage application and AI generation settings.
+            Manage AI generation settings.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
-            <div className="space-y-2">
-                <Label htmlFor="theme" className="text-base">Theme</Label>
-                <Select value={settings.theme} onValueChange={handleThemeChange}>
-                    <SelectTrigger className="text-base">
-                        <SelectValue placeholder="Select a theme" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="system">System</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
             <div className="space-y-2">
                 <Label htmlFor="tone" className="text-base">Default AI Tone</Label>
                 <Select value={settings.aiTone} onValueChange={handleToneChange}>

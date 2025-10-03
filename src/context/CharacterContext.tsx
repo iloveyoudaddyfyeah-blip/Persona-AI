@@ -9,7 +9,7 @@ type View = 'welcome' | 'creating' | 'viewing';
 export type Tone = "default" | "witty" | "serious" | "whimsical" | "poetic";
 
 type Settings = {
-  theme: "light" | "dark" | "system";
+  theme: "light" | "dark";
   aiTone: Tone;
   aiCharLimit: number;
 }
@@ -41,7 +41,7 @@ const initialState: State = {
   view: 'welcome',
   isGenerating: false,
   settings: {
-    theme: 'system',
+    theme: 'dark',
     aiTone: 'default',
     aiCharLimit: 3000,
   }
@@ -56,7 +56,14 @@ function characterReducer(state: State, action: Action): State {
   switch (action.type) {
     case 'LOAD_STATE':
         const characters = action.payload.characters || [];
-        const newState: State = { ...state, ...action.payload };
+        // When loading, default to dark if theme is system
+        const loadedSettings = action.payload.settings;
+        if (loadedSettings && (loadedSettings.theme as any) === 'system') {
+            loadedSettings.theme = 'dark';
+        }
+        
+        const newState: State = { ...state, ...action.payload, settings: { ...state.settings, ...loadedSettings } };
+
         if (characters.length > 0 && !newState.selectedCharacterId) {
             const firstId = characters[0].id;
             newState.selectedCharacterId = firstId;
@@ -164,12 +171,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
-    if (state.settings.theme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        root.classList.add(systemTheme);
-    } else {
-        root.classList.add(state.settings.theme);
-    }
+    root.classList.add(state.settings.theme);
   }, [state.settings.theme]);
 
 
