@@ -50,13 +50,13 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
   };
 
   return (
-    <Card className="flex flex-col h-full">
-        <div ref={scrollAreaRef} className="flex-grow overflow-y-auto p-4 space-y-4">
-            {character.chatHistory.map((msg, index) => (
+    <Card className="flex flex-col h-full border-0 shadow-none rounded-t-none">
+        <div ref={scrollAreaRef} className="flex-grow overflow-y-auto p-4 space-y-4 pt-6">
+            {(character.chatHistory || []).map((msg, index) => (
                 <ChatMessage key={index} message={msg} characterPhoto={character.photoDataUri} characterName={character.name} />
             ))}
             {isTyping && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <span>{character.name} is typing...</span>
                 </div>
@@ -71,7 +71,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
             className="text-lg"
             disabled={isTyping}
             />
-            <Button type="submit" size="icon" className="h-12 w-12" disabled={isTyping}>
+            <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping}>
               <Send className="h-6 w-6" />
             </Button>
       </form>

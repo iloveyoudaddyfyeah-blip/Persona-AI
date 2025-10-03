@@ -118,7 +118,7 @@ function characterReducer(state: State, action: Action): State {
         ...state,
         characters: state.characters.map(c =>
           c.id === action.payload.characterId
-            ? { ...c, chatHistory: [...c.chatHistory, action.payload.message] }
+            ? { ...c, chatHistory: [...(c.chatHistory || []), action.payload.message] }
             : c
         ),
       };
@@ -171,7 +171,12 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
-    root.classList.add(state.settings.theme);
+    if (state.settings.theme !== 'system') {
+        root.classList.add(state.settings.theme);
+    } else {
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        root.classList.add(systemTheme);
+    }
   }, [state.settings.theme]);
 
 

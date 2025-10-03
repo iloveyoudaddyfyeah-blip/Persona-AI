@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { regenerateCharacterProfile } from '@/app/actions';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ChatInterface from '../chat/ChatInterface';
 
 interface CharacterProfileProps {
   character: Character;
@@ -32,21 +34,10 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   }, [character]);
 
   const handleSave = () => {
-    // When saving, we need to update both the string profile and the structured data
-    // A more robust solution might involve parsing the string back into structured data
-    const updatedProfileData = {
-        ...(character.profileData || { biography: '', traits: '', hobbies: '', motivations: '', likes: [], dislikes: [] }),
-        // This is a simplification. A real app would need a more robust way
-        // to map the free-text `profile` back to the structured `profileData`.
-        // For now, we'll assume most manual edits are to the biography.
-        biography: profile.split('**Biography:**\n')[1]?.split('\n\n**')[0] || character.profileData?.biography || ''
-    };
-
     const updatedCharacter: Character = { 
         ...character, 
         name, 
         profile,
-        profileData: updatedProfileData,
     };
     dispatch({ type: 'UPDATE_CHARACTER', payload: updatedCharacter });
     toast({
@@ -67,10 +58,8 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
     setIsRegenerating(true);
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
     try {
-      // If profileData is missing, create a default empty structure that passes schema validation.
-      // This allows regeneration to proceed, creating a new profile from scratch based on the prompt.
       const currentProfileData = character.profileData || {
-        biography: character.profile, // Use existing text as a starting point if available
+        biography: character.profile,
         traits: "",
         hobbies: "",
         motivations: "",
@@ -103,56 +92,69 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   const hasChanges = name !== character.name || profile !== character.profile;
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="flex flex-row items-center gap-4">
-        <Image src={character.photoDataUri} alt={character.name} width={100} height={100} className="rounded-lg border-2 pixel-art aspect-square object-cover" />
-        <div className='w-full'>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="text-4xl font-headline bg-transparent outline-none w-full border-b border-transparent focus:border-foreground"
-            />
-          <p className="text-muted-foreground text-lg">Character Profile</p>
+    <Tabs defaultValue="profile" className="h-full flex flex-col">
+        <div className="flex-shrink-0 px-6 pt-6">
+            <CardHeader className="flex flex-row items-center gap-4 p-0">
+                <Image src={character.photoDataUri} alt={character.name} width={100} height={100} className="rounded-lg border-2 pixel-art aspect-square object-cover" />
+                <div className='w-full'>
+                    <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="text-4xl font-headline bg-transparent outline-none w-full border-b border-transparent focus:border-foreground"
+                    />
+                    <TabsList className="mt-2">
+                        <TabsTrigger value="profile">Profile</TabsTrigger>
+                        <TabsTrigger value="chat">Chat</TabsTrigger>
+                    </TabsList>
+                </div>
+            </CardHeader>
         </div>
-      </CardHeader>
-      <CardContent className="flex-grow flex flex-col gap-4">
-        <Textarea
-          value={profile}
-          onChange={(e) => setProfile(e.target.value)}
-          placeholder="Character profile..."
-          className="flex-grow text-lg resize-none"
-        />
-        <div className="flex justify-end gap-4">
-          {hasChanges && (
-              <Button onClick={handleSave} className="self-end text-lg h-12">
-                  <Save className="mr-2 h-5 w-5"/>
-                  Save Changes
-              </Button>
-          )}
-        </div>
-      </CardContent>
-      <CardFooter className="flex flex-col items-start gap-4 border-t pt-6">
-        <Label htmlFor="regen-prompt" className="text-xl">Refine with AI</Label>
-        <div className='flex w-full gap-2'>
-            <Input
-              id="regen-prompt"
-              placeholder="e.g., 'Make them more mysterious and give them a secret past.'"
-              value={regenPrompt}
-              onChange={(e) => setRegenPrompt(e.target.value)}
-              className="text-lg"
-              disabled={isRegenerating || state.isGenerating}
-            />
-            <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRegenerating || state.isGenerating}>
-              {isRegenerating ? (
-                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-              ) : (
-                <Sparkles className="mr-2 h-6 w-6" />
-              )}
-              Regenerate
-            </Button>
-        </div>
-      </CardFooter>
-    </Card>
+
+        <TabsContent value="profile" className="flex-grow flex flex-col mt-0">
+            <Card className="h-full flex flex-col border-0 shadow-none rounded-t-none">
+                <CardContent className="flex-grow flex flex-col gap-4 pt-6">
+                    <Textarea
+                        value={profile}
+                        onChange={(e) => setProfile(e.target.value)}
+                        placeholder="Character profile..."
+                        className="flex-grow text-lg resize-none"
+                    />
+                    <div className="flex justify-end gap-4">
+                        {hasChanges && (
+                            <Button onClick={handleSave} className="self-end text-lg h-12">
+                                <Save className="mr-2 h-5 w-5"/>
+                                Save Changes
+                            </Button>
+                        )}
+                    </div>
+                </CardContent>
+                <CardFooter className="flex flex-col items-start gap-4 border-t pt-6">
+                    <Label htmlFor="regen-prompt" className="text-xl">Refine with AI</Label>
+                    <div className='flex w-full gap-2'>
+                        <Input
+                            id="regen-prompt"
+                            placeholder="e.g., 'Make them more mysterious and give them a secret past.'"
+                            value={regenPrompt}
+                            onChange={(e) => setRegenPrompt(e.target.value)}
+                            className="text-lg"
+                            disabled={isRegenerating || state.isGenerating}
+                        />
+                        <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRegenerating || state.isGenerating}>
+                            {isRegenerating ? (
+                                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                            ) : (
+                                <Sparkles className="mr-2 h-6 w-6" />
+                            )}
+                            Regenerate
+                        </Button>
+                    </div>
+                </CardFooter>
+            </Card>
+        </TabsContent>
+        <TabsContent value="chat" className="flex-grow mt-0">
+            <ChatInterface character={character} />
+        </TabsContent>
+    </Tabs>
   );
 }

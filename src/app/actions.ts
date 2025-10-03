@@ -77,7 +77,7 @@ export async function getChatResponse(
   userMessage: string,
   chatHistory: ChatMessage[]
 ): Promise<string> {
-  const historyString = chatHistory
+  const historyString = (chatHistory || [])
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)
     .join('\n');
   
