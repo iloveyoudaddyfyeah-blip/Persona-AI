@@ -152,7 +152,8 @@
   },
   "auth": {
     "providers": [
-      "anonymous"
+      "anonymous",
+      "password"
     ]
   },
   "firestore": {

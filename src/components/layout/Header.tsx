@@ -35,10 +35,10 @@ export default function Header() {
       return <Button variant="ghost" size="icon" disabled><Loader2 className="h-6 w-6 animate-spin" /></Button>;
     }
     if (user) {
-      const buttonTitle = user.isAnonymous ? "Logged in Anonymously" : "Logout";
+      const buttonTitle = user.isAnonymous ? "Logged in Anonymously" : user.email || "Logged In";
       return (
         <div className="flex items-center gap-2">
-            <UserIcon className="h-6 w-6 text-muted-foreground" title={buttonTitle} />
+            <span className="text-sm text-muted-foreground hidden md:inline" title={buttonTitle}>{buttonTitle}</span>
             <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
                 <LogOut className="h-6 w-6" />
             </Button>
