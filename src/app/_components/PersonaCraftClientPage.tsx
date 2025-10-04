@@ -60,10 +60,10 @@ export default function PersonaCraftClientPage() {
     <div className="flex flex-col h-screen bg-background text-foreground font-body text-xl">
       <Header />
       <div className="flex flex-grow min-h-0">
-        <aside className="w-1/4 min-w-[300px] h-full p-4 hidden md:block">
+        <aside className="w-1/4 min-w-[300px] h-full p-4 hidden md:block sticky top-0">
           <CharacterList />
         </aside>
-        <main className="flex-grow h-full p-4">
+        <main className="flex-grow h-full p-4 overflow-y-auto">
           {renderMainContent()}
         </main>
       </div>

@@ -9,13 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Slider } from "../ui/slider";
 import { useCharacter, Tone } from "@/context/CharacterContext";
-import { Settings } from 'lucide-react';
+import { Settings, Bug } from 'lucide-react';
 
 export default function SettingsDialog() {
   const { state, dispatch } = useCharacter();
@@ -81,6 +82,14 @@ export default function SettingsDialog() {
                 </div>
               </div>
         </div>
+        <DialogFooter>
+          <Button asChild variant="link">
+            <a href="mailto:calebliskey51@gmail.com">
+              <Bug className="mr-2 h-4 w-4" />
+              Report a Bug
+            </a>
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
