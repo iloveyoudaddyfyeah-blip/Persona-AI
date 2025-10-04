@@ -43,8 +43,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     setIsTyping(true);
 
     try {
-      const response = await getChatResponse(character, userInput, state.userPersona);
-      const characterMessage = { role: 'character' as const, content: response };
+      const characterMessage = await getChatResponse(character, userInput, state.userPersona);
       
       const updatedHistory = [...(character.chatHistory || []), userMessage, characterMessage];
       const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);

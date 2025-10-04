@@ -8,7 +8,7 @@ import {
 import { modifyPersonalityProfile } from '@/ai/flows/modify-personality-profile';
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
 import { generateUserPersona } from '@/ai/flows/generate-user-persona';
-import type { Character } from '@/lib/types';
+import type { Character, ChatMessage } from '@/lib/types';
 import { Tone } from '@/context/CharacterContext';
 import {
   deleteDocumentNonBlocking,
@@ -78,7 +78,7 @@ export async function getChatResponse(
   character: Character,
   userMessage: string,
   userPersona: string
-): Promise<string> {
+): Promise<ChatMessage> {
   const historyString = (character.chatHistory || [])
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)
     .join('\n');
@@ -95,7 +95,7 @@ export async function getChatResponse(
     userPersona,
   });
   
-  return response;
+  return { role: 'character', content: response };
 }
 
 
