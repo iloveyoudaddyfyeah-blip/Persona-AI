@@ -3,9 +3,8 @@
 
 import type { Character, ChatMessage } from '@/lib/types';
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
-import { useAuth } from '@/firebase/auth';
-import { collection, getDocs, doc, onSnapshot } from 'firebase/firestore';
-import { db } from '@/firebase/firebase';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc, onSnapshot } from 'firebase/firestore';
 
 type View = 'welcome' | 'creating' | 'viewing';
 
@@ -83,9 +82,9 @@ function characterReducer(state: State, action: Action): State {
             newSelectedId = characters.length > 0 ? characters[0].id : null;
         }
 
-        if (characters.length > 0) {
+        if (characters.length > 0 && state.view !== 'creating') {
             newView = 'viewing';
-        } else {
+        } else if (characters.length === 0) {
             newView = 'welcome';
         }
 
@@ -153,7 +152,7 @@ function characterReducer(state: State, action: Action): State {
     case 'SET_USER_PERSONA':
         return { ...state, userPersona: action.payload };
     case 'RESET_STATE':
-        return initialState;
+        return {...initialState, isLoading: false, settings: state.settings};
     default:
       return state;
   }
@@ -161,7 +160,8 @@ function characterReducer(state: State, action: Action): State {
 
 export function CharacterProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(characterReducer, initialState);
-  const { user, loading: authLoading } = useAuth();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
 
   useEffect(() => {
     try {
@@ -176,32 +176,36 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
   }, []);
   
   useEffect(() => {
-    if (user) {
+    if (user && firestore) {
       dispatch({ type: 'SET_IS_LOADING', payload: true });
 
-      const userDocRef = doc(db, 'users', user.uid);
+      const userDocRef = doc(firestore, 'users', user.uid);
       const userUnsub = onSnapshot(userDocRef, (doc) => {
         const userData = doc.data();
         if (userData?.persona) {
           dispatch({ type: 'SET_USER_PERSONA', payload: userData.persona });
         }
+      }, (error) => {
+        console.error("Error listening to user document:", error);
       });
       
-      const charactersColRef = collection(db, 'users', user.uid, 'characters');
+      const charactersColRef = collection(firestore, 'users', user.uid, 'characters');
       const charactersUnsub = onSnapshot(charactersColRef, (snapshot) => {
         const characters = snapshot.docs.map(doc => doc.data() as Character);
         dispatch({ type: 'SET_CHARACTERS', payload: characters });
+      }, (error) => {
+        console.error("Error listening to characters collection:", error);
+        dispatch({ type: 'SET_IS_LOADING', payload: false });
       });
 
       return () => {
         userUnsub();
         charactersUnsub();
       };
-    } else if (!authLoading) {
+    } else if (!isUserLoading) {
       dispatch({ type: 'RESET_STATE' });
-      dispatch({ type: 'SET_IS_LOADING', payload: false });
     }
-  }, [user, authLoading]);
+  }, [user, isUserLoading, firestore]);
 
   useEffect(() => {
     try {

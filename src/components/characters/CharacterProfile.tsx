@@ -16,7 +16,7 @@ import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatInterface from '../chat/ChatInterface';
 import UserPersona from '../user/UserPersona';
-import { useAuth } from '@/firebase/auth';
+import { useUser } from '@/firebase';
 
 interface CharacterProfileProps {
   character: Character;
@@ -24,7 +24,7 @@ interface CharacterProfileProps {
 
 export default function CharacterProfile({ character }: CharacterProfileProps) {
   const { state, dispatch } = useCharacter();
-  const { user } = useAuth();
+  const { user } = useUser();
   const { toast } = useToast();
   const [name, setName] = useState(character.name);
   const [profile, setProfile] = useState(character.profile);

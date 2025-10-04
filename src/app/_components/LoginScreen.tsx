@@ -2,12 +2,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { auth } from '@/firebase/firebase';
+import { useAuth } from '@/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { Chrome } from 'lucide-react';
 import Image from 'next/image';
 
 export default function LoginScreen() {
+  const auth = useAuth();
+  
   const handleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
@@ -21,7 +23,7 @@ export default function LoginScreen() {
     <div className="flex h-screen w-screen items-center justify-center bg-background">
       <div className="text-center">
         <Image
-          src="https://i.ibb.co/6gZ0s2B/cat-girl-paw-hoodie.png"
+          src="https://images.unsplash.com/photo-1516934024742-b60b8b93356f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmb3h8ZW58MHx8fHwxNzYwMjE2NjU1fDA&ixlib=rb-4.1.0&q=80&w=1080"
           alt="Welcome"
           width={256}
           height={256}

@@ -5,13 +5,13 @@ import { useCharacter } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/firebase/auth';
+import { useUser } from '@/firebase';
 import { deleteCharacterFromDb } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 
 export default function CharacterList() {
   const { state, dispatch } = useCharacter();
-  const { user } = useAuth();
+  const { user } = useUser();
   const { toast } = useToast();
 
   const handleSelectCharacter = (id: string) => {

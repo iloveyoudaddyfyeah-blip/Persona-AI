@@ -8,17 +8,17 @@ import CharacterCreator from '@/components/characters/CharacterCreator';
 import CharacterProfile from '@/components/characters/CharacterProfile';
 import WelcomeScreen from './WelcomeScreen';
 import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/firebase/auth';
+import { useUser } from '@/firebase';
 import LoginScreen from './LoginScreen';
 
 function AppContent() {
   const { state } = useCharacter();
   const { view, characters, selectedCharacterId, isGenerating, isLoading } = state;
-  const { user, loading: authLoading } = useAuth();
+  const { user, isUserLoading } = useUser();
 
   const selectedCharacter = characters.find(c => c.id === selectedCharacterId);
 
-  if (authLoading || isLoading) {
+  if (isUserLoading || isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center">
           <Loader2 className="h-16 w-16 animate-spin mb-4" />

@@ -13,11 +13,11 @@ import { Loader2, Upload } from 'lucide-react';
 import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Slider } from '../ui/slider';
-import { useAuth } from '@/firebase/auth';
+import { useUser } from '@/firebase';
 
 export default function CharacterCreator() {
   const { state, dispatch } = useCharacter();
-  const { user } = useAuth();
+  const { user } = useUser();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [photo, setPhoto] = useState<{ file: File; dataUri: string } | null>(null);

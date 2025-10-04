@@ -2,12 +2,13 @@
 'use client';
 
 import PersonaCraftClientPage from "./_components/PersonaCraftClientPage";
-import { FirebaseProvider } from "@/firebase/FirebaseProvider";
+import { FirebaseClientProvider } from "@/firebase/client-provider";
+
 
 export default function Home() {
   return (
-    <FirebaseProvider>
+    <FirebaseClientProvider>
       <PersonaCraftClientPage />
-    </FirebaseProvider>
+    </FirebaseClientProvider>
   );
 }

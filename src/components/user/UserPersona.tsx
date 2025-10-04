@@ -9,11 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Loader2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserPersona } from '@/app/actions';
-import { useAuth } from '@/firebase/auth';
+import { useUser } from '@/firebase';
 
 export default function UserPersona() {
   const { state, dispatch } = useCharacter();
-  const { user } = useAuth();
+  const { user } = useUser();
   const { toast } = useToast();
   const [persona, setPersona] = useState(state.userPersona);
   const [isSaving, setIsSaving] = useState(false);

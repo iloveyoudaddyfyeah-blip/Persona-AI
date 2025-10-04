@@ -4,14 +4,14 @@
 import React from 'react';
 import { ThemeToggle } from '../settings/ThemeToggle';
 import SettingsDialog from '../settings/SettingsDialog';
-import { useAuth } from '@/firebase/auth';
+import { useUser, useAuth } from '@/firebase';
 import { Button } from '../ui/button';
-import { auth } from '@/firebase/firebase';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { Loader2, LogIn, LogOut } from 'lucide-react';
 
 export default function Header() {
-  const { user, loading } = useAuth();
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
 
   const handleLogin = async () => {
     const provider = new GoogleAuthProvider();
@@ -31,7 +31,7 @@ export default function Header() {
   };
 
   const renderAuthButton = () => {
-    if (loading) {
+    if (isUserLoading) {
       return <Button variant="ghost" size="icon" disabled><Loader2 className="h-6 w-6 animate-spin" /></Button>;
     }
     if (user) {

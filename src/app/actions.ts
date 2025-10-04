@@ -7,10 +7,11 @@ import {
 } from '@/ai/flows/generate-personality-profile';
 import { modifyPersonalityProfile } from '@/ai/flows/modify-personality-profile';
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
-import type { Character, ChatMessage } from '@/lib/types';
+import type { Character } from '@/lib/types';
 import { Tone } from '@/context/CharacterContext';
-import { doc, setDoc, deleteDoc, collection, Firestore } from 'firebase/firestore';
-import { db } from '@/firebase/firebase';
+import { doc, collection } from 'firebase/firestore';
+import { getSdks } from '@/firebase';
+import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 function formatProfile(
   name: string,
@@ -47,6 +48,7 @@ export async function createCharacterFromPhoto(
   charLimit: number,
   userId: string,
 ): Promise<Character> {
+  const { firestore } = getSdks();
   try {
     const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit });
     const profile = formatProfile(name, profileData);
@@ -58,8 +60,8 @@ export async function createCharacterFromPhoto(
         profileData,
         chatHistory: [],
     };
-    const characterRef = doc(db, 'users', userId, 'characters', newCharacter.id);
-    await setDoc(characterRef, newCharacter);
+    const characterRef = doc(firestore, 'users', userId, 'characters', newCharacter.id);
+    setDocumentNonBlocking(characterRef, newCharacter, { merge: false });
     return newCharacter;
   } catch (error) {
     console.error('Error generating personality profile:', error);
@@ -72,6 +74,7 @@ export async function regenerateCharacterProfile(
   prompt: string,
   userId: string,
 ): Promise<Pick<Character, 'profile' | 'profileData'>> {
+  const { firestore } = getSdks();
   try {
     const newProfileData = await modifyPersonalityProfile({
       currentProfile: character.profileData!,
@@ -81,8 +84,8 @@ export async function regenerateCharacterProfile(
     
     const updatedCharacterData = { ...character, profile, profileData: newProfileData };
 
-    const characterRef = doc(db, 'users', userId, 'characters', character.id);
-    await setDoc(characterRef, updatedCharacterData, { merge: true });
+    const characterRef = doc(firestore, 'users', userId, 'characters', character.id);
+    setDocumentNonBlocking(characterRef, updatedCharacterData, { merge: true });
 
     return { profile, profileData: newProfileData };
   } catch (error) {
@@ -97,11 +100,11 @@ export async function getChatResponse(
   userPersona: string,
   userId: string
 ): Promise<string> {
+  const { firestore } = getSdks();
   const historyString = (character.chatHistory || [])
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)
     .join('\n');
   
-  // Truncate history if it exceeds 10,000 characters
   const maxHistoryLength = 10000;
   const truncatedHistory = historyString.length > maxHistoryLength 
     ? historyString.slice(-maxHistoryLength) 
@@ -119,8 +122,8 @@ export async function getChatResponse(
     const newResponse = { role: 'character' as const, content: response };
     const updatedChatHistory = [...(character.chatHistory || []), newMessage, newResponse];
     
-    const characterRef = doc(db, 'users', userId, 'characters', character.id);
-    await setDoc(characterRef, { chatHistory: updatedChatHistory }, { merge: true });
+    const characterRef = doc(firestore, 'users', userId, 'characters', character.id);
+    setDocumentNonBlocking(characterRef, { chatHistory: updatedChatHistory }, { merge: true });
 
     return response;
   } catch (error) {
@@ -130,19 +133,21 @@ export async function getChatResponse(
 }
 
 export async function updateUserPersona(userId: string, persona: string): Promise<void> {
-  try {
-    const userRef = doc(db, 'users', userId);
-    await setDoc(userRef, { persona }, { merge: true });
-  } catch (error) {
-    console.error('Error updating user persona:', error);
-    throw new Error('Failed to update user persona.');
-  }
+    const { firestore } = getSdks();
+    try {
+        const userRef = doc(firestore, 'users', userId);
+        setDocumentNonBlocking(userRef, { persona }, { merge: true });
+    } catch (error) {
+        console.error('Error updating user persona:', error);
+        throw new Error('Failed to update user persona.');
+    }
 }
 
 export async function saveCharacterChanges(userId: string, character: Character): Promise<void> {
+    const { firestore } = getSdks();
     try {
-        const characterRef = doc(db, 'users', userId, 'characters', character.id);
-        await setDoc(characterRef, character, { merge: true });
+        const characterRef = doc(firestore, 'users', userId, 'characters', character.id);
+        setDocumentNonBlocking(characterRef, character, { merge: true });
     } catch (error) {
         console.error('Error saving character changes:', error);
         throw new Error('Failed to save character changes.');
@@ -150,9 +155,10 @@ export async function saveCharacterChanges(userId: string, character: Character)
 }
 
 export async function deleteCharacterFromDb(userId: string, characterId: string): Promise<void> {
+    const { firestore } = getSdks();
     try {
-        const characterRef = doc(db, 'users', userId, 'characters', characterId);
-        await deleteDoc(characterRef);
+        const characterRef = doc(firestore, 'users', userId, 'characters', characterId);
+        deleteDocumentNonBlocking(characterRef);
     } catch (error) {
         console.error('Error deleting character:', error);
         throw new Error('Failed to delete character.');

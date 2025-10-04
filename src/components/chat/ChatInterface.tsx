@@ -10,7 +10,7 @@ import ChatMessage from './ChatMessage';
 import { getChatResponse } from '@/app/actions';
 import { Loader2, Send } from 'lucide-react';
 import { Card } from '../ui/card';
-import { useAuth } from '@/firebase/auth';
+import { useUser } from '@/firebase';
 
 interface ChatInterfaceProps {
   character: Character;
@@ -18,7 +18,7 @@ interface ChatInterfaceProps {
 
 export default function ChatInterface({ character }: ChatInterfaceProps) {
   const { state, dispatch } = useCharacter();
-  const { user } = useAuth();
+  const { user } = useUser();
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
