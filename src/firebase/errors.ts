@@ -104,8 +104,6 @@ function truncateData(data: any): any {
       for (const item of current) {
         newArray.push(recurse(item));
       }
-      // Un-mark after processing so it can appear again if it's not a direct cycle
-      visited.delete(current);
       return newArray;
     }
     
@@ -116,8 +114,6 @@ function truncateData(data: any): any {
         newObj[key] = recurse(current[key]);
       }
     }
-    // Un-mark after processing
-    visited.delete(current);
     return newObj;
   }
 
