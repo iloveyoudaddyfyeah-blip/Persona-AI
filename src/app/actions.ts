@@ -108,8 +108,8 @@ export async function generatePersonaFromPrompt(prompt: string): Promise<string>
   return persona;
 }
 
-export async function saveUserPersona(userId: string, persona: UserPersona) {
+export const saveUserPersona = async (userId: string, persona: UserPersona) => {
     const { firestore } = await getFirebaseAdmin();
     const personaRef = doc(firestore, 'users', userId, 'personas', persona.id);
     await personaRef.set(persona);
-}
+};
