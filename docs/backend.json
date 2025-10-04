@@ -11,110 +11,47 @@
           "type": "string",
           "description": "Unique identifier for the CharacterProfile entity."
         },
-        "userId": {
+        "name": {
           "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N CharacterProfile). The user who created/owns this profile."
+          "description": "The name of the character."
         },
-        "photoUrl": {
+        "photoDataUri": {
           "type": "string",
-          "description": "URL of the uploaded photo used to generate the profile.",
+          "description": "Data URI of the uploaded photo used to generate the profile.",
           "format": "uri"
         },
-        "generatedProfileText": {
+        "profile": {
           "type": "string",
-          "description": "The AI-generated personality profile text.",
-          "format": "text"
+          "description": "The formatted, combined personality profile text."
         },
-        "customizedProfileText": {
-          "type": "string",
-          "description": "The user-customized personality profile text (if any). If null, the generatedProfileText is used.",
-          "format": "text"
+        "profileData": {
+          "type": "object",
+          "description": "The structured, AI-generated personality profile data.",
+          "properties": {
+            "biography": {"type": "string"},
+            "traits": {"type": "string"},
+            "hobbies": {"type": "string"},
+            "motivations": {"type": "string"},
+            "likes": {"type": "array", "items": {"type": "string"}},
+            "dislikes": {"type": "array", "items": {"type": "string"}}
+          }
         },
-        "creationDate": {
-          "type": "string",
-          "description": "Date and time the profile was initially generated.",
-          "format": "date-time"
-        },
-        "lastModifiedDate": {
-          "type": "string",
-          "description": "Date and time the profile was last modified (either by AI or user).",
-          "format": "date-time"
+        "chatHistory": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "role": {"type": "string", "enum": ["user", "character"]},
+                    "content": {"type": "string"}
+                }
+            }
         }
       },
       "required": [
         "id",
-        "userId",
-        "photoUrl",
-        "generatedProfileText",
-        "creationDate",
-        "lastModifiedDate"
-      ]
-    },
-    "ChatSession": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ChatSession",
-      "type": "object",
-      "description": "Represents a chat session between the user and the AI for a specific character profile.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ChatSession entity."
-        },
-        "characterProfileId": {
-          "type": "string",
-          "description": "Reference to CharacterProfile. (Relationship: CharacterProfile 1:N ChatSession). The character profile this chat session belongs to."
-        },
-        "startTime": {
-          "type": "string",
-          "description": "Date and time the chat session started.",
-          "format": "date-time"
-        },
-        "endTime": {
-          "type": "string",
-          "description": "Date and time the chat session ended (can be null if the session is still active).",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "characterProfileId",
-        "startTime"
-      ]
-    },
-    "ChatMessage": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ChatMessage",
-      "type": "object",
-      "description": "Represents a single message within a chat session.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ChatMessage entity."
-        },
-        "chatSessionId": {
-          "type": "string",
-          "description": "Reference to ChatSession. (Relationship: ChatSession 1:N ChatMessage). The chat session this message belongs to."
-        },
-        "sender": {
-          "type": "string",
-          "description": "Indicates who sent the message ('user' or 'ai')."
-        },
-        "messageText": {
-          "type": "string",
-          "description": "The text content of the message."
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "Date and time the message was sent.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "chatSessionId",
-        "sender",
-        "messageText",
-        "timestamp"
+        "name",
+        "photoDataUri",
+        "profile"
       ]
     },
     "User": {
@@ -123,14 +60,6 @@
       "type": "object",
       "description": "Represents a user of the application. This document stores user-specific data like settings.",
       "properties": {
-        "subscriptionStatus": {
-          "type": "string",
-          "enum": [
-            "free",
-            "premium"
-          ],
-          "description": "The user's current subscription status."
-        },
         "settings": {
           "type": "object",
           "description": "User-specific application settings.",
@@ -139,8 +68,7 @@
               "type": "string",
               "enum": [
                 "light",
-                "dark",
-                "system"
+                "dark"
               ],
               "description": "The UI theme preference."
             },
@@ -180,7 +108,7 @@
         },
         "photoDataUri": {
           "type": "string",
-          "description": "URL of the uploaded photo for the persona.",
+          "description": "Data URI of the uploaded photo for the persona.",
           "format": "uri"
         },
         "isActive": {
@@ -210,25 +138,25 @@
     }
   },
   "firestore": {
-      "collections": {
-          "/users/{userId}": {
-              "schema": {
-                  "$ref": "#/entities/User"
-              },
-              "description": "Stores user profiles, including settings and active persona ID."
-          },
-          "/users/{userId}/characters/{characterId}": {
-              "schema": {
-                  "$ref": "#/entities/CharacterProfile"
-              },
-              "description": "Stores character profiles created by the user."
-          },
-          "/users/{userId}/personas/{personaId}": {
+    "collections": {
+        "/users/{userId}": {
             "schema": {
-                "$ref": "#/entities/UserPersona"
+                "$ref": "#/entities/User"
             },
-            "description": "Stores the different personas created by a user."
-          }
-      }
+            "description": "Stores user profiles, including settings and active persona ID."
+        },
+        "/users/{userId}/characters/{characterId}": {
+            "schema": {
+                "$ref": "#/entities/CharacterProfile"
+            },
+            "description": "Stores character profiles created by the user."
+        },
+        "/users/{userId}/personas/{personaId}": {
+          "schema": {
+              "$ref": "#/entities/UserPersona"
+          },
+          "description": "Stores the different personas created by a user."
+        }
+    }
   }
 }
