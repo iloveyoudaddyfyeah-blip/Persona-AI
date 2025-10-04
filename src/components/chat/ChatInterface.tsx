@@ -11,6 +11,8 @@ import { getChatResponse } from '@/app/actions';
 import { Loader2, Send } from 'lucide-react';
 import { Card } from '../ui/card';
 import { useUser, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 interface ChatInterfaceProps {
   character: Character;
@@ -41,11 +43,13 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     setIsTyping(true);
 
     try {
-      // The backend action will save both user message and character response
-      const response = await getChatResponse(firestore, character, userInput, state.userPersona, user.uid);
+      const response = await getChatResponse(character, userInput, state.userPersona);
       const characterMessage = { role: 'character' as const, content: response };
-      // We only need to add the character's message, as the user's was added optimistically
-      // and the full history is now saved in Firestore. The local state will be updated by the onSnapshot listener.
+      
+      const updatedHistory = [...(character.chatHistory || []), userMessage, characterMessage];
+      const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+      updateDocumentNonBlocking(characterRef, { chatHistory: updatedHistory });
+
     } catch (error) {
       console.error(error);
       const errorMessage = { role: 'character' as const, content: "I'm sorry, I'm having trouble thinking right now." };

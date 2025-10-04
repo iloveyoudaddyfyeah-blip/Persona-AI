@@ -8,8 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Loader2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserPersona } from '@/app/actions';
 import { useUser, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export default function UserPersona() {
   const { state, dispatch } = useCharacter();
@@ -30,8 +31,9 @@ export default function UserPersona() {
     }
     setIsSaving(true);
     try {
-        await updateUserPersona(firestore, user.uid, persona);
-        // The snapshot listener will update the context state
+        const userRef = doc(firestore, `users/${user.uid}`);
+        updateDocumentNonBlocking(userRef, { persona });
+        // The snapshot listener in CharacterContext will update the local state
         toast({
         title: 'Persona Saved',
         description: `Your persona has been updated. Characters will now react to this new persona.`,

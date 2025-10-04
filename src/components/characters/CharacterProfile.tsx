@@ -10,13 +10,15 @@ import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
 import Image from 'next/image';
 import { Loader2, Save, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { regenerateCharacterProfile, saveCharacterChanges } from '@/app/actions';
+import { regenerateCharacterProfile } from '@/app/actions';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatInterface from '../chat/ChatInterface';
 import UserPersona from '../user/UserPersona';
 import { useUser, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 interface CharacterProfileProps {
   character: Character;
@@ -41,14 +43,13 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   const handleSave = async () => {
     if (!user || !firestore) return;
     setIsSaving(true);
-    const updatedCharacter: Character = { 
-        ...character, 
+    const updatedCharacterData: Partial<Character> = { 
         name, 
         profile,
     };
     try {
-        await saveCharacterChanges(firestore, user.uid, updatedCharacter);
-        // The snapshot listener will update the context state
+        const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+        updateDocumentNonBlocking(characterRef, updatedCharacterData);
         toast({
             title: 'Character Saved',
             description: `${name}'s profile has been updated.`,
@@ -71,19 +72,14 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
       return;
     }
 
-    if (!character.profileData) {
-         toast({
-            variant: "destructive",
-            title: "Missing Profile Data",
-            description: "Cannot regenerate a profile that wasn't created with the new system.",
-        });
-        return;
-    }
-
     setIsRegenerating(true);
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
     try {
-      await regenerateCharacterProfile(firestore, character, regenPrompt, user.uid);
+      const { profile: newProfile, profileData: newProfileData } = await regenerateCharacterProfile(character, regenPrompt);
+      
+      const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+      updateDocumentNonBlocking(characterRef, { profile: newProfile, profileData: newProfileData });
+
       setRegenPrompt('');
       toast({
         title: 'Profile Regenerating!',
@@ -153,7 +149,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
                             className="text-lg"
                             disabled={isRegenerating || state.isGenerating}
                         />
-                        <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRegenerating || state.isGenerating}>
+                        <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRegenerating || state.isGenerating || !character.profileData}>
                             {isRegenerating ? (
                                 <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                             ) : (

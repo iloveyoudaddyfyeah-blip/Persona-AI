@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Plus, Trash2, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore } from '@/firebase';
-import { deleteCharacterFromDb } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
+import { doc } from 'firebase/firestore';
+import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export default function CharacterList() {
   const { state, dispatch } = useCharacter();
@@ -32,7 +33,8 @@ export default function CharacterList() {
     }
     if (window.confirm('Are you sure you want to delete this character? This cannot be undone.')) {
       try {
-        await deleteCharacterFromDb(firestore, user.uid, id);
+        const characterRef = doc(firestore, `users/${user.uid}/characters/${id}`);
+        deleteDocumentNonBlocking(characterRef);
         // The snapshot listener in context will handle updating the local state
         toast({ title: 'Character deleted' });
       } catch (error) {

@@ -14,7 +14,7 @@ import {
   setDocumentNonBlocking,
   updateDocumentNonBlocking
 } from '@/firebase/non-blocking-updates';
-import { collection, doc, Firestore } from 'firebase/firestore';
+import { collection, doc, type Firestore } from 'firebase/firestore';
 
 
 function formatProfile(
@@ -45,59 +45,41 @@ ${motivations}
 `;
 }
 
-// Note: Firestore instance is passed from the client
+// Note: Firestore instance is NOT passed anymore. The action only generates the data.
 export async function createCharacterFromPhoto(
-  firestore: Firestore,
   name: string,
   photoDataUri: string,
   tone: Tone,
   charLimit: number,
   userId: string,
-): Promise<Character> {
+): Promise<GeneratePersonalityProfileOutput & { profile: string }> {
   const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit });
   const profile = formatProfile(name, profileData);
-  const newCharacterId = doc(collection(firestore, 'users')).id; // Generate ID client-side
-  const newCharacter: Character = {
-      id: newCharacterId,
-      name,
-      photoDataUri,
-      profile,
-      profileData,
-      chatHistory: [],
-  };
-  const characterRef = doc(firestore, `users/${userId}/characters/${newCharacterId}`);
-  setDocumentNonBlocking(characterRef, newCharacter, { merge: false });
-  return newCharacter;
+  return { ...profileData, profile };
 }
 
-// Note: Firestore instance is passed from the client
+// Note: Firestore instance is NOT passed anymore.
 export async function regenerateCharacterProfile(
-  firestore: Firestore,
   character: Character,
   prompt: string,
-  userId: string,
 ): Promise<Pick<Character, 'profile' | 'profileData'>> {
+  if (!character.profileData) {
+    throw new Error("Cannot regenerate a profile that doesn't have profileData.");
+  }
   const newProfileData = await modifyPersonalityProfile({
-    currentProfile: character.profileData!,
+    currentProfile: character.profileData,
     prompt,
   });
   const profile = formatProfile(character.name, newProfileData);
   
-  const updatedCharacterData = { profile, profileData: newProfileData };
-
-  const characterRef = doc(firestore, `users/${userId}/characters/${character.id}`);
-  updateDocumentNonBlocking(characterRef, updatedCharacterData);
-
   return { profile, profileData: newProfileData };
 }
 
-// Note: Firestore instance is passed from the client
+// Note: Firestore instance is NOT passed anymore.
 export async function getChatResponse(
-  firestore: Firestore,
   character: Character,
   userMessage: string,
-  userPersona: string,
-  userId: string
+  userPersona: string
 ): Promise<string> {
   const historyString = (character.chatHistory || [])
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)
@@ -115,31 +97,5 @@ export async function getChatResponse(
     userPersona,
   });
   
-  const newMessage = { role: 'user' as const, content: userMessage };
-  const newResponse = { role: 'character' as const, content: response };
-  
-  const characterRef = doc(firestore, `users/${userId}/characters/${character.id}`);
-    updateDocumentNonBlocking(characterRef, { 
-      chatHistory: [...(character.chatHistory || []), newMessage, newResponse]
-  });
-
   return response;
-}
-
-// Note: Firestore instance is passed from the client
-export async function updateUserPersona(firestore: Firestore, userId: string, persona: string): Promise<void> {
-    const userRef = doc(firestore, `users/${userId}`);
-    updateDocumentNonBlocking(userRef, { persona });
-}
-
-// Note: Firestore instance is passed from the client
-export async function saveCharacterChanges(firestore: Firestore, userId: string, character: Character): Promise<void> {
-    const characterRef = doc(firestore, `users/${userId}/characters/${character.id}`);
-    updateDocumentNonBlocking(characterRef, character);
-}
-
-// Note: Firestore instance is passed from the client
-export async function deleteCharacterFromDb(firestore: Firestore, userId: string, characterId: string): Promise<void> {
-    const characterRef = doc(firestore, `users/${userId}/characters/${characterId}`);
-    deleteDocumentNonBlocking(characterRef);
 }

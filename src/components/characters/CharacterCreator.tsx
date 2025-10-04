@@ -14,6 +14,9 @@ import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Slider } from '../ui/slider';
 import { useUser, useFirestore } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import type { Character } from '@/lib/types';
 
 export default function CharacterCreator() {
   const { state, dispatch } = useCharacter();
@@ -63,11 +66,32 @@ export default function CharacterCreator() {
         return;
     }
 
-
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
 
     try {
-      const newCharacter = await createCharacterFromPhoto(firestore, name, photo.dataUri, tone, charLimit, user.uid);
+      // 1. Call server action to get AI-generated data
+      const generatedData = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit, user.uid);
+      
+      const newCharacterId = doc(collection(firestore, 'users')).id;
+      const newCharacter: Character = {
+          id: newCharacterId,
+          name,
+          photoDataUri: photo.dataUri,
+          profile: generatedData.profile,
+          profileData: {
+            biography: generatedData.biography,
+            traits: generatedData.traits,
+            hobbies: generatedData.hobbies,
+            motivations: generatedData.motivations,
+            likes: generatedData.likes,
+            dislikes: generatedData.dislikes,
+          },
+          chatHistory: [],
+      };
+
+      // 2. Save the complete character object to Firestore from the client
+      const characterRef = doc(firestore, `users/${user.uid}/characters/${newCharacterId}`);
+      setDocumentNonBlocking(characterRef, newCharacter, { merge: false });
       
       // The onSnapshot listener will add the character to the state.
       // We just need to select it.
