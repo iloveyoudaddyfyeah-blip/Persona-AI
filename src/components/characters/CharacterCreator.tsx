@@ -10,17 +10,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { createCharacterFromPhoto } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload } from 'lucide-react';
-import type { Character } from '@/lib/types';
 import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Slider } from '../ui/slider';
+import { useAuth } from '@/firebase/auth';
 
 export default function CharacterCreator() {
   const { state, dispatch } = useCharacter();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [photo, setPhoto] = useState<{ file: File; dataUri: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [charLimit, setCharLimit] = useState(state.settings.aiCharLimit);
   const [tone, setTone] = useState<Tone>(state.settings.aiTone);
   
@@ -53,23 +53,23 @@ export default function CharacterCreator() {
       });
       return;
     }
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Not logged in",
+            description: "You must be logged in to create a character.",
+        });
+        return;
+    }
 
-    setIsLoading(true);
+
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
 
     try {
-      const { profile, profileData } = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit);
+      const newCharacter = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit, user.uid);
       
-      const newCharacter: Character = {
-        id: crypto.randomUUID(),
-        name,
-        photoDataUri: photo.dataUri,
-        profile,
-        profileData,
-        chatHistory: [],
-      };
-
-      dispatch({ type: 'ADD_CHARACTER', payload: newCharacter });
+      // The onSnapshot listener will add the character to the state.
+      // We just need to select it.
       dispatch({ type: 'SELECT_CHARACTER', payload: newCharacter.id });
       toast({
         title: "Character created!",
@@ -84,7 +84,6 @@ export default function CharacterCreator() {
         description: (error as Error).message || "Could not create character. Please try again.",
       });
     } finally {
-      setIsLoading(false);
       dispatch({ type: 'SET_IS_GENERATING', payload: false });
     }
   };
@@ -150,8 +149,8 @@ export default function CharacterCreator() {
                 </div>
               </div>
             </div>
-            <Button type="submit" disabled={isLoading} className="w-full text-xl h-12">
-              {isLoading ? (
+            <Button type="submit" disabled={state.isGenerating} className="w-full text-xl h-12">
+              {state.isGenerating ? (
                 <>
                   <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                   Generating...

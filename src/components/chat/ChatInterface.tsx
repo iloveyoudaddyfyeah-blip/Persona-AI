@@ -10,6 +10,7 @@ import ChatMessage from './ChatMessage';
 import { getChatResponse } from '@/app/actions';
 import { Loader2, Send } from 'lucide-react';
 import { Card } from '../ui/card';
+import { useAuth } from '@/firebase/auth';
 
 interface ChatInterfaceProps {
   character: Character;
@@ -17,6 +18,7 @@ interface ChatInterfaceProps {
 
 export default function ChatInterface({ character }: ChatInterfaceProps) {
   const { state, dispatch } = useCharacter();
+  const { user } = useAuth();
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -29,17 +31,20 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userInput.trim() || isTyping) return;
+    if (!userInput.trim() || isTyping || !user) return;
 
     const userMessage = { role: 'user' as const, content: userInput };
+    // Optimistically update UI
     dispatch({ type: 'ADD_MESSAGE', payload: { characterId: character.id, message: userMessage } });
     setUserInput('');
     setIsTyping(true);
 
     try {
-      const response = await getChatResponse(character.profile, userInput, character.chatHistory, state.userPersona);
+      // The backend action will save both user message and character response
+      const response = await getChatResponse(character, userInput, state.userPersona, user.uid);
       const characterMessage = { role: 'character' as const, content: response };
-      dispatch({ type: 'ADD_MESSAGE', payload: { characterId: character.id, message: characterMessage } });
+      // We only need to add the character's message, as the user's was added optimistically
+      // and the full history is now saved in Firestore. The local state will be updated by the onSnapshot listener.
     } catch (error) {
       console.error(error);
       const errorMessage = { role: 'character' as const, content: "I'm sorry, I'm having trouble thinking right now." };
@@ -69,9 +74,9 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
             onChange={(e) => setUserInput(e.target.value)}
             placeholder={`Talk to ${character.name}...`}
             className="text-lg"
-            disabled={isTyping}
+            disabled={isTyping || !user}
             />
-            <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping}>
+            <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user}>
               <Send className="h-6 w-6" />
             </Button>
       </form>

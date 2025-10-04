@@ -10,12 +10,13 @@ import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
 import Image from 'next/image';
 import { Loader2, Save, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { regenerateCharacterProfile } from '@/app/actions';
+import { regenerateCharacterProfile, saveCharacterChanges } from '@/app/actions';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatInterface from '../chat/ChatInterface';
 import UserPersona from '../user/UserPersona';
+import { useAuth } from '@/firebase/auth';
 
 interface CharacterProfileProps {
   character: Character;
@@ -23,31 +24,43 @@ interface CharacterProfileProps {
 
 export default function CharacterProfile({ character }: CharacterProfileProps) {
   const { state, dispatch } = useCharacter();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState(character.name);
   const [profile, setProfile] = useState(character.profile);
   const [regenPrompt, setRegenPrompt] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setName(character.name);
     setProfile(character.profile);
   }, [character]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!user) return;
+    setIsSaving(true);
     const updatedCharacter: Character = { 
         ...character, 
         name, 
         profile,
     };
-    dispatch({ type: 'UPDATE_CHARACTER', payload: updatedCharacter });
-    toast({
-      title: 'Character Saved',
-      description: `${name}'s profile has been updated.`,
-    });
+    try {
+        await saveCharacterChanges(user.uid, updatedCharacter);
+        // The snapshot listener will update the context state
+        toast({
+            title: 'Character Saved',
+            description: `${name}'s profile has been updated.`,
+        });
+    } catch (error) {
+        toast({ variant: 'destructive', title: 'Save failed', description: (error as Error).message });
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   const handleRegenerate = async () => {
+    if (!user) return;
     if (!regenPrompt) {
       toast({
         variant: "destructive",
@@ -56,26 +69,24 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
       });
       return;
     }
+
+    if (!character.profileData) {
+         toast({
+            variant: "destructive",
+            title: "Missing Profile Data",
+            description: "Cannot regenerate a profile that wasn't created with the new system.",
+        });
+        return;
+    }
+
     setIsRegenerating(true);
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
     try {
-      const currentProfileData = character.profileData || {
-        biography: character.profile,
-        traits: "",
-        hobbies: "",
-        motivations: "",
-        likes: ["", "", "", "", ""],
-        dislikes: ["", "", "", "", ""],
-      };
-
-      const { profile: newProfile, profileData: newProfileData } = await regenerateCharacterProfile(name, currentProfileData, regenPrompt);
-      const updatedCharacter: Character = { ...character, name, profile: newProfile, profileData: newProfileData };
-      dispatch({ type: 'UPDATE_CHARACTER', payload: updatedCharacter });
-      setProfile(newProfile); // update local state
+      await regenerateCharacterProfile(character, regenPrompt, user.uid);
       setRegenPrompt('');
       toast({
-        title: 'Profile Regenerated!',
-        description: `${name}'s profile has been updated based on your prompt.`,
+        title: 'Profile Regenerating!',
+        description: `${name}'s profile is being updated. This may take a moment.`,
       });
     } catch (error) {
        toast({
@@ -123,8 +134,8 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
                     />
                     <div className="flex justify-end gap-4">
                         {hasChanges && (
-                            <Button onClick={handleSave} className="self-end text-lg h-12">
-                                <Save className="mr-2 h-5 w-5"/>
+                            <Button onClick={handleSave} className="self-end text-lg h-12" disabled={isSaving}>
+                                {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5"/>}
                                 Save Changes
                             </Button>
                         )}

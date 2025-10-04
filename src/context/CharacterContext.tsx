@@ -3,6 +3,9 @@
 
 import type { Character, ChatMessage } from '@/lib/types';
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
+import { useAuth } from '@/firebase/auth';
+import { collection, getDocs, doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/firebase/firebase';
 
 type View = 'welcome' | 'creating' | 'viewing';
 
@@ -19,6 +22,7 @@ type State = {
   selectedCharacterId: string | null;
   view: View;
   isGenerating: boolean;
+  isLoading: boolean;
   settings: Settings;
   userPersona: string;
 };
@@ -31,17 +35,22 @@ type Action =
   | { type: 'SET_VIEW'; payload: View }
   | { type: 'ADD_MESSAGE'; payload: { characterId: string; message: ChatMessage } }
   | { type: 'SET_IS_GENERATING', payload: boolean }
+  | { type: 'SET_IS_LOADING', payload: boolean }
   | { type: 'LOAD_STATE', payload: Partial<State> }
   | { type: 'SET_THEME', payload: Settings['theme'] }
   | { type: 'SET_AI_TONE', payload: Tone }
   | { type: 'SET_AI_CHAR_LIMIT', payload: number }
-  | { type: 'SET_USER_PERSONA', payload: string };
+  | { type: 'SET_USER_PERSONA', payload: string }
+  | { type: 'SET_CHARACTERS', payload: Character[] }
+  | { type: 'RESET_STATE' };
+
 
 const initialState: State = {
   characters: [],
   selectedCharacterId: null,
   view: 'welcome',
   isGenerating: false,
+  isLoading: true,
   settings: {
     theme: 'dark',
     aiTone: 'default',
@@ -58,23 +67,29 @@ const CharacterContext = createContext<{
 function characterReducer(state: State, action: Action): State {
   switch (action.type) {
     case 'LOAD_STATE':
-        const characters = action.payload.characters || [];
+        const loadedState = action.payload;
         // When loading, default to dark if theme is system
-        const loadedSettings = action.payload.settings;
+        const loadedSettings = loadedState.settings;
         if (loadedSettings && (loadedSettings.theme as any) === 'system') {
             loadedSettings.theme = 'dark';
         }
-        
-        const newState: State = { ...initialState, ...action.payload, settings: { ...initialState.settings, ...loadedSettings } };
+        return { ...state, ...loadedState, settings: { ...state.settings, ...loadedSettings }};
+    case 'SET_CHARACTERS':
+        const characters = action.payload;
+        let newSelectedId = state.selectedCharacterId;
+        let newView = state.view;
 
-        if (characters.length > 0 && !newState.selectedCharacterId) {
-            const firstId = characters[0].id;
-            newState.selectedCharacterId = firstId;
-            newState.view = 'viewing';
-        } else if (characters.length === 0) {
-            newState.view = 'welcome';
+        if (!characters.find(c => c.id === newSelectedId)) {
+            newSelectedId = characters.length > 0 ? characters[0].id : null;
         }
-        return newState;
+
+        if (characters.length > 0) {
+            newView = 'viewing';
+        } else {
+            newView = 'welcome';
+        }
+
+        return { ...state, characters, selectedCharacterId: newSelectedId, view: newView, isLoading: false };
     case 'ADD_CHARACTER':
       return { 
         ...state, 
@@ -90,23 +105,23 @@ function characterReducer(state: State, action: Action): State {
       };
     case 'DELETE_CHARACTER':
         const remainingCharacters = state.characters.filter(c => c.id !== action.payload);
-        let newSelectedId = state.selectedCharacterId;
-        let newView = state.view;
+        let deletedSelectedId = state.selectedCharacterId;
+        let deletedView = state.view;
 
         if (state.selectedCharacterId === action.payload) {
             if (remainingCharacters.length > 0) {
-                newSelectedId = remainingCharacters[0].id;
-                newView = 'viewing';
+                deletedSelectedId = remainingCharacters[0].id;
+                deletedView = 'viewing';
             } else {
-                newSelectedId = null;
-                newView = 'welcome';
+                deletedSelectedId = null;
+                deletedView = 'welcome';
             }
         }
       return {
         ...state,
         characters: remainingCharacters,
-        selectedCharacterId: newSelectedId,
-        view: newView,
+        selectedCharacterId: deletedSelectedId,
+        view: deletedView,
       };
     case 'SELECT_CHARACTER':
       return {
@@ -127,6 +142,8 @@ function characterReducer(state: State, action: Action): State {
       };
     case 'SET_IS_GENERATING':
       return { ...state, isGenerating: action.payload };
+    case 'SET_IS_LOADING':
+      return { ...state, isLoading: action.payload };
     case 'SET_THEME':
         return { ...state, settings: { ...state.settings, theme: action.payload }};
     case 'SET_AI_TONE':
@@ -135,6 +152,8 @@ function characterReducer(state: State, action: Action): State {
         return { ...state, settings: { ...state.settings, aiCharLimit: action.payload }};
     case 'SET_USER_PERSONA':
         return { ...state, userPersona: action.payload };
+    case 'RESET_STATE':
+        return initialState;
     default:
       return state;
   }
@@ -142,37 +161,55 @@ function characterReducer(state: State, action: Action): State {
 
 export function CharacterProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(characterReducer, initialState);
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     try {
-      const storedState = localStorage.getItem('personaCraftState');
-      if (storedState) {
-        const loadedState = JSON.parse(storedState);
-        // Add migration for old data structure
-        if (Array.isArray(loadedState)) {
-             dispatch({ type: 'LOAD_STATE', payload: { characters: loadedState } });
-        } else {
-             dispatch({ type: 'LOAD_STATE', payload: loadedState });
-        }
+      const storedSettings = localStorage.getItem('personaCraftSettings');
+      if (storedSettings) {
+        const loadedSettings = JSON.parse(storedSettings);
+         dispatch({ type: 'LOAD_STATE', payload: { settings: loadedSettings } });
       }
     } catch (error) {
-      console.error("Failed to load state from localStorage", error);
+      console.error("Failed to load settings from localStorage", error);
     }
   }, []);
+  
+  useEffect(() => {
+    if (user) {
+      dispatch({ type: 'SET_IS_LOADING', payload: true });
+
+      const userDocRef = doc(db, 'users', user.uid);
+      const userUnsub = onSnapshot(userDocRef, (doc) => {
+        const userData = doc.data();
+        if (userData?.persona) {
+          dispatch({ type: 'SET_USER_PERSONA', payload: userData.persona });
+        }
+      });
+      
+      const charactersColRef = collection(db, 'users', user.uid, 'characters');
+      const charactersUnsub = onSnapshot(charactersColRef, (snapshot) => {
+        const characters = snapshot.docs.map(doc => doc.data() as Character);
+        dispatch({ type: 'SET_CHARACTERS', payload: characters });
+      });
+
+      return () => {
+        userUnsub();
+        charactersUnsub();
+      };
+    } else if (!authLoading) {
+      dispatch({ type: 'RESET_STATE' });
+      dispatch({ type: 'SET_IS_LOADING', payload: false });
+    }
+  }, [user, authLoading]);
 
   useEffect(() => {
     try {
-        const stateToSave = {
-            characters: state.characters,
-            settings: state.settings,
-            selectedCharacterId: state.selectedCharacterId,
-            userPersona: state.userPersona,
-        };
-      localStorage.setItem('personaCraftState', JSON.stringify(stateToSave));
+      localStorage.setItem('personaCraftSettings', JSON.stringify(state.settings));
     } catch (error) {
-      console.error("Failed to save state to localStorage", error);
+      console.error("Failed to save settings to localStorage", error);
     }
-  }, [state.characters, state.settings, state.selectedCharacterId, state.userPersona]);
+  }, [state.settings]);
 
   useEffect(() => {
     const root = window.document.documentElement;

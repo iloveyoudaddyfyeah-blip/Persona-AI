@@ -8,12 +8,28 @@ import CharacterCreator from '@/components/characters/CharacterCreator';
 import CharacterProfile from '@/components/characters/CharacterProfile';
 import WelcomeScreen from './WelcomeScreen';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/firebase/auth';
+import LoginScreen from './LoginScreen';
 
 function AppContent() {
   const { state } = useCharacter();
-  const { view, characters, selectedCharacterId, isGenerating } = state;
+  const { view, characters, selectedCharacterId, isGenerating, isLoading } = state;
+  const { user, loading: authLoading } = useAuth();
 
   const selectedCharacter = characters.find(c => c.id === selectedCharacterId);
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center">
+          <Loader2 className="h-16 w-16 animate-spin mb-4" />
+          <h2 className="text-3xl font-headline">Loading...</h2>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <LoginScreen />;
+  }
 
   const renderMainContent = () => {
     if (isGenerating) {
