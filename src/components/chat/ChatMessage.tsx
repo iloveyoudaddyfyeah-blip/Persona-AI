@@ -45,8 +45,8 @@ const FormattedContent = ({ content, role }: { content: string; role: ChatMessag
 
 export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
-  // Only use typewriter for the last character message when the AI is NOT currently typing the *next* message.
-  const useTypewriterEffect = isCharacter && isLastMessage && !isTyping;
+  // Only use typewriter for the last character message WHILE the AI is generating the NEXT response.
+  const useTypewriterEffect = isCharacter && isLastMessage && isTyping;
   const displayedText = useTypewriterEffect ? useTypewriter(message.content) : message.content;
 
   return (
@@ -70,7 +70,10 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
         )}
       >
         <FormattedContent content={displayedText} role={message.role} />
-        {useTypewriterEffect && displayedText.length < message.content.length && <span className="inline-block w-0.5 h-4 bg-foreground animate-[blink-caret_1s_step-end_infinite] ml-1" />}
+        {/* Only show the blinking caret if the text is actively being typed out */}
+        {useTypewriterEffect && displayedText.length < message.content.length && (
+            <span className="inline-block w-0.5 h-4 bg-foreground animate-[blink-caret_1s_step-end_infinite] ml-1" />
+        )}
       </div>
     </div>
   );
