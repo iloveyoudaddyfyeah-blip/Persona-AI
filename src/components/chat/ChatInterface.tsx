@@ -58,9 +58,10 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     if (!userInput.trim() || isTyping || !user || !firestore) return;
 
     const userMessage = { role: 'user' as const, content: userInput };
-    // Optimistically update UI
+    // Optimistically update UI with user message first
     const newHistoryWithUserMessage = [...(character.chatHistory || []), userMessage];
     dispatch({ type: 'UPDATE_CHARACTER', payload: { ...character, chatHistory: newHistoryWithUserMessage } });
+    
     setUserInput('');
     setIsTyping(true);
 
@@ -69,13 +70,14 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
       
       const updatedHistory = [...newHistoryWithUserMessage, characterMessage];
       const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
-      // This will trigger the onSnapshot listener in CharacterContext to update the state
       updateDocumentNonBlocking(characterRef, { chatHistory: updatedHistory });
 
     } catch (error) {
       console.error(error);
       const errorMessage = { role: 'character' as const, content: "I'm sorry, I'm having trouble thinking right now." };
        const updatedHistory = [...newHistoryWithUserMessage, errorMessage];
+       // Here we directly update the character in the context, which will then be picked up by the listener.
+       // This might feel redundant, but it ensures the UI is updated even if the DB write has a delay.
       dispatch({ type: 'UPDATE_CHARACTER', payload: { ...character, chatHistory: updatedHistory } });
     } finally {
       setIsTyping(false);

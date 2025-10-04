@@ -14,7 +14,7 @@ interface ChatMessageProps {
   isTyping: boolean;
 }
 
-const FormattedContent = ({ content, role }: { content: string; role: ChatMessageType['role'] }) => {
+const FormattedContent = ({ content }: { content: string }) => {
   const regex = /(\*[^*]+\*)|("[^"]+")/g;
   const parts = content.split(regex).filter(Boolean);
 
@@ -30,14 +30,10 @@ const FormattedContent = ({ content, role }: { content: string; role: ChatMessag
         }
         if (part.startsWith('"') && part.endsWith('"')) {
            return (
-            <span key={index} className="text-primary-foreground">
+            <span key={index} className="text-primary">
               {part}
             </span>
           );
-        }
-        // For character responses, non-dialogue/action parts can have a different color if desired
-        if (role === 'character') {
-             return <span key={index}>{part}</span>;
         }
         return <span key={index}>{part}</span>;
       })}
@@ -49,14 +45,14 @@ const FormattedContent = ({ content, role }: { content: string; role: ChatMessag
 export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
   
-  // A new message is being typed if it's the last message, from the character, AND the interface is "typing".
+  // A new message is being received if it's the last message, from the character, AND the interface is "typing".
   const isReceiving = isCharacter && isLastMessage && isTyping;
 
   // Use the typewriter effect only for the message that is actively being received.
-  const displayedText = useTypewriter(isReceiving ? message.content : '');
+  const typedText = useTypewriter(message.content, 20);
 
-  // If the message is not being received, show its full content instantly.
-  const content = isReceiving ? displayedText : message.content;
+  // If the message is being received, show the typed text. Otherwise, show the full content instantly.
+  const content = isReceiving ? typedText : message.content;
 
 
   return (
@@ -79,7 +75,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
             : "bg-primary text-primary-foreground"
         )}
       >
-        <FormattedContent content={content} role={message.role} />
+        <FormattedContent content={content} />
         {/* Only show the blinking caret if the text is actively being typed out */}
         {isReceiving && content.length < message.content.length && (
             <span className="inline-block w-0.5 h-5 bg-foreground animate-[blink_1s_step-end_infinite] -mb-1 ml-1" />
