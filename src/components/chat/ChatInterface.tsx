@@ -25,7 +25,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import Image from 'next/image';
-import { BannerAd } from '../ads/BannerAd';
 
 
 interface ChatInterfaceProps {
@@ -115,7 +114,6 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
             )}
         </div>
         <div className="p-4 border-t flex flex-col gap-2">
-            <BannerAd />
             <div className="flex gap-2 items-center">
                 <form onSubmit={handleSubmit} className="flex-grow flex gap-2">
                     <Input

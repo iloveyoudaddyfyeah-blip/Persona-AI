@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import { doc } from 'firebase/firestore';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Image from 'next/image';
-import { BannerAd } from '../ads/BannerAd';
 
 export default function CharacterList() {
   const { state, dispatch } = useCharacter();
@@ -81,7 +80,6 @@ export default function CharacterList() {
       <Button onClick={handleNewCharacter} className="mt-4 text-lg h-12">
         <Plus className="mr-2 h-5 w-5" /> New Character
       </Button>
-      <BannerAd />
     </div>
   );
 }
