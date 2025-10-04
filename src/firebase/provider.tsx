@@ -108,12 +108,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       auth,
       async (firebaseUser) => { // Auth state determined
         if (firebaseUser) {
-            // Development override for premium status
-            if (firebaseUser.email === 'calebliskey51@gmail.com') {
-                setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, isPremium: true });
-                return;
-            }
-
             const tokenResult = await firebaseUser.getIdTokenResult();
             const isPremium = tokenResult.claims.premium === true;
             setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, isPremium });
