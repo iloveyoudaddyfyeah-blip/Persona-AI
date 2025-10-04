@@ -20,7 +20,7 @@ const GeneratePersonalityProfileInputSchema = z.object({
     .describe(
       "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
-  tone: z.string().optional().default('default').describe("The tone of voice for the generation. Can be 'witty', 'serious', 'whimsical', 'poetic' or 'default'"),
+  tone: z.string().optional().default('default').describe("The tone of voice for the generation. Can be 'witty', 'serious', 'whimsical', 'poetic', 'epic', 'noir', 'comedic', 'dramatic', 'sarcastic', 'inspirational', or 'default'"),
   charLimit: z.number().optional().default(3000).describe("The minimum character length for the biography.")
 });
 export type GeneratePersonalityProfileInput = z.infer<

@@ -9,7 +9,7 @@ import { collection, onSnapshot, Query, doc } from 'firebase/firestore';
 
 type View = 'welcome' | 'creating' | 'viewing';
 
-export type Tone = "default" | "witty" | "serious" | "whimsical" | "poetic";
+export type Tone = "default" | "witty" | "serious" | "whimsical" | "poetic" | "epic" | "noir" | "comedic" | "dramatic" | "sarcastic" | "inspirational";
 
 type Settings = {
   theme: "light" | "dark";

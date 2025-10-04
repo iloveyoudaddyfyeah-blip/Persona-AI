@@ -1,127 +1,135 @@
 /**
- * @file Overview
- * This ruleset enforces a strict user-ownership model, meaning that each user can only access data associated with their own user ID.
+ * @fileoverview Firestore Security Rules for the application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model.  Each user has full control
+ * over their own data, and no access to other users' data unless explicitly granted
+ * through a shared access pattern (not currently implemented).
  *
  * Data Structure:
- * All data is nested under /users/{userId}, ensuring a clear hierarchical structure that reflects user ownership. Character profiles, chat sessions, and chat messages are all subcollections of the user document.
+ * Data is nested under `/users/{userId}`, creating a clear ownership hierarchy.
+ * Character profiles, chat sessions, and chat messages are all subcollections
+ * of the user's document.
  *
  * Key Security Decisions:
- * - User data is strictly private; listing all users is disallowed.
- * - All write operations are protected by authorization checks to prevent unauthorized data modification.
- * - Read-only access is not explicitly granted for any collection, defaulting to a secure, authenticated-user read model where only the owning user can view the data.
- *
- * Denormalization for Authorization:
- * The data model already includes `userId` on CharacterProfile objects.  This is leveraged to improve rule performance and security.
+ * - Users can only create, read, update, and delete their own profiles.
+ * - User listing is disallowed as there is no need for it in the app, and could expose emails.
+ * - Data validation is relaxed in this prototype to allow faster iteration,
+ *   but authorization is strictly enforced based on user ID.
+ * - No public read access is granted.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Enforces user-ownership for user profiles.
-     * @path /databases/{database}/documents/users/{userId}
-     * @allow (create) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can create their own profile.
-     * @deny (create) User ABC cannot create a profile for user XYZ.
-     * @allow (update) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can update their own profile.
-     * @deny (update) User ABC cannot update the profile for user STzGlUZEvZgVu1z9uPSEQhG2DT92.
-     * @allow (get) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can get their own profile.
-     * @deny (get) User ABC cannot get the profile for user STzGlUZEvZgVu1z9uPSEQhG2DT92.
-     * @allow (list) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can list their own profiles.
-     * @deny (list) User ABC cannot list the profiles for user STzGlUZEvZgVu1z9uPSEQhG2DT92.
-     * @allow (delete) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can delete their own profile.
-     * @deny (delete) User ABC cannot delete the profile for user STzGlUZEvZgVu1z9uPSEQhG2DT92.
+     * @description Controls access to user profiles.
+     * @path /users/{userId}
+     * @allow (create) User with ID 'user123' can create their own profile.
+     *   Request: { auth: { uid: 'user123' }, method: 'create', path: '/databases/(default)/documents/users/user123' }
+     * @allow (get) User with ID 'user123' can read their own profile.
+     *   Request: { auth: { uid: 'user123' }, method: 'get', path: '/databases/(default)/documents/users/user123' }
+     * @allow (update) User with ID 'user123' can update their own profile.
+     *   Request: { auth: { uid: 'user123' }, method: 'update', path: '/databases/(default)/documents/users/user123' }
+     * @allow (delete) User with ID 'user123' can delete their own profile.
+     *   Request: { auth: { uid: 'user123' }, method: 'delete', path: '/databases/(default)/documents/users/user123' }
+     * @deny (create) User with ID 'user456' cannot create a profile for user 'user123'.
+     *   Request: { auth: { uid: 'user456' }, method: 'create', path: '/databases/(default)/documents/users/user123' }
+     * @deny (get) User with ID 'user456' cannot read user 'user123's profile.
+     *   Request: { auth: { uid: 'user456' }, method: 'get', path: '/databases/(default)/documents/users/user123' }
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow list: if false; // Listing users is not permitted.
+      allow list: if false;
       allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    
+
+        /**
+         * @description Controls access to character profiles nested under a user.
+         * @path /users/{userId}/characters/{characterId}
+         * @allow (create) User with ID 'user123' can create a character profile under their ID.
+         *   Request: { auth: { uid: 'user123' }, method: 'create', path: '/databases/(default)/documents/users/user123/characters/char1' }
+         * @allow (get) User with ID 'user123' can read their own character profile.
+         *   Request: { auth: { uid: 'user123' }, method: 'get', path: '/databases/(default)/documents/users/user123/characters/char1' }
+         * @allow (update) User with ID 'user123' can update their own character profile.
+         *   Request: { auth: { uid: 'user123' }, method: 'update', path: '/databases/(default)/documents/users/user123/characters/char1' }
+         * @allow (delete) User with ID 'user123' can delete their own character profile.
+         *   Request: { auth: { uid: 'user123' }, method: 'delete', path: '/databases/(default)/documents/users/user123/characters/char1' }
+         * @deny (create) User with ID 'user456' cannot create a character profile for user 'user123'.
+         *   Request: { auth: { uid: 'user456' }, method: 'create', path: '/databases/(default)/documents/users/user123/characters/char1' }
+         * @deny (get) User with ID 'user456' cannot read user 'user123's character profile.
+         *   Request: { auth: { uid: 'user456' }, method: 'get', path: '/databases/(default)/documents/users/user123/characters/char1' }
+         * @principle Enforces document ownership for all operations within the user's data tree.
+         */
+        match /characters/{characterId} {
+          allow get: if isOwner(userId);
+          allow list: if false;
+          allow create: if isOwner(userId);
+          allow update: if isOwner(userId);
+          allow delete: if isOwner(userId);
+
+            /**
+             * @description Controls access to chat sessions nested under a character profile.
+             * @path /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}
+             * @allow (create) User with ID 'user123' can create a chat session under their character profile.
+             *   Request: { auth: { uid: 'user123' }, method: 'create', path: '/databases/(default)/documents/users/user123/characters/char1/chatSessions/session1' }
+             * @allow (get) User with ID 'user123' can read their own chat session.
+             *   Request: { auth: { uid: 'user123' }, method: 'get', path: '/databases/(default)/documents/users/user123/characters/char1/chatSessions/session1' }
+             * @allow (update) User with ID 'user123' can update their own chat session.
+             *   Request: { auth: { uid: 'user123' }, method: 'update', path: '/databases/(default)/documents/users/user123/characters/char1/chatSessions/session1' }
+             * @allow (delete) User with ID 'user123' can delete their own chat session.
+             *   Request: { auth: { uid: 'user123' }, method: 'delete', path: '/databases/(default)/documents/users/user123/characters/char1/chatSessions/session1' }
+             * @deny (create) User with ID 'user456' cannot create a chat session for user 'user123'.
+             *   Request: { auth: { uid: 'user456' }, method: 'create', path: '/databases/(default)/documents/users/user123/characters/char1/chatSessions/session1' }
+             * @deny (get) User with ID 'user456' cannot read user 'user123's chat session.
+             *   Request: { auth: { uid: 'user456' }, method: 'get', path: '/databases/(default)/documents/users/user123/characters/char1/chatSessions/session1' }
+             * @principle Enforces document ownership for all operations within the user's data tree.
+             */
+            match /chatSessions/{chatSessionId} {
+              allow get: if isOwner(userId);
+              allow list: if false;
+              allow create: if isOwner(userId);
+              allow update: if isOwner(userId);
+              allow delete: if isOwner(userId);
+
+                /**
+                 * @description Controls access to chat messages nested under a chat session.
+                 * @path /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId}
+                 * @allow (create) User with ID 'user123' can create a chat message under their chat session.
+                 *   Request: { auth: { uid: 'user123' }, method: 'create', path: '/databases/(default)/documents/users/user123/characters/char1/chatSessions/session1/chatMessages/message1' }
+                 * @allow (get) User with ID 'user123' can read their own chat message.
+                 *   Request: { auth: { uid: 'user123' }, method: 'get', path: '/databases/(default)/documents/users/user123/characters/char1/chatSessions/session1/chatMessages/message1' }
+                 * @allow (update) User with ID 'user123' can update their own chat message.
+                 *   Request: { auth: { uid: 'user123' }, method: 'update', path: '/databases/(default)/documents/users/user123/characters/char1/chatSessions/session1/chatMessages/message1' }
+                 * @allow (delete) User with ID 'user123' can delete their own chat message.
+                 *   Request: { auth: { uid: 'user123' }, method: 'delete', path: '/databases/(default)/documents/users/user123/characters/char1/chatSessions/session1/chatMessages/message1' }
+                 * @deny (create) User with ID 'user456' cannot create a chat message for user 'user123'.
+                 *   Request: { auth: { uid: 'user456' }, method: 'create', path: '/databases/(default)/documents/users/user123/characters/char1/chatSessions/session1/chatMessages/message1' }
+                 * @deny (get) User with ID 'user456' cannot read user 'user123's chat message.
+                 *   Request: { auth: { uid: 'user456' }, method: 'get', path: '/databases/(default)/documents/users/user123/characters/char1/chatSessions/session1/chatMessages/message1' }
+                 * @principle Enforces document ownership for all operations within the user's data tree.
+                 */
+                match /chatMessages/{chatMessageId} {
+                  allow get: if isOwner(userId);
+                  allow list: if false;
+                  allow create: if isOwner(userId);
+                  allow update: if isOwner(userId);
+                  allow delete: if isOwner(userId);
+                }
+              }
+            }
+          }
+        }
     }
 
-    /**
-     * @description Enforces user-ownership for character profiles.
-     * @path /databases/{database}/documents/users/{userId}/characters/{characterId}
-     * @allow (create) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can create a character profile under their user ID.
-     * @deny (create) User ABC cannot create a character profile under user STzGlUZEvZgVu1z9uPSEQhG2DT92's ID.
-     * @allow (update) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can update a character profile under their user ID.
-     * @deny (update) User ABC cannot update a character profile under user STzGlUZEvZgVu1z9uPSEQhG2DT92's ID.
-     * @allow (get) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can get a character profile under their user ID.
-     * @deny (get) User ABC cannot get a character profile under user STzGlUZEvZgVu1z9uPSEQhG2DT92's ID.
-     * @allow (list) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can list character profiles under their user ID.
-     * @deny (list) User ABC cannot list character profiles under user STzGlUZEvZgVu1z9uPSEQhG2DT92's ID.
-     * @allow (delete) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can delete a character profile under their user ID.
-     * @deny (delete) User ABC cannot delete a character profile under user STzGlUZEvZgVu1z9uPSEQhG2DT92's ID.
-     * @principle Enforces document ownership and data consistency.
-     */
-    match /users/{userId}/characters/{characterId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    /**
-     * @description Enforces user-ownership for chat sessions within a character profile.
-     * @path /databases/{database}/documents/users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}
-     * @allow (create) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can create a chat session under their user and character profile.
-     * @deny (create) User ABC cannot create a chat session under user STzGlUZEvZgVu1z9uPSEQhG2DT92's user and character profile.
-     * @allow (update) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can update a chat session under their user and character profile.
-     * @deny (update) User ABC cannot update a chat session under user STzGlUZEvZgVu1z9uPSEQhG2DT92's user and character profile.
-     * @allow (get) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can get a chat session under their user and character profile.
-     * @deny (get) User ABC cannot get a chat session under user STzGlUZEvZgVu1z9uPSEQhG2DT92's user and character profile.
-     * @allow (list) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can list chat sessions under their user and character profile.
-     * @deny (list) User ABC cannot list chat sessions under user STzGlUZEvZgVu1z9uPSEQhG2DT92's user and character profile.
-     * @allow (delete) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can delete a chat session under their user and character profile.
-     * @deny (delete) User ABC cannot delete a chat session under user STzGlUZEvZgVu1z9uPSEQhG2DT92's user and character profile.
-     * @principle Enforces nested document ownership.
-     */
-    match /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
-
-    /**
-     * @description Enforces user-ownership for chat messages within a chat session.
-     * @path /databases/{database}/documents/users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId}
-     * @allow (create) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can create a chat message under their user, character profile, and chat session.
-     * @deny (create) User ABC cannot create a chat message under user STzGlUZEvZgVu1z9uPSEQhG2DT92's user, character profile, and chat session.
-     * @allow (update) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can update a chat message under their user, character profile, and chat session.
-     * @deny (update) User ABC cannot update a chat message under user STzGlUZEvZgVu1z9uPSEQhG2DT92's user, character profile, and chat session.
-     * @allow (get) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can get a chat message under their user, character profile, and chat session.
-     * @deny (get) User ABC cannot get a chat message under user STzGlUZEvZgVu1z9uPSEQhG2DT92's user, character profile, and chat session.
-     * @allow (list) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can list chat messages under their user, character profile, and chat session.
-     * @deny (list) User ABC cannot list chat messages under user STzGlUZEvZgVu1z9uPSEQhG2DT92's user, character profile, and chat session.
-     * @allow (delete) User STzGlUZEvZgVu1z9uPSEQhG2DT92 can delete a chat message under their user, character profile, and chat session.
-     * @deny (delete) User ABC cannot delete a chat message under user STzGlUZEvZgVu1z9uPSEQhG2DT92's user, character profile, and chat session.
-     * @principle Enforces deeply nested document ownership.
-     */
-    match /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-  }
-
-  // Helper function to determine if the current user is the owner of the resource.
-  function isOwner(userId) {
-    return isSignedIn() && request.auth.uid == userId;
-  }
-
-  // Helper function to determine if the current user is the owner of the resource AND the resource exists.
-  function isExistingOwner(userId) {
-    return isOwner(userId) && resource != null;
-  }
-
-  // Helper function to determine if a user is signed in.
-  function isSignedIn() {
-    return request.auth != null;
-  }
 }

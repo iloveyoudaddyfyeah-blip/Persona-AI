@@ -57,6 +57,12 @@ export default function SettingsDialog() {
                         <SelectItem value="serious">Serious</SelectItem>
                         <SelectItem value="whimsical">Whimsical</SelectItem>
                         <SelectItem value="poetic">Poetic</SelectItem>
+                        <SelectItem value="epic">Epic</SelectItem>
+                        <SelectItem value="noir">Noir</SelectItem>
+                        <SelectItem value="comedic">Comedic</SelectItem>
+                        <SelectItem value="dramatic">Dramatic</SelectItem>
+                        <SelectItem value="sarcastic">Sarcastic</SelectItem>
+                        <SelectItem value="inspirational">Inspirational</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
