@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ChatMessage from './ChatMessage';
 import { getChatResponse } from '@/app/actions';
-import { Loader2, Send, Trash2 } from 'lucide-react';
+import { Loader2, Send, Trash2, Crown } from 'lucide-react';
 import { Card } from '../ui/card';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -25,6 +25,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import Image from 'next/image';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { SubscriptionDialog } from '../settings/SubscriptionDialog';
 
 
 interface ChatInterfaceProps {
@@ -33,12 +35,14 @@ interface ChatInterfaceProps {
 
 export default function ChatInterface({ character }: ChatInterfaceProps) {
   const { state, dispatch } = useCharacter();
-  const { user } = useUser();
+  const { user, isPremium, setIsPremium } = useUser();
   const firestore = useFirestore();
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const chatHistory = character.chatHistory || [];
+
+  const activePersona = state.userPersonas.find(p => p.id === state.activePersonaId) || null;
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -66,7 +70,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     setIsTyping(true);
 
     try {
-      const characterMessage = await getChatResponse(character, userInput, state.userPersona);
+      const characterMessage = await getChatResponse(character, userInput, activePersona, isPremium);
       
       const updatedHistory = [...newHistoryWithUserMessage, characterMessage];
       const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
@@ -83,6 +87,8 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
       setIsTyping(false);
     }
   };
+
+  const isChatLocked = !isPremium && chatHistory.length >= 20;
 
   return (
     <Card className="flex flex-col h-full border-0 shadow-none rounded-t-none">
@@ -114,18 +120,36 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
             )}
         </div>
         <div className="p-4 border-t flex flex-col gap-2">
+            {isChatLocked && (
+                <Alert variant="destructive">
+                    <Crown className="h-4 w-4" />
+                    <AlertTitle>Chat Limit Reached</AlertTitle>
+                    <AlertDescription className="flex justify-between items-center">
+                        <div>
+                            Free users have a 20-message limit. Upgrade for unlimited chat history.
+                            You can also clear the history to start a new conversation.
+                        </div>
+                        <SubscriptionDialog onUpgrade={() => setIsPremium(true)}>
+                          <Button size="sm">
+                              <Crown className="mr-2 h-4 w-4" />
+                              Upgrade
+                          </Button>
+                        </SubscriptionDialog>
+                    </AlertDescription>
+                </Alert>
+            )}
             <div className="flex gap-2 items-center">
                 <form onSubmit={handleSubmit} className="flex-grow flex gap-2">
                     <Input
                     type="text"
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
-                    placeholder={`Talk to ${character.name}...`}
+                    placeholder={isChatLocked ? "Upgrade to continue chatting" : `Talk to ${character.name}...`}
                     className="text-lg"
-                    disabled={isTyping || !user}
+                    disabled={isTyping || !user || isChatLocked}
                     />
-                    <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user}>
-                    <Send className="h-6 w-6" />
+                    <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user || isChatLocked}>
+                        <Send className="h-6 w-6" />
                     </Button>
                 </form>
                 <AlertDialog>

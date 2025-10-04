@@ -15,7 +15,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatInterface from '../chat/ChatInterface';
-import UserPersona from '../user/UserPersona';
+import UserPersonaManager from '../user/UserPersonaManager';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -224,7 +224,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
             <ChatInterface character={character} />
         </TabsContent>
          <TabsContent value="persona" className="flex-grow mt-0">
-            <UserPersona />
+            <UserPersonaManager />
         </TabsContent>
     </Tabs>
   );

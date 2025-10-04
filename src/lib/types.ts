@@ -20,8 +20,16 @@ export type Character = {
   chatHistory: ChatMessage[];
 };
 
+export type UserPersona = {
+    id: string;
+    name: string;
+    description: string;
+    photoDataUri: string;
+    isActive: boolean;
+}
+
 export type UserData = {
-    persona?: string;
     settings?: Partial<Settings>;
     subscriptionStatus?: 'free' | 'premium';
+    activePersonaId?: string;
 }

@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Character, ChatMessage, UserData } from '@/lib/types';
+import type { Character, ChatMessage, UserData, UserPersona } from '@/lib/types';
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { useDoc } from '@/firebase';
@@ -24,7 +24,8 @@ type State = {
   isGenerating: boolean;
   isLoading: boolean;
   settings: Settings;
-  userPersona: string;
+  userPersonas: UserPersona[];
+  activePersonaId: string | null;
 };
 
 type Action =
@@ -40,7 +41,8 @@ type Action =
   | { type: 'SET_THEME', payload: Settings['theme'] }
   | { type: 'SET_AI_TONE', payload: Tone }
   | { type: 'SET_AI_CHAR_LIMIT', payload: number }
-  | { type: 'SET_USER_PERSONA', payload: string }
+  | { type: 'SET_USER_PERSONAS', payload: UserPersona[] }
+  | { type: 'SET_ACTIVE_PERSONA', payload: string | null }
   | { type: 'SET_CHARACTERS', payload: Character[] }
   | { type: 'RESET_STATE' };
 
@@ -56,7 +58,8 @@ const initialState: State = {
     aiTone: 'default',
     aiCharLimit: 3000,
   },
-  userPersona: 'A curious individual trying to get to know the characters.',
+  userPersonas: [],
+  activePersonaId: null,
 };
 
 const CharacterContext = createContext<{
@@ -168,8 +171,17 @@ function characterReducer(state: State, action: Action): State {
         return { ...state, settings: { ...state.settings, aiTone: action.payload }};
     case 'SET_AI_CHAR_LIMIT':
         return { ...state, settings: { ...state.settings, aiCharLimit: action.payload }};
-    case 'SET_USER_PERSONA':
-        return { ...state, userPersona: action.payload };
+    case 'SET_USER_PERSONAS':
+        const personas = action.payload;
+        let activeId = state.activePersonaId;
+        if (!activeId && personas.length > 0) {
+            activeId = personas.find(p => p.isActive)?.id || personas[0].id;
+        } else if (personas.length === 0) {
+            activeId = null;
+        }
+        return { ...state, userPersonas: personas, activePersonaId: activeId };
+    case 'SET_ACTIVE_PERSONA':
+        return { ...state, activePersonaId: action.payload };
     case 'RESET_STATE':
         return {...initialState, isLoading: false };
     default:
@@ -194,14 +206,20 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     return collection(firestore, 'users', user.uid, 'characters');
   }, [user, firestore]);
 
-  // Load user data (persona and settings) from Firestore
+  const personasColRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, 'users', user.uid, 'personas');
+  }, [user, firestore]);
+
+
+  // Load user data (settings) from Firestore
   useEffect(() => {
     if (userData) {
-      if (userData.persona) {
-        dispatch({ type: 'SET_USER_PERSONA', payload: userData.persona });
-      }
       if (userData.settings) {
         dispatch({ type: 'LOAD_SETTINGS', payload: userData.settings });
+      }
+      if (userData.activePersonaId) {
+        dispatch({ type: 'SET_ACTIVE_PERSONA', payload: userData.activePersonaId });
       }
     }
   }, [userData]);
@@ -218,7 +236,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
             characters.push(doc.data() as Character);
         });
 
-        // Sort characters by name, or any other property
         characters.sort((a, b) => a.name.localeCompare(b.name));
         
         dispatch({ type: 'SET_CHARACTERS', payload: characters });
@@ -231,10 +248,27 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
         charactersUnsub();
       };
     } else if (!isUserLoading) {
-      // If user logs out, reset state
       dispatch({ type: 'RESET_STATE' });
     }
   }, [user, isUserLoading, firestore, charactersColRef]);
+
+  // Subscribe to personas collection
+  useEffect(() => {
+    if (user && firestore && personasColRef) {
+      const personasUnsub = onSnapshot(personasColRef, (snapshot) => {
+        const personas: UserPersona[] = [];
+        snapshot.forEach(doc => {
+          personas.push(doc.data() as UserPersona);
+        });
+        personas.sort((a, b) => a.name.localeCompare(b.name));
+        dispatch({ type: 'SET_USER_PERSONAS', payload: personas });
+      }, (error) => {
+        console.error("Error listening to personas collection:", error);
+      });
+      return () => personasUnsub();
+    }
+  }, [user, firestore, personasColRef]);
+
 
   // Apply theme to HTML element
   useEffect(() => {
