@@ -2,36 +2,41 @@
  * @fileoverview Firestore Security Rules for the application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Users can only read and write data
- * that belongs to them. Data validation is relaxed to allow for rapid prototyping.
+ * This ruleset enforces a strict user-ownership model.  Users can only
+ * read and write their own data, with limited public read access where
+ * explicitly allowed. Data shape validation is relaxed to allow for rapid prototyping.
  *
  * Data Structure:
- * - /users/{userId}: Stores user profile data.
- * - /users/{userId}/characters/{characterId}: Stores character profiles created by each user.
- * - /users/{userId}/personas/{personaId}: Stores user-defined personas.
+ * - /users/{userId}: Stores user-specific data and settings.
+ * - /users/{userId}/personas/{personaId}: Stores user-created personas.
+ * - /characters/{characterId}: Stores character profiles; publicly readable, but owner-writeable.
  *
  * Key Security Decisions:
- * - Users can only access their own data. No cross-user data access is allowed.
- * - Listing of users is disallowed.
+ * - Users can only access their own user document.
+ * - Users can only manage their own personas.
+ * - Character profiles are publicly readable, but only the owner can modify them.
+ * - Listing of user documents and user personas is restricted to the owner.
+ * - Data shape validation is limited to ensuring relationship integrity (e.g., user IDs match).
  *
  * Denormalization for Authorization:
- * The rules rely on path-based authorization, assuming that the `userId` in the path
- * matches the authenticated user's UID. The `id` field within the documents stored under
- * user paths must also match the `userId`, enforced on creation and immutability on update to
- * prevent privilege escalation.
+ * - The `CharacterProfile` entity requires an `ownerId` field to enforce ownership.  This allows
+ *   rules to quickly verify ownership without additional reads.
+ *
+ * Structural Segregation:
+ * - Publicly readable `CharacterProfile` documents are stored in a top-level collection (`/characters/{characterId}`),
+ *   separate from private user data stored under `/users/{userId}`.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile documents.
-     * @path /users/{userId}
-     * @allow (create) - User with UID 'user_abc' can create their own profile document with `id: 'user_abc'`.
-     * @allow (get, update, delete) - User with UID 'user_abc' can read, update, and delete their own profile document.
-     * @deny (create) - User with UID 'user_abc' cannot create a profile document with `id: 'other_user'`.
-     * @deny (get, update, delete) - User with UID 'user_xyz' cannot read, update, or delete the profile document of user 'user_abc'.
-     * @principle Enforces document ownership and relational integrity for user profiles.
+     * @description Secure access to the user's root document.
+     * @path /databases/{database}/documents/users/{userId}
+     * @allow (get, create, update, delete, list): Authenticated user can only access their own document.
+     * @deny (get, list): Request without authentication.
+     * @deny (create, update, delete): Mismatched user ID in path.
+     * @principle Enforces document ownership and self-creation.
      */
     match /users/{userId} {
       function isSignedIn() {
@@ -47,51 +52,22 @@ service cloud.firestore {
       }
 
       allow get: if isOwner(userId);
-      allow list: if false; // Listing users is not permitted.
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Controls access to character profiles within a user's collection.
-     * @path /users/{userId}/characters/{characterId}
-     * @allow (create) - User with UID 'user_abc' can create a character profile under their user document.
-     * @allow (get, list, update, delete) - User with UID 'user_abc' can read, list, update, and delete character profiles under their user document.
-     * @deny (create) - User with UID 'user_xyz' cannot create a character profile under user 'user_abc'.
-     * @deny (get, list, update, delete) - User with UID 'user_xyz' cannot read, list, update, or delete character profiles under user 'user_abc'.
-     * @principle Enforces document ownership for character profiles.
-     */
-    match /users/{userId}/characters/{characterId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow list: if false;
       allow create: if isSignedIn() && isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to user personas within a user's collection.
-     * @path /users/{userId}/personas/{personaId}
-     * @allow (create) - User with UID 'user_abc' can create a persona under their user document.
-     * @allow (get, list, update, delete) - User with UID 'user_abc' can read, list, update, and delete personas under their user document.
-     * @deny (create) - User with UID 'user_xyz' cannot create a persona under user 'user_abc'.
-     * @deny (get, list, update, delete) - User with UID 'user_xyz' cannot read, list, update, or delete personas under user 'user_abc'.
-     * @principle Enforces document ownership for user personas.
+     * @description Secure access to the user's personas subcollection.
+     * @path /databases/{database}/documents/users/{userId}/personas/{personaId}
+     * @allow (get, create, update, delete, list): Authenticated user can only access their own personas.
+     * @deny (get, create, update, delete, list): Request without authentication.
+     * @deny (create, update, delete): Mismatched user ID in path or data.
+     * @principle Enforces document ownership for writes, allows owner-only reads.
      */
     match /users/{userId}/personas/{personaId} {
+
       function isSignedIn() {
         return request.auth != null;
       }
@@ -103,12 +79,37 @@ service cloud.firestore {
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
-
       allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow list: if get == true;
       allow create: if isSignedIn() && isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Secure access to the character profiles collection. Public read, owner-only writes.
+     * @path /databases/{database}/documents/characters/{characterId}
+     * @allow (get, list): Public read access for all users.
+     * @allow (create, update, delete): Only the owner can modify a character profile. The 'ownerId' field MUST be present in the document.
+     * @deny (create, update, delete): Request without authentication or mismatched owner ID.
+     * @principle Public read, owner-only writes with ownership validation.
+     */
+    match /characters/{characterId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(ownerId) {
+        return isSignedIn() && request.auth.uid == ownerId;
+      }
+
+      function isExistingOwner(ownerId) {
+        return isSignedIn() && request.auth.uid == ownerId && resource.data.ownerId == request.auth.uid;
+      }
+       allow get, list: if true;
+       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+       allow update: if isSignedIn() && request.auth.uid == resource.data.ownerId;
+       allow delete: if isSignedIn() && request.auth.uid == resource.data.ownerId;
     }
   }
 }

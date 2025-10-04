@@ -13,6 +13,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { CreatePersonaDialog } from './CreatePersonaDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function UserPersonaManager() {
   const { state } = useCharacter();
@@ -42,15 +53,12 @@ export default function UserPersonaManager() {
     toast({ title: "Active persona updated!" });
   };
   
-  const handleDelete = (e: React.MouseEvent, personaId: string) => {
-    e.stopPropagation();
+  const handleDelete = (personaId: string) => {
     if (!user || !firestore) return;
 
-    if (window.confirm("Are you sure you want to delete this persona?")) {
-        const personaRef = doc(firestore, `users/${user.uid}/personas/${personaId}`);
-        deleteDocumentNonBlocking(personaRef);
-        toast({ title: "Persona deleted." });
-    }
+    const personaRef = doc(firestore, `users/${user.uid}/personas/${personaId}`);
+    deleteDocumentNonBlocking(personaRef);
+    toast({ title: "Persona deleted." });
   };
 
 
@@ -88,12 +96,37 @@ export default function UserPersonaManager() {
                         <Card 
                             key={persona.id} 
                             className={cn(
-                                "cursor-pointer hover:shadow-lg transition-shadow",
+                                "cursor-pointer hover:shadow-lg transition-shadow group relative",
                                 state.activePersonaId === persona.id && "border-primary ring-2 ring-primary"
                             )}
                             onClick={() => handleSetActive(persona.id)}
                         >
-                            <CardHeader className="flex-row gap-4 items-start">
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 flex-shrink-0 z-10 opacity-50 group-hover:opacity-100 transition-opacity">
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action will permanently delete the persona "{persona.name}". This cannot be undone.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(persona.id);
+                                    }}>
+                                        Continue
+                                    </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+
+                            <CardHeader className="flex-row gap-4 items-start pr-12">
                                 <Image 
                                     src={persona.photoDataUri}
                                     alt={persona.name}
@@ -108,10 +141,6 @@ export default function UserPersonaManager() {
                                         <span className="text-xs font-bold text-primary bg-primary/20 px-2 py-1 rounded-full">ACTIVE</span>
                                     )}
                                 </div>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={(e) => handleDelete(e, persona.id)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-
                             </CardHeader>
                             <CardContent>
                                 <p className="text-muted-foreground line-clamp-3">{persona.description}</p>

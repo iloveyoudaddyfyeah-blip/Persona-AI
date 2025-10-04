@@ -10,6 +10,17 @@ import { useToast } from '@/hooks/use-toast';
 import { doc } from 'firebase/firestore';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import Image from 'next/image';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function CharacterList() {
   const { state, dispatch } = useCharacter();
@@ -26,21 +37,18 @@ export default function CharacterList() {
     dispatch({ type: 'SELECT_CHARACTER', payload: null });
   };
   
-  const handleDeleteCharacter = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
+  const handleDeleteCharacter = (id: string) => {
     if (!user || !firestore) {
         toast({ variant: 'destructive', title: 'Not logged in' });
         return;
     }
-    if (window.confirm('Are you sure you want to delete this character? This cannot be undone.')) {
-      try {
+    try {
         const characterRef = doc(firestore, `users/${user.uid}/characters/${id}`);
         deleteDocumentNonBlocking(characterRef);
         // The snapshot listener in context will handle updating the local state
         toast({ title: 'Character deleted' });
-      } catch (error) {
+    } catch (error) {
         toast({ variant: 'destructive', title: 'Delete failed', description: (error as Error).message });
-      }
     }
   };
 
@@ -54,13 +62,12 @@ export default function CharacterList() {
             key={char.id}
             onClick={() => handleSelectCharacter(char.id)}
             className={cn(
-              "flex items-center w-full justify-start text-lg h-12 rounded-md cursor-pointer",
+              "flex items-center w-full justify-between rounded-md cursor-pointer group",
               state.selectedCharacterId === char.id ? "bg-secondary" : "hover:bg-accent/50"
             )}
           >
-            <Button
-              variant='ghost'
-              className="flex-grow justify-start h-full text-lg hover:bg-transparent"
+            <div
+              className="flex-grow flex items-center justify-start text-lg h-12 px-4 rounded-md"
             >
               <Image 
                 src={char.photoDataUri} 
@@ -70,10 +77,28 @@ export default function CharacterList() {
                 className="mr-3 h-8 w-8 rounded-md object-cover pixel-art"
               />
               <span className="truncate flex-grow text-left">{char.name}</span>
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 mr-2" onClick={(e) => handleDeleteCharacter(e, char.id)}>
-              <Trash2 className="h-4 w-4 text-destructive/70" />
-            </Button>
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 mr-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action will permanently delete the character "{char.name}". This cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => handleDeleteCharacter(char.id)}>
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         ))}
       </div>
