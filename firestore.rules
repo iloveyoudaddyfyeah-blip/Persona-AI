@@ -2,124 +2,117 @@
  * @fileoverview Firestore Security Rules for the application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Each user can only
- * access their own data, which is nested under their respective `/users/{userId}`
- * path.
+ * This ruleset enforces a strict user-ownership model.  Each user can only
+ * access their own data, which is nested under their unique user ID.  This
+ * provides strong data isolation and prevents unauthorized access.  Data
+ * validation is relaxed to enable rapid prototyping.
  *
  * Data Structure:
- * The Firestore database is structured as follows:
- * - `/users/{userId}`: User profiles.
- * - `/users/{userId}/characters/{characterId}`: Character profiles created by the user.
- * - `/users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}`: Chat sessions for a character profile.
- * - `/users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId}`: Chat messages within a chat session.
+ * - /users/{userId}: User profile information.
+ * - /users/{userId}/characters/{characterId}: Character profiles created by the user.
+ * - /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}: Chat sessions for each character profile.
+ * - /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId}: Individual chat messages within a session.
  *
  * Key Security Decisions:
- * - User listing is disallowed for privacy.
- * - All data is private and requires authentication.
- * - Rules leverage path-based ownership for simplicity and performance.
+ * - Users can only create, read, update, and delete data under their own user ID.
+ * - No user listing is allowed.
+ * - Data validation is minimized in this prototyping phase to focus on authorization.
+ * - All write operations require the user to be authenticated.
+ *
+ * Denormalization for Authorization:
+ *  Not explicitly used, but the path-based ownership inherently denormalizes the user ID
+ *  onto every document, simplifying the `isOwner()` check.
+ *
+ * Structural Segregation:
+ *  Not applicable. All data is private and user-specific.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secure user profiles. Only the user can access their own profile.
-     * @path /users/{userId}
-     * @allow (create) - User with ID 'user123' can create a profile with ID 'user123'.
-     * @allow (get, update, delete) - User with ID 'user123' can get, update, or delete their own profile (ID 'user123').
-     * @deny (create) - User with ID 'user456' cannot create a profile with ID 'user123'.
-     * @deny (get, update, delete) - User with ID 'user456' cannot get, update, or delete the profile of user 'user123'.
+     * @description Secure access to user profiles.  Only the user themselves can read or write their profile.
+     * @path /databases/{database}/documents/users/{userId}
+     * @allow (create) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can create their own profile with matching ID.
+     * @allow (get) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can read their own profile.
+     * @allow (update) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can update their own profile.
+     * @allow (delete) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can delete their own profile.
+     * @deny (create) User 'OTHER_USER_ID' cannot create a profile with userId '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1'.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Secure character profiles. Only the user who owns the profile can access it.
-     * @path /users/{userId}/characters/{characterId}
-     * @allow (create) - User with ID 'user123' can create a character profile under their user ID.
-     * @allow (get, update, delete) - User with ID 'user123' can get, update, or delete their own character profiles.
-     * @deny (create) - User with ID 'user456' cannot create a character profile under user 'user123'.
-     * @deny (get, update, delete) - User with ID 'user456' cannot get, update, or delete character profiles owned by user 'user123'.
-     * @principle Enforces path-based ownership.
+     * @description Secure access to character profiles. Only the owning user can manage their characters.
+     * @path /databases/{database}/documents/users/{userId}/characters/{characterId}
+     * @allow (create) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can create a character under their profile.
+     * @allow (get) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can read a character under their profile.
+     * @allow (update) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can update a character under their profile.
+     * @allow (delete) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can delete a character under their profile.
+     * @deny (create) User 'OTHER_USER_ID' cannot create a character for user '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1'.
+     * @principle Enforces user-ownership of character profiles.
      */
     match /users/{userId}/characters/{characterId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Secure chat sessions. Only the user who owns the character profile can access the chat sessions.
-     * @path /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}
-     * @allow (create) - User with ID 'user123' can create a chat session under their character profile.
-     * @allow (get, update, delete) - User with ID 'user123' can get, update, or delete their own chat sessions.
-     * @deny (create) - User with ID 'user456' cannot create a chat session under user 'user123''s character profile.
-     * @deny (get, update, delete) - User with ID 'user456' cannot get, update, or delete chat sessions owned by user 'user123'.
-     * @principle Enforces path-based ownership.
+     * @description Secure access to chat sessions. Only the owning user can manage chat sessions for their characters.
+     * @path /databases/{database}/documents/users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}
+     * @allow (create) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can create a chat session under their character.
+     * @allow (get) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can read a chat session under their character.
+     * @allow (update) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can update a chat session under their character.
+     * @allow (delete) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can delete a chat session under their character.
+     * @deny (create) User 'OTHER_USER_ID' cannot create a chat session for user '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1'.
+     * @principle Enforces user-ownership of chat sessions.
      */
     match /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Secure chat messages. Only the user who owns the chat session can access the chat messages.
-     * @path /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId}
-     * @allow (create) - User with ID 'user123' can create a chat message under their chat session.
-     * @allow (get, update, delete) - User with ID 'user123' can get, update, or delete their own chat messages.
-     * @deny (create) - User with ID 'user456' cannot create a chat message under user 'user123''s chat session.
-     * @deny (get, update, delete) - User with ID 'user456' cannot get, update, or delete chat messages owned by user 'user123'.
-     * @principle Enforces path-based ownership.
+     * @description Secure access to chat messages. Only the owning user can manage chat messages within their chat sessions.
+     * @path /databases/{database}/documents/users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId}
+     * @allow (create) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can create a chat message in their session.
+     * @allow (get) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can read a chat message in their session.
+     * @allow (update) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can update a chat message in their session.
+     * @allow (delete) User '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1' can delete a chat message in their session.
+     * @deny (create) User 'OTHER_USER_ID' cannot create a chat message for user '1VAcsWQ3ggbJQFEBSG5go1ZYC6j1'.
+     * @principle Enforces user-ownership of chat messages.
      */
     match /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
+  }
+
+  // Helper Functions
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function isOwner(userId) {
+    return request.auth.uid == userId;
+  }
+
+  function isExistingOwner(userId) {
+    return isSignedIn() && isOwner(userId) && resource != null;
   }
 }
