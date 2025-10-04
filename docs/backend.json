@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "CharacterProfile": {
@@ -151,7 +152,7 @@
   },
   "auth": {
     "providers": [
-      "google.com"
+      "anonymous"
     ]
   },
   "firestore": {

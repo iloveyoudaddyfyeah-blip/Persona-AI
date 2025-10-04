@@ -7,22 +7,26 @@ import SettingsDialog from '../settings/SettingsDialog';
 import { useUser, useAuth } from '@/firebase';
 import { Button } from '../ui/button';
 import { signOut } from 'firebase/auth';
-import { Loader2, LogIn, LogOut } from 'lucide-react';
-import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
+import { Loader2, LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 
 export default function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
 
   const handleLogin = () => {
-    initiateGoogleSignIn(auth);
+    if (auth) {
+        initiateAnonymousSignIn(auth);
+    }
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error('Error during sign-out:', error);
+    if (auth) {
+        try {
+        await signOut(auth);
+        } catch (error) {
+        console.error('Error during sign-out:', error);
+        }
     }
   };
 
@@ -31,26 +35,30 @@ export default function Header() {
       return <Button variant="ghost" size="icon" disabled><Loader2 className="h-6 w-6 animate-spin" /></Button>;
     }
     if (user) {
+      const buttonTitle = user.isAnonymous ? "Logged in Anonymously" : "Logout";
       return (
-        <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
-          <LogOut className="h-6 w-6" />
-        </Button>
+        <div className="flex items-center gap-2">
+            <UserIcon className="h-6 w-6 text-muted-foreground" title={buttonTitle} />
+            <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
+                <LogOut className="h-6 w-6" />
+            </Button>
+        </div>
       );
     }
     return (
-      <Button variant="ghost" size="icon" onClick={handleLogin} title="Login with Google">
-        <LogIn className="h-6 w-6" />
+      <Button variant="ghost" onClick={handleLogin} title="Login Anonymously">
+        <LogIn className="h-6 w-6 mr-2" /> Login
       </Button>
     );
   };
 
   return (
     <header className="p-4 border-b border-border flex items-center justify-between">
-      <div className="flex items-center gap-2 w-24 justify-start">
+      <div className="flex items-center gap-2 min-w-[150px] justify-start">
         {renderAuthButton()}
       </div>
       <h1 className="text-4xl text-foreground font-headline text-center">PersonaCraft AI</h1>
-      <div className="flex items-center gap-2 w-24 justify-end">
+      <div className="flex items-center gap-2 min-w-[150px] justify-end">
         <SettingsDialog />
         <ThemeToggle />
       </div>
