@@ -3,8 +3,8 @@
 
 import type { Character, ChatMessage } from '@/lib/types';
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { collection, doc, onSnapshot, Query } from 'firebase/firestore';
+import { useUser, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
+import { collection, onSnapshot, Query } from 'firebase/firestore';
 
 type View = 'welcome' | 'creating' | 'viewing';
 
@@ -109,7 +109,6 @@ function characterReducer(state: State, action: Action): State {
       return { 
         ...state, 
         characters: [...state.characters, action.payload],
-        view: 'viewing' 
       };
     case 'UPDATE_CHARACTER':
       return {
@@ -184,10 +183,18 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     return doc(firestore, 'users', user.uid);
   }, [user, firestore]);
 
+  const { data: userData } = useDoc<{persona: string}>(userDocRef);
+
   const charactersColRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'characters');
   }, [user, firestore]);
+
+  useEffect(() => {
+    if (userData && userData.persona) {
+      dispatch({ type: 'SET_USER_PERSONA', payload: userData.persona });
+    }
+  }, [userData]);
 
 
   useEffect(() => {
@@ -205,15 +212,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user && firestore) {
       dispatch({ type: 'SET_IS_LOADING', payload: true });
-
-      const userUnsub = userDocRef ? onSnapshot(userDocRef, (doc) => {
-        const userData = doc.data();
-        if (userData?.persona) {
-          dispatch({ type: 'SET_USER_PERSONA', payload: userData.persona });
-        }
-      }, (error) => {
-        console.error("Error listening to user document:", error);
-      }) : () => {};
       
       const charactersUnsub = charactersColRef ? onSnapshot(charactersColRef as Query, (snapshot) => {
         const characters: Character[] = [];
@@ -231,13 +229,12 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       }) : () => {};
 
       return () => {
-        userUnsub();
         charactersUnsub();
       };
     } else if (!isUserLoading) {
       dispatch({ type: 'RESET_STATE' });
     }
-  }, [user, isUserLoading, firestore, userDocRef, charactersColRef]);
+  }, [user, isUserLoading, firestore, charactersColRef]);
 
   useEffect(() => {
     try {
