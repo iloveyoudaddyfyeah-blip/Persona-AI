@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -25,18 +26,6 @@ export interface UseCollectionResult<T> {
   data: WithId<T>[] | null; // Document data with ID, or null.
   isLoading: boolean;       // True if loading.
   error: FirestoreError | Error | null; // Error object, or null.
-}
-
-/* Internal implementation of Query:
-  https://github.com/firebase/firebase-js-sdk/blob/c5f08a9bc5da0d2b0207802c972d53724ccef055/packages/firestore/src/lite-api/reference.ts#L143
-*/
-export interface InternalQuery extends Query<DocumentData> {
-  _query: {
-    path: {
-      canonicalString(): string;
-      toString(): string;
-    }
-  }
 }
 
 /**
@@ -74,6 +63,16 @@ export function useCollection<T = any>(
     setIsLoading(true);
     setError(null);
 
+    const getPathFromQuery = (query: Query | CollectionReference): string => {
+        if (query.type === 'collection') {
+            return (query as CollectionReference).path;
+        }
+        // This is a workaround to get the path from a query.
+        // It's not ideal but often works for debugging.
+        // The path is stored on an internal property.
+        return (query as any)._query.path.segments.join('/');
+    };
+
     // Directly use memoizedTargetRefOrQuery as it's assumed to be the final query
     const unsubscribe = onSnapshot(
       memoizedTargetRefOrQuery,
@@ -87,20 +86,15 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        // This logic extracts the path from either a ref or a query
-        const path: string =
-          memoizedTargetRefOrQuery.type === 'collection'
-            ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
-
+        const path = getPathFromQuery(memoizedTargetRefOrQuery);
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path,
-        })
+          path: path,
+        });
 
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
+        setError(contextualError);
+        setData(null);
+        setIsLoading(false);
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
