@@ -2,9 +2,9 @@
   "placeholderImages": [
     {
       "id": "welcome-soul",
-      "description": "A collection of colorful, abstract masks representing different personas.",
-      "imageUrl": "https://images.unsplash.com/photo-1519164836962-a4f4fa15c159?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMG1hc2tzfGVufDB8fHx8MTc2MDM4MzgxNnww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "abstract masks"
+      "description": "An anime style girl.",
+      "imageUrl": "https://images.unsplash.com/photo-1708034677699-6f39d9c59f6e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhbmltZSUyMGdpcmx8ZW58MHx8fHwxNzU5NTM1MzU3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "anime girl"
     }
   ]
 }
