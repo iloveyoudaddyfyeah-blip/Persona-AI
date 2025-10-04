@@ -10,7 +10,7 @@ import { Loader2, Save, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { generatePersonaFromPrompt } from '@/app/actions';
@@ -37,7 +37,8 @@ export default function UserPersona() {
     setIsSaving(true);
     try {
         const userRef = doc(firestore, `users/${user.uid}`);
-        updateDocumentNonBlocking(userRef, { persona });
+        // Use set with merge to either create or update the document.
+        setDocumentNonBlocking(userRef, { persona }, { merge: true });
         toast({
         title: 'Persona Saved',
         description: `Your persona has been updated. Characters will now react to this new persona.`,
