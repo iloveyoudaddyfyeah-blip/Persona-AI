@@ -14,12 +14,12 @@ import {
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { useUser, useFirestore } from '@/firebase';
+import { useUser } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { generatePersonaFromPrompt } from '@/app/actions';
-import { Loader2, Sparkles, Upload } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { Textarea } from '../ui/textarea';
 import type { UserPersona } from '@/lib/types';
@@ -28,9 +28,11 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 interface CreatePersonaDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    personaCount: number;
+    isPremium: boolean;
 }
 
-export function CreatePersonaDialog({ open, onOpenChange }: CreatePersonaDialogProps) {
+export function CreatePersonaDialog({ open, onOpenChange, personaCount, isPremium }: CreatePersonaDialogProps) {
   const { user, firestore } = useUser();
   const { toast } = useToast();
 
@@ -81,19 +83,35 @@ export function CreatePersonaDialog({ open, onOpenChange }: CreatePersonaDialogP
         return;
     }
 
+    if (!isPremium && personaCount >= 1) {
+        toast({ variant: 'destructive', title: 'Premium Feature', description: 'Upgrade to create more than one persona.' });
+        return;
+    }
+
+
     setIsSaving(true);
     try {
         const newPersonaId = doc(collection(firestore, `users/${user.uid}/personas`)).id;
+        
+        // The first persona created is automatically set to active.
+        const isActive = personaCount === 0;
+
         const newPersona: UserPersona = {
             id: newPersonaId,
             name,
             description,
             photoDataUri: photo?.dataUri || personaPlaceholder?.imageUrl || '',
-            isActive: false, // Initially not active
+            isActive: isActive,
         };
 
         const personaRef = doc(firestore, `users/${user.uid}/personas/${newPersonaId}`);
+        // Corrected call: data is the second argument, options is the third
         setDocumentNonBlocking(personaRef, newPersona, { merge: false });
+
+        if (isActive) {
+            const userRef = doc(firestore, `users/${user.uid}`);
+            setDocumentNonBlocking(userRef, { activePersonaId: newPersonaId }, { merge: true });
+        }
         
         toast({ title: 'Persona created!', description: `${name} is now available.` });
         resetForm();
@@ -136,7 +154,7 @@ export function CreatePersonaDialog({ open, onOpenChange }: CreatePersonaDialogP
             <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="photo" className="text-right text-lg pt-2">Photo</Label>
                 <div className="col-span-3 flex items-center space-x-4">
-                    <Image src={photo?.dataUri || personaPlaceholder?.imageUrl || ''} alt="Preview" width={80} height={80} className="rounded-md border object-cover aspect-square" data-ai-hint={personaPlaceholder?.imageHint} />
+                    <Image src={photo?.dataUri || personaPlaceholder?.imageUrl || ''} alt="Preview" width={80} height={80} className="rounded-md border object-cover aspect-square" data-ai-hint={personaPlaceholder?.imageHint} unoptimized/>
                     <Input id="photo" type="file" accept="image/*" onChange={handleFileChange} className="text-lg file:text-lg file:mr-4 file:py-2 file:px-4"/>
                 </div>
             </div>
@@ -145,7 +163,7 @@ export function CreatePersonaDialog({ open, onOpenChange }: CreatePersonaDialogP
                 <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3 text-lg min-h-[100px]" placeholder="A short bio of your persona..." />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="gen-prompt" className="text-right text-lg">Generate From AI</Label>
+                <Label htmlFor="gen-prompt" className="text-right text-lg">Generate with AI</Label>
                 <div className="col-span-3 flex gap-2">
                     <Input id="gen-prompt" value={genPrompt} onChange={(e) => setGenPrompt(e.target.value)} className="text-lg" placeholder="e.g., 'A grizzled space captain'" disabled={isGenerating} />
                     <Button onClick={handleGenerateDescription} disabled={isGenerating}>

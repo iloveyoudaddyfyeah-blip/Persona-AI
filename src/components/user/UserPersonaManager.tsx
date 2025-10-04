@@ -5,46 +5,46 @@ import React, { useState } from 'react';
 import { useCharacter } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
-import type { UserPersona } from '@/lib/types';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Crown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { CreatePersonaDialog } from './CreatePersonaDialog';
+import { SubscriptionDialog } from '../settings/SubscriptionDialog';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 export default function UserPersonaManager() {
-  const { state, dispatch } = useCharacter();
-  const { user, firestore } = useUser();
+  const { state } = useCharacter();
+  const { user, firestore, isPremium, setIsPremium } = useUser();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleSetActive = async (personaId: string) => {
     if (!user || !firestore || personaId === state.activePersonaId) return;
 
-    // Create batch write
-    const batch: Promise<void>[] = [];
+    // Create batch write promises
+    const promises: Promise<void>[] = [];
 
-    // 1. Set new persona to active
-    const newActiveRef = doc(firestore, `users/${user.uid}/personas/${personaId}`);
-    // Using update here, assuming the doc exists
-    batch.push(updateDocumentNonBlocking(newActiveRef, { isActive: true }));
-
-    // 2. Deactivate old persona if there was one
+    // 1. Deactivate old persona if there was one
     if (state.activePersonaId) {
         const oldActiveRef = doc(firestore, `users/${user.uid}/personas/${state.activePersonaId}`);
-        batch.push(updateDocumentNonBlocking(oldActiveRef, { isActive: false }));
+        // We don't need to await this inside the function
+        updateDocumentNonBlocking(oldActiveRef, { isActive: false });
     }
+    
+    // 2. Set new persona to active
+    const newActiveRef = doc(firestore, `users/${user.uid}/personas/${personaId}`);
+    updateDocumentNonBlocking(newActiveRef, { isActive: true });
+
 
     // 3. Update the activePersonaId on the user document
     const userRef = doc(firestore, `users/${user.uid}`);
     setDocumentNonBlocking(userRef, { activePersonaId: personaId }, { merge: true });
 
-    // Local dispatch for immediate UI update
-    dispatch({ type: 'SET_ACTIVE_PERSONA', payload: personaId });
-
+    // The snapshot listener in context will handle the UI update.
     toast({ title: "Active persona updated!" });
   };
   
@@ -62,7 +62,12 @@ export default function UserPersonaManager() {
 
   return (
     <Card className="h-full flex flex-col border-0 shadow-none rounded-t-none">
-        <CreatePersonaDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+        <CreatePersonaDialog 
+            open={isDialogOpen} 
+            onOpenChange={setIsDialogOpen}
+            personaCount={state.userPersonas.length}
+            isPremium={isPremium}
+        />
         <CardHeader>
             <div className="flex justify-between items-center">
                 <div>
@@ -71,13 +76,29 @@ export default function UserPersonaManager() {
                         Manage your different personas. The active persona influences how AI characters interact with you.
                     </CardDescription>
                 </div>
-                <Button onClick={() => setIsDialogOpen(true)} size="lg" className="text-lg">
+                <Button onClick={() => setIsDialogOpen(true)} size="lg" className="text-lg" disabled={!isPremium && state.userPersonas.length >= 1}>
                     <Plus className="mr-2 h-5 w-5" />
                     New Persona
+                    {!isPremium && state.userPersonas.length >= 1 && <Crown className='ml-2 h-5 w-5' />}
                 </Button>
             </div>
         </CardHeader>
         <CardContent className="flex-grow flex flex-col gap-4">
+            {!isPremium && state.userPersonas.length >= 1 && (
+                <Alert>
+                    <Crown className="h-4 w-4" />
+                    <AlertTitle>Unlock Unlimited Personas!</AlertTitle>
+                    <AlertDescription className="flex justify-between items-center">
+                        <span>Create and manage multiple personas by upgrading to premium.</span>
+                        <SubscriptionDialog onUpgrade={() => setIsPremium(true)}>
+                          <Button size="sm">
+                              <Crown className="mr-2 h-4 w-4" />
+                              Upgrade
+                          </Button>
+                        </SubscriptionDialog>
+                    </AlertDescription>
+                </Alert>
+            )}
             {state.userPersonas.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center p-8 border-2 border-dashed rounded-lg">
                      <h3 className="text-2xl font-headline mb-2">No Personas Yet</h3>
@@ -102,6 +123,7 @@ export default function UserPersonaManager() {
                                     width={64}
                                     height={64}
                                     className="rounded-md border object-cover aspect-square"
+                                    unoptimized
                                 />
                                 <div className="flex-grow">
                                     <CardTitle className="text-xl">{persona.name}</CardTitle>

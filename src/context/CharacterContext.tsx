@@ -6,6 +6,8 @@ import React, { createContext, useContext, useEffect, useReducer, ReactNode } fr
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { useDoc } from '@/firebase';
 import { collection, onSnapshot, Query, doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 type View = 'welcome' | 'creating' | 'viewing';
 
@@ -172,14 +174,7 @@ function characterReducer(state: State, action: Action): State {
     case 'SET_AI_CHAR_LIMIT':
         return { ...state, settings: { ...state.settings, aiCharLimit: action.payload }};
     case 'SET_USER_PERSONAS':
-        const personas = action.payload;
-        let activeId = state.activePersonaId;
-        if (!activeId && personas.length > 0) {
-            activeId = personas.find(p => p.isActive)?.id || personas[0].id;
-        } else if (personas.length === 0) {
-            activeId = null;
-        }
-        return { ...state, userPersonas: personas, activePersonaId: activeId };
+        return { ...state, userPersonas: action.payload };
     case 'SET_ACTIVE_PERSONA':
         return { ...state, activePersonaId: action.payload };
     case 'RESET_STATE':
@@ -262,12 +257,38 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
         });
         personas.sort((a, b) => a.name.localeCompare(b.name));
         dispatch({ type: 'SET_USER_PERSONAS', payload: personas });
+
+        // If no personas exist, create a default one
+        if (snapshot.empty) {
+          const personaPlaceholder = PlaceHolderImages.find(img => img.id === 'persona-placeholder');
+          const defaultPersonaId = "default";
+          const defaultPersona: UserPersona = {
+            id: defaultPersonaId,
+            name: "Default",
+            description: "A curious individual exploring the world of AI personas.",
+            photoDataUri: personaPlaceholder?.imageUrl || '',
+            isActive: true,
+          };
+          const personaRef = doc(firestore, `users/${user.uid}/personas/${defaultPersonaId}`);
+          setDocumentNonBlocking(personaRef, defaultPersona, { merge: false });
+          const userRef = doc(firestore, `users/${user.uid}`);
+          setDocumentNonBlocking(userRef, { activePersonaId: defaultPersonaId }, { merge: true });
+        } else {
+            // Ensure there is an active persona
+            const activePersona = personas.find(p => p.isActive);
+            if (!activePersona && user?.uid && userData?.activePersonaId) {
+                 dispatch({ type: 'SET_ACTIVE_PERSONA', payload: userData.activePersonaId });
+            } else if (!activePersona && personas.length > 0) {
+                 dispatch({ type: 'SET_ACTIVE_PERSONA', payload: personas[0].id });
+            }
+        }
+
       }, (error) => {
         console.error("Error listening to personas collection:", error);
       });
       return () => personasUnsub();
     }
-  }, [user, firestore, personasColRef]);
+  }, [user, firestore, personasColRef, userData]);
 
 
   // Apply theme to HTML element
