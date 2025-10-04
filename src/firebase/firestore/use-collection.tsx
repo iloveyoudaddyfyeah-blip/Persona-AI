@@ -70,7 +70,10 @@ export function useCollection<T = any>(
         // This is a workaround to get the path from a query.
         // It's not ideal but often works for debugging.
         // The path is stored on an internal property.
-        return (query as any)._query.path.segments.join('/');
+        if ((query as any)._query?.path?.segments) {
+            return (query as any)._query.path.segments.join('/');
+        }
+        return '[unknown path]';
     };
 
     // Directly use memoizedTargetRefOrQuery as it's assumed to be the final query

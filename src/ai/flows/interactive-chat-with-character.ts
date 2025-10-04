@@ -10,7 +10,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { InteractiveChatWithCharacterOutputSchema } from '@/ai/schemas';
 
 const InteractiveChatWithCharacterInputSchema = z.object({
   characterProfile: z
@@ -19,6 +18,11 @@ const InteractiveChatWithCharacterInputSchema = z.object({
   userMessage: z.string().describe('The user message to the character.'),
   chatHistory: z.string().optional().describe('Previous chat history'),
   userPersona: z.string().describe("A description of the user's persona, which the character should react to.")
+});
+
+const InteractiveChatWithCharacterOutputSchema = z.object({
+  response: z.string().describe('The character response to the user message.'),
+  updatedChatHistory: z.string().describe('The updated chat history.'),
 });
 
 export type InteractiveChatWithCharacterInput = z.infer<

@@ -15,6 +15,6 @@ export type Character = {
   name: string;
   photoDataUri: string;
   profile: string;
-  profileData?: GeneratePersonalityProfileOutput;
+  profileData?: GeneratePersonalityProfile-output;
   chatHistory: ChatMessage[];
 };
