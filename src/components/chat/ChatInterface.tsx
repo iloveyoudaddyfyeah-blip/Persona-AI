@@ -25,6 +25,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const chatHistory = character.chatHistory || [];
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -61,8 +62,14 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
   return (
     <Card className="flex flex-col h-full border-0 shadow-none rounded-t-none">
         <div ref={scrollAreaRef} className="flex-grow overflow-y-auto p-4 space-y-4 pt-6">
-            {(character.chatHistory || []).map((msg, index) => (
-                <ChatMessage key={index} message={msg} characterPhoto={character.photoDataUri} characterName={character.name} />
+            {chatHistory.map((msg, index) => (
+                <ChatMessage 
+                    key={index} 
+                    message={msg} 
+                    characterPhoto={character.photoDataUri} 
+                    characterName={character.name}
+                    isLastMessage={index === chatHistory.length - 1}
+                />
             ))}
             {isTyping && (
                 <div className="flex items-center gap-2 text-muted-foreground">
