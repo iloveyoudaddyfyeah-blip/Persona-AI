@@ -14,7 +14,6 @@ export default function WelcomeScreen() {
 
     const handleNewCharacter = () => {
         dispatch({ type: 'SET_VIEW', payload: 'creating' });
-        dispatch({ type: 'SELECT_CHARACTER', payload: null });
     };
 
     return (

@@ -142,6 +142,14 @@ function characterReducer(state: State, action: Action): State {
         selectedCharacterId: action.payload,
         view: action.payload ? 'viewing' : state.view,
       };
+    case 'SET_VIEW':
+        if (action.payload === 'creating') {
+            return { ...state, view: 'creating', selectedCharacterId: null };
+        }
+        return {
+            ...state,
+            view: action.payload,
+        };
     case 'ADD_MESSAGE':
       return {
         ...state,
