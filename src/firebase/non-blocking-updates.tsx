@@ -19,7 +19,7 @@ import {
  */
 export function setDocumentNonBlocking(docRef: DocumentReference, data: any, options?: SetOptions) {
   setDoc(docRef, data, options || {}).catch(error => {
-    console.error(`Error setting document at ${docRef.path}:`, error);
+    console.error(`Error setting document at ${docRef.path}:`, (error as Error).message);
   })
   // Execution continues immediately
 }
@@ -33,7 +33,7 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
 export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
   const promise = addDoc(colRef, data)
     .catch(error => {
-      console.error(`Error adding document to ${colRef.path}:`, error);
+      console.error(`Error adding document to ${colRef.path}:`, (error as Error).message);
     });
   return promise;
 }
@@ -46,7 +46,7 @@ export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
 export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) {
   updateDoc(docRef, data)
     .catch(error => {
-      console.error(`Error updating document at ${docRef.path}:`, error);
+      console.error(`Error updating document at ${docRef.path}:`, (error as Error).message);
     });
 }
 
@@ -65,6 +65,6 @@ export function updateUser(firestore: Firestore, userId: string, data: any): voi
 export function deleteDocumentNonBlocking(docRef: DocumentReference) {
   deleteDoc(docRef)
     .catch(error => {
-      console.error(`Error deleting document at ${docRef.path}:`, error);
+      console.error(`Error deleting document at ${docRef.path}:`, (error as Error).message);
     });
 }

@@ -73,7 +73,7 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        console.error("Error in useCollection listener:", error);
+        console.error("Error in useCollection listener:", (error as Error).message);
         setError(error);
         setData(null);
         setIsLoading(false);

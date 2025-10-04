@@ -71,7 +71,7 @@ export function useDoc<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        console.error(`Error in useDoc listener for path ${memoizedDocRef.path}:`, error);
+        console.error(`Error in useDoc listener for path ${memoizedDocRef.path}:`, (error as Error).message);
         setError(error);
         setData(null);
         setIsLoading(false);
