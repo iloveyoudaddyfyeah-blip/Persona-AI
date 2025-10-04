@@ -70,7 +70,7 @@ export default function CharacterCreator() {
 
     try {
       // 1. Call server action to get AI-generated data
-      const generatedData = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit, user.uid);
+      const generatedData = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit);
       
       const newCharacterId = doc(collection(firestore, 'users', user.uid, 'characters')).id;
       const newCharacter: Character = {

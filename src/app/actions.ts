@@ -50,8 +50,7 @@ export async function createCharacterFromPhoto(
   name: string,
   photoDataUri: string,
   tone: Tone,
-  charLimit: number,
-  userId: string,
+  charLimit: number
 ): Promise<GeneratePersonalityProfileOutput & { profile: string }> {
   const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit });
   const profile = formatProfile(name, profileData);
