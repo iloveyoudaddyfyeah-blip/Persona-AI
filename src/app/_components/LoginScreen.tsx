@@ -3,20 +3,15 @@
 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { Chrome } from 'lucide-react';
 import Image from 'next/image';
 
 export default function LoginScreen() {
   const auth = useAuth();
   
-  const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error('Error during sign-in:', error);
-    }
+  const handleLogin = () => {
+    initiateGoogleSignIn(auth);
   };
 
   return (
