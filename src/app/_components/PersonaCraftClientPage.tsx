@@ -1,7 +1,7 @@
 
 "use client";
 
-import { CharacterProvider, useCharacter } from '@/context/CharacterContext';
+import { useCharacter } from '@/context/CharacterContext';
 import Header from '@/components/layout/Header';
 import CharacterList from '@/components/characters/CharacterList';
 import CharacterCreator from '@/components/characters/CharacterCreator';
@@ -11,7 +11,7 @@ import { Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import LoginScreen from './LoginScreen';
 
-function AppContent() {
+export default function PersonaCraftClientPage() {
   const { state } = useCharacter();
   const { view, characters, selectedCharacterId, isGenerating, isLoading } = state;
   const { user, isUserLoading } = useUser();
@@ -20,7 +20,7 @@ function AppContent() {
 
   if (isUserLoading || isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center">
+      <div className="flex flex-col items-center justify-center h-screen text-center">
           <Loader2 className="h-16 w-16 animate-spin mb-4" />
           <h2 className="text-3xl font-headline">Loading...</h2>
       </div>
@@ -68,13 +68,5 @@ function AppContent() {
         </main>
       </div>
     </div>
-  );
-}
-
-export default function PersonaCraftClientPage() {
-  return (
-    <CharacterProvider>
-      <AppContent />
-    </CharacterProvider>
   );
 }
