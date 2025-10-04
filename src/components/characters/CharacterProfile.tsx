@@ -21,6 +21,7 @@ import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { SubscriptionDialog } from '../settings/SubscriptionDialog';
 
 interface CharacterProfileProps {
   character: Character;
@@ -49,7 +50,7 @@ const FormattedProfile = ({ content }: { content: string }) => {
 
 export default function CharacterProfile({ character }: CharacterProfileProps) {
   const { state, dispatch } = useCharacter();
-  const { user, isPremium } = useUser();
+  const { user, isPremium, setIsPremium } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [name, setName] = useState(character.name);
@@ -180,10 +181,12 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
                             <AlertTitle>Unlock Premium AI Refinement!</AlertTitle>
                             <AlertDescription className="flex justify-between items-center">
                                 <span>Refine your character's profile with custom prompts by upgrading.</span>
-                                 <Button size="sm" onClick={() => toast({ title: "Coming Soon!", description: "Payment processing is not yet implemented."})}>
-                                    <Crown className="mr-2 h-4 w-4" />
-                                    Upgrade
-                                </Button>
+                                <SubscriptionDialog onUpgrade={() => setIsPremium(true)}>
+                                  <Button size="sm">
+                                      <Crown className="mr-2 h-4 w-4" />
+                                      Upgrade
+                                  </Button>
+                                </SubscriptionDialog>
                             </AlertDescription>
                         </Alert>
                     )}

@@ -33,6 +33,7 @@ export interface FirebaseContextState {
   isUserLoading: boolean; // True during initial auth check
   userError: Error | null; // Error from auth listener
   isPremium: boolean;
+  setIsPremium: (isPremium: boolean) => void;
 }
 
 // Return type for useFirebase()
@@ -44,6 +45,7 @@ export interface FirebaseServicesAndUser {
   isUserLoading: boolean;
   userError: Error | null;
   isPremium: boolean;
+  setIsPremium: (isPremium: boolean) => void;
 }
 
 // Return type for useUser() - specific to user auth state
@@ -52,6 +54,7 @@ export interface UserHookResult { // Renamed from UserAuthHookResult for consist
   isUserLoading: boolean;
   userError: Error | null;
   isPremium: boolean;
+  setIsPremium: (isPremium: boolean) => void;
 }
 
 // React Context
@@ -90,6 +93,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     isPremium: false,
   });
 
+  const [simulatedPremium, setSimulatedPremium] = useState(false);
+
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
     if (!auth) { // If no Auth service instance, cannot determine user state
@@ -127,6 +132,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
     const servicesAvailable = !!(firebaseApp && firestore && auth);
+    const finalIsPremium = userAuthState.isPremium || simulatedPremium;
+
     return {
       areServicesAvailable: servicesAvailable,
       firebaseApp: servicesAvailable ? firebaseApp : null,
@@ -135,9 +142,10 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       user: userAuthState.user,
       isUserLoading: userAuthState.isUserLoading,
       userError: userAuthState.userError,
-      isPremium: userAuthState.isPremium,
+      isPremium: finalIsPremium,
+      setIsPremium: setSimulatedPremium,
     };
-  }, [firebaseApp, firestore, auth, userAuthState]);
+  }, [firebaseApp, firestore, auth, userAuthState, simulatedPremium]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
@@ -170,6 +178,7 @@ export const useFirebase = (): FirebaseServicesAndUser => {
     isUserLoading: context.isUserLoading,
     userError: context.userError,
     isPremium: context.isPremium,
+    setIsPremium: context.setIsPremium,
   };
 };
 
@@ -197,6 +206,6 @@ export const useFirebaseApp = (): FirebaseApp => {
  * @returns {UserHookResult} Object with user, isUserLoading, userError, and premium status.
  */
 export const useUser = (): UserHookResult => {
-  const { user, isUserLoading, userError, isPremium } = useFirebase();
-  return { user, isUserLoading, userError, isPremium };
+  const { user, isUserLoading, userError, isPremium, setIsPremium } = useFirebase();
+  return { user, isUserLoading, userError, isPremium, setIsPremium };
 };

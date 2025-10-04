@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useCharacter, Tone } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,16 +18,17 @@ import { doc, collection } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { Character } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { SubscriptionDialog } from '../settings/SubscriptionDialog';
 
 export default function CharacterCreator() {
   const { state, dispatch } = useCharacter();
-  const { user, isPremium } = useUser();
+  const { user, isPremium, setIsPremium } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const [name, setName] = useState('');
-  const [photo, setPhoto] = useState<{ file: File; dataUri: string } | null>(null);
-  const [charLimit, setCharLimit] = useState(state.settings.aiCharLimit);
-  const [tone, setTone] = useState<Tone>(state.settings.aiTone);
+  const [name, setName] = React.useState('');
+  const [photo, setPhoto] = React.useState<{ file: File; dataUri: string } | null>(null);
+  const [charLimit, setCharLimit] = React.useState(state.settings.aiCharLimit);
+  const [tone, setTone] = React.useState<Tone>(state.settings.aiTone);
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -155,10 +156,12 @@ export default function CharacterCreator() {
                     <AlertTitle>Unlock Premium Features!</AlertTitle>
                     <AlertDescription className="flex justify-between items-center">
                         <span>Customize AI Tone and Biography Length by upgrading.</span>
-                        <Button size="sm" onClick={() => toast({ title: "Coming Soon!", description: "Payment processing is not yet implemented."})}>
-                            <Crown className="mr-2 h-4 w-4" />
-                            Upgrade
-                        </Button>
+                        <SubscriptionDialog onUpgrade={() => setIsPremium(true)}>
+                          <Button size="sm">
+                              <Crown className="mr-2 h-4 w-4" />
+                              Upgrade
+                          </Button>
+                        </SubscriptionDialog>
                     </AlertDescription>
                 </Alert>
             )}
