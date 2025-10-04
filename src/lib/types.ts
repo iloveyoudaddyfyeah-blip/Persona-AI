@@ -1,7 +1,9 @@
+
 import type { z } from 'genkit';
-import type { GeneratePersonalityProfileOutputSchema } from '@/ai/schemas';
+import type { GeneratePersonalityProfileOutputSchema, InteractiveChatWithCharacterOutputSchema } from '@/ai/schemas';
 
 export type GeneratePersonalityProfileOutput = z.infer<typeof GeneratePersonalityProfileOutputSchema>;
+export type InteractiveChatWithCharacterOutput = z.infer<typeof InteractiveChatWithCharacterOutputSchema>;
 
 export type ChatMessage = {
   role: 'user' | 'character';

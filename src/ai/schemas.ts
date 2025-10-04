@@ -22,3 +22,8 @@ export const GeneratePersonalityProfileOutputSchema = z.object({
     .length(5)
     .describe('A list of 5 things the character dislikes.'),
 });
+
+export const InteractiveChatWithCharacterOutputSchema = z.object({
+  response: z.string().describe('The character response to the user message.'),
+  updatedChatHistory: z.string().describe('The updated chat history.'),
+});
