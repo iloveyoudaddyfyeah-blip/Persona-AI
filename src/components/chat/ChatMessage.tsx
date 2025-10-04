@@ -11,6 +11,7 @@ interface ChatMessageProps {
   characterPhoto: string;
   characterName: string;
   isLastMessage: boolean;
+  isTyping: boolean;
 }
 
 const FormattedContent = ({ content, role }: { content: string; role: ChatMessageType['role'] }) => {
@@ -42,9 +43,10 @@ const FormattedContent = ({ content, role }: { content: string; role: ChatMessag
 };
 
 
-export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage }: ChatMessageProps) {
+export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
-  const useTypewriterEffect = isCharacter && isLastMessage;
+  // Only use typewriter for the last character message when the AI is NOT currently typing the *next* message.
+  const useTypewriterEffect = isCharacter && isLastMessage && !isTyping;
   const displayedText = useTypewriterEffect ? useTypewriter(message.content) : message.content;
 
   return (
@@ -68,7 +70,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
         )}
       >
         <FormattedContent content={displayedText} role={message.role} />
-        {useTypewriterEffect && displayedText.length === message.content.length && <span className="inline-block w-0.5 h-4 bg-foreground animate-[blink-caret_1s_step-end_infinite] ml-1" />}
+        {useTypewriterEffect && displayedText.length < message.content.length && <span className="inline-block w-0.5 h-4 bg-foreground animate-[blink-caret_1s_step-end_infinite] ml-1" />}
       </div>
     </div>
   );

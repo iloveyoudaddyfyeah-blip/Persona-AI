@@ -8,11 +8,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ChatMessage from './ChatMessage';
 import { getChatResponse } from '@/app/actions';
-import { Loader2, Send } from 'lucide-react';
+import { Loader2, Send, Trash2 } from 'lucide-react';
 import { Card } from '../ui/card';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 interface ChatInterfaceProps {
   character: Character;
@@ -32,6 +44,13 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [character.chatHistory]);
+  
+  const handleClearChat = () => {
+    if (!user || !firestore) return;
+    const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+    updateDocumentNonBlocking(characterRef, { chatHistory: [] });
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +88,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                     characterPhoto={character.photoDataUri} 
                     characterName={character.name}
                     isLastMessage={index === chatHistory.length - 1}
+                    isTyping={isTyping}
                 />
             ))}
             {isTyping && (
@@ -78,19 +98,40 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                 </div>
             )}
         </div>
-        <form onSubmit={handleSubmit} className="p-4 border-t flex gap-2">
-            <Input
-            type="text"
-            value={userInput}
-            onChange={(e) => setUserInput(e.target.value)}
-            placeholder={`Talk to ${character.name}...`}
-            className="text-lg"
-            disabled={isTyping || !user}
-            />
-            <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user}>
-              <Send className="h-6 w-6" />
-            </Button>
-      </form>
+        <div className="p-4 border-t flex gap-2 items-center">
+            <form onSubmit={handleSubmit} className="flex-grow flex gap-2">
+                <Input
+                type="text"
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                placeholder={`Talk to ${character.name}...`}
+                className="text-lg"
+                disabled={isTyping || !user}
+                />
+                <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user}>
+                  <Send className="h-6 w-6" />
+                </Button>
+            </form>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user || chatHistory.length === 0}>
+                        <Trash2 className="h-6 w-6" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete the chat history for {character.name}. This action cannot be undone.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearChat}>Continue</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+      </div>
     </Card>
   );
 }
