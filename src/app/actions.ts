@@ -10,6 +10,7 @@ import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-c
 import type { Character } from '@/lib/types';
 import { Tone } from '@/context/CharacterContext';
 import { getFirebaseAdmin } from '@/firebase/server';
+import { FieldValue } from 'firebase-admin/firestore';
 
 function formatProfile(
   name: string,
@@ -46,7 +47,7 @@ export async function createCharacterFromPhoto(
   charLimit: number,
   userId: string,
 ): Promise<Character> {
-  const { firestore } = getFirebaseAdmin();
+  const { firestore } = await getFirebaseAdmin();
   const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit });
   const profile = formatProfile(name, profileData);
   const newCharacterId = crypto.randomUUID();
@@ -68,7 +69,7 @@ export async function regenerateCharacterProfile(
   prompt: string,
   userId: string,
 ): Promise<Pick<Character, 'profile' | 'profileData'>> {
-  const { firestore } = getFirebaseAdmin();
+  const { firestore } = await getFirebaseAdmin();
   const newProfileData = await modifyPersonalityProfile({
     currentProfile: character.profileData!,
     prompt,
@@ -89,7 +90,7 @@ export async function getChatResponse(
   userPersona: string,
   userId: string
 ): Promise<string> {
-  const { firestore } = getFirebaseAdmin();
+  const { firestore } = await getFirebaseAdmin();
   const historyString = (character.chatHistory || [])
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)
     .join('\n');
@@ -108,28 +109,29 @@ export async function getChatResponse(
   
   const newMessage = { role: 'user' as const, content: userMessage };
   const newResponse = { role: 'character' as const, content: response };
-  const updatedChatHistory = [...(character.chatHistory || []), newMessage, newResponse];
   
   const characterRef = firestore.doc(`users/${userId}/characters/${character.id}`);
-  await characterRef.update({ chatHistory: updatedChatHistory });
+  await characterRef.update({ 
+      chatHistory: FieldValue.arrayUnion(newMessage, newResponse) 
+  });
 
   return response;
 }
 
 export async function updateUserPersona(userId: string, persona: string): Promise<void> {
-    const { firestore } = getFirebaseAdmin();
+    const { firestore } = await getFirebaseAdmin();
     const userRef = firestore.doc(`users/${userId}`);
     await userRef.set({ persona }, { merge: true });
 }
 
 export async function saveCharacterChanges(userId: string, character: Character): Promise<void> {
-    const { firestore } = getFirebaseAdmin();
+    const { firestore } = await getFirebaseAdmin();
     const characterRef = firestore.doc(`users/${userId}/characters/${character.id}`);
     await characterRef.set(character, { merge: true });
 }
 
 export async function deleteCharacterFromDb(userId: string, characterId: string): Promise<void> {
-    const { firestore } = getFirebaseAdmin();
+    const { firestore } = await getFirebaseAdmin();
     const characterRef = firestore.doc(`users/${userId}/characters/${characterId}`);
     await characterRef.delete();
 }

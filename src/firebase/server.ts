@@ -11,7 +11,7 @@ interface FirebaseAdminSDKs {
   firestore: Firestore;
 }
 
-export function getFirebaseAdmin(): FirebaseAdminSDKs {
+export async function getFirebaseAdmin(): Promise<FirebaseAdminSDKs> {
   if (getApps().length === 0) {
     initializeApp();
   }
