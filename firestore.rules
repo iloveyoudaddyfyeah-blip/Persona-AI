@@ -1,102 +1,83 @@
 /**
- * @fileoverview Firestore Security Rules for the application.
+ * @fileoverview Firestore Security Rules for the Character Profile Generator application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Each user has full
- * control over their own data tree, and no access to other users' data.
+ * This ruleset enforces a strict user-ownership model. Each user has full control over their own data,
+ * and no user can access another user's data.  The rules are designed to be simple, secure, and
+ * easy to understand.  Data validation is relaxed for prototyping.
  *
  * Data Structure:
- * The database is structured hierarchically, with all data nested under
- * /users/{userId}. This structure simplifies the security rules by aligning
- * access control with the Firestore data paths.
+ * The data is organized hierarchically under the `/users/{userId}` path.
+ * Each user has a profile document and can create multiple character profiles.
+ * Each character profile can have multiple chat sessions, and each chat session can have multiple chat messages.
  *
  * Key Security Decisions:
  * - Users can only access their own data.
- * - Data validation is relaxed in this prototype to allow for rapid iteration.
- * - Denormalization is used to improve performance.  The userId is present in the user document and all subcollections.
+ * - Users cannot list all users.
+ *
+ * Denormalization for Authorization:
+ *  None necessary, path-based ownership is sufficient.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile documents.
-     * @path /users/{userId}
-     * @allow (create) Signed-in user with ID matching the document ID can create their profile.
-     * @allow (get, list, update, delete) Signed-in user with ID matching the document ID can read, update, and delete their profile.
-     * @deny (create) Signed-in user with ID not matching the document ID cannot create the profile.
-     * @deny (get, list, update, delete) Signed-in user with ID not matching the document ID cannot read, update, or delete the profile.
+     * @description Enforces access control for user profiles. Only the authenticated user can read or write their own profile.
+     * @path /databases/{database}/documents/users/{userId}
+     * @allow (get) Authenticated user can read their own profile.
+     * @allow (create) Authenticated user can create their own profile if the userId matches their auth UID.
+     * @allow (update) Authenticated user can update their own profile if the userId matches their auth UID.
+     * @allow (delete) Authenticated user can delete their own profile if the userId matches their auth UID.
+     * @deny (get) Authenticated user cannot read another user's profile.
+     * @deny (create) Authenticated user cannot create a profile with a userId that doesn't match their auth UID.
+     * @deny (update) Authenticated user cannot update another user's profile.
+     * @deny (delete) Authenticated user cannot delete another user's profile.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
       allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isSignedIn() && isExistingOwner(userId) && resource.data.id == userId;
       allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to character profile documents.
-     * @path /users/{userId}/characters/{characterId}
-     * @allow (create) Signed-in user with ID matching the userId can create a character profile.
-     * @allow (get, list, update, delete) Signed-in user with ID matching the userId can read, update, and delete character profiles.
-     * @deny (create) Signed-in user with ID not matching the userId cannot create character profiles.
-     * @deny (get, list, update, delete) Signed-in user with ID not matching the userId cannot read, update, or delete character profiles.
-     * @principle Enforces document ownership for all operations.
+     * @description Enforces access control for character profiles. Only the owner of the user profile can create, read, update, or delete character profiles under their user profile.
+     * @path /databases/{database}/documents/users/{userId}/characters/{characterId}
+     * @allow (get) Authenticated user can read their own character profile.
+     * @allow (create) Authenticated user can create a character profile under their own user profile.
+     * @allow (update) Authenticated user can update their own character profile.
+     * @allow (delete) Authenticated user can delete their own character profile.
+     * @deny (get) Authenticated user cannot read another user's character profile.
+     * @deny (create) Authenticated user cannot create a character profile under another user's profile.
+     * @deny (update) Authenticated user cannot update another user's character profile.
+     * @deny (delete) Authenticated user cannot delete another user's character profile.
+     * @principle Enforces document ownership and nested data access control.
      */
     match /users/{userId}/characters/{characterId} {
-       function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
       allow get: if isSignedIn() && isOwner(userId);
       allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isSignedIn() && isExistingOwner(userId) && resource.data.userId == userId;
       allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to chat session documents.
-     * @path /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}
-     * @allow (create) Signed-in user with ID matching the userId can create a chat session.
-     * @allow (get, list, update, delete) Signed-in user with ID matching the userId can read, update, and delete chat sessions.
-     * @deny (create) Signed-in user with ID not matching the userId cannot create chat sessions.
-     * @deny (get, list, update, delete) Signed-in user with ID not matching the userId cannot read, update, or delete chat sessions.
-     * @principle Enforces document ownership for all operations.
+     * @description Enforces access control for chat sessions. Only the owner of the character profile can create, read, update, or delete chat sessions under their character profile.
+     * @path /databases/{database}/documents/users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}
+     * @allow (get) Authenticated user can read their own chat session.
+     * @allow (create) Authenticated user can create a chat session under their own character profile.
+     * @allow (update) Authenticated user can update their own chat session.
+     * @allow (delete) Authenticated user can delete their own chat session.
+     * @deny (get) Authenticated user cannot read another user's chat session.
+     * @deny (create) Authenticated user cannot create a chat session under another user's character profile.
+     * @deny (update) Authenticated user cannot update another user's chat session.
+     * @deny (delete) Authenticated user cannot delete another user's chat session.
+     * @principle Enforces document ownership and deeply nested data access control.
      */
     match /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId} {
-       function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
       allow get: if isSignedIn() && isOwner(userId);
       allow list: if isSignedIn() && isOwner(userId);
       allow create: if isSignedIn() && isOwner(userId);
@@ -105,31 +86,37 @@ service cloud.firestore {
     }
 
     /**
-     * @description Controls access to chat message documents.
-     * @path /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId}
-     * @allow (create) Signed-in user with ID matching the userId can create a chat message.
-     * @allow (get, list, update, delete) Signed-in user with ID matching the userId can read, update, and delete chat messages.
-     * @deny (create) Signed-in user with ID not matching the userId cannot create chat messages.
-     * @deny (get, list, update, delete) Signed-in user with ID not matching the userId cannot read, update, or delete chat messages.
-     * @principle Enforces document ownership for all operations.
+     * @description Enforces access control for chat messages. Only the owner of the chat session can create, read, update, or delete chat messages under their chat session.
+     * @path /databases/{database}/documents/users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId}
+     * @allow (get) Authenticated user can read their own chat message.
+     * @allow (create) Authenticated user can create a chat message under their own chat session.
+     * @allow (update) Authenticated user can update their own chat message.
+     * @allow (delete) Authenticated user can delete their own chat message.
+     * @deny (get) Authenticated user cannot read another user's chat message.
+     * @deny (create) Authenticated user cannot create a chat message under another user's chat session.
+     * @deny (update) Authenticated user cannot update another user's chat message.
+     * @deny (delete) Authenticated user cannot delete another user's chat message.
+     * @principle Enforces document ownership and deeply nested data access control.
      */
     match /users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId} {
-       function isSignedIn() {
-        return request.auth != null;
-      }
-
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
       allow get: if isSignedIn() && isOwner(userId);
       allow list: if isSignedIn() && isOwner(userId);
       allow create: if isSignedIn() && isOwner(userId);
       allow update: if isSignedIn() && isExistingOwner(userId);
       allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
     }
   }
 }
