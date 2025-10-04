@@ -19,10 +19,32 @@ import UserPersona from '../user/UserPersona';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { cn } from '@/lib/utils';
 
 interface CharacterProfileProps {
   character: Character;
 }
+
+const FormattedProfile = ({ content }: { content: string }) => {
+    const regex = /(\*\*[^*]+\*\*)/g;
+    const parts = content.split(regex).filter(Boolean);
+
+    return (
+        <div className="whitespace-pre-wrap break-words text-lg leading-relaxed p-4 rounded-md bg-secondary/30 h-full">
+            {parts.map((part, index) => {
+                if (part.startsWith('**') && part.endsWith('**')) {
+                    return (
+                        <strong key={index} className="font-bold text-xl inline-block">
+                            {part.slice(2, -2)}
+                        </strong>
+                    );
+                }
+                return <span key={index}>{part}</span>;
+            })}
+        </div>
+    );
+};
+
 
 export default function CharacterProfile({ character }: CharacterProfileProps) {
   const { state, dispatch } = useCharacter();
@@ -31,6 +53,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   const { toast } = useToast();
   const [name, setName] = useState(character.name);
   const [profile, setProfile] = useState(character.profile);
+  const [isEditing, setIsEditing] = useState(false);
   const [regenPrompt, setRegenPrompt] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -38,6 +61,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   useEffect(() => {
     setName(character.name);
     setProfile(character.profile);
+    setIsEditing(false); // Reset editing state when character changes
   }, [character]);
 
   const handleSave = async () => {
@@ -54,6 +78,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
             title: 'Character Saved',
             description: `${name}'s profile has been updated.`,
         });
+        setIsEditing(false);
     } catch (error) {
         toast({ variant: 'destructive', title: 'Save failed', description: (error as Error).message });
     } finally {
@@ -123,19 +148,26 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
         <TabsContent value="profile" className="flex-grow flex flex-col mt-0">
             <Card className="h-full flex flex-col border-0 shadow-none rounded-t-none">
                 <CardContent className="flex-grow flex flex-col gap-4 pt-6">
-                    <Textarea
-                        value={profile}
-                        onChange={(e) => setProfile(e.target.value)}
-                        placeholder="Character profile..."
-                        className="flex-grow text-lg resize-none"
-                    />
+                    {isEditing ? (
+                        <Textarea
+                            value={profile}
+                            onChange={(e) => setProfile(e.target.value)}
+                            placeholder="Character profile..."
+                            className="flex-grow text-lg resize-none"
+                        />
+                    ) : (
+                       <FormattedProfile content={profile} />
+                    )}
                     <div className="flex justify-end gap-4">
-                        {hasChanges && (
+                        {(hasChanges || isEditing) && (
                             <Button onClick={handleSave} className="self-end text-lg h-12" disabled={isSaving}>
                                 {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5"/>}
                                 Save Changes
                             </Button>
                         )}
+                         <Button onClick={() => setIsEditing(!isEditing)} variant="outline" className="self-end text-lg h-12">
+                            {isEditing ? "Cancel" : "Edit Profile"}
+                        </Button>
                     </div>
                 </CardContent>
                 <CardFooter className="flex flex-col items-start gap-4 border-t pt-6">

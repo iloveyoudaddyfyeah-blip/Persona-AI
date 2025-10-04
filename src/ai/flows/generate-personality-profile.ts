@@ -46,7 +46,7 @@ const prompt = ai.definePrompt({
 
 Your response should be in a {{{tone}}} tone.
 
-Analyze the photo and create an exceptionally detailed profile. The biography must be at least {{{charLimit}}} characters long, weaving a complex and compelling narrative. Also include traits, hobbies, motivations, and a list of 5 likes and 5 dislikes.
+Analyze the photo and create an exceptionally detailed profile for the character named {{{name}}}. The biography must be at least {{{charLimit}}} characters long, weaving a complex and compelling narrative about {{{name}}}. Also include traits, hobbies, motivations, and a list of 5 likes and 5 dislikes for {{{name}}}.
 
 Photo: {{media url=photoDataUri}}`,
 });
