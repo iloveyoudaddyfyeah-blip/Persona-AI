@@ -23,4 +23,5 @@ export type Character = {
 export type UserData = {
     persona?: string;
     settings?: Partial<Settings>;
+    subscriptionStatus?: 'free' | 'premium';
 }

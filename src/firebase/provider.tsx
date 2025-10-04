@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -18,6 +19,7 @@ interface UserAuthState {
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
+  isPremium: boolean;
 }
 
 // Combined state for the Firebase context
@@ -30,6 +32,7 @@ export interface FirebaseContextState {
   user: User | null;
   isUserLoading: boolean; // True during initial auth check
   userError: Error | null; // Error from auth listener
+  isPremium: boolean;
 }
 
 // Return type for useFirebase()
@@ -40,6 +43,7 @@ export interface FirebaseServicesAndUser {
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
+  isPremium: boolean;
 }
 
 // Return type for useUser() - specific to user auth state
@@ -47,6 +51,7 @@ export interface UserHookResult { // Renamed from UserAuthHookResult for consist
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
+  isPremium: boolean;
 }
 
 // React Context
@@ -82,25 +87,32 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     user: null,
     isUserLoading: true, // Start loading until first auth event
     userError: null,
+    isPremium: false,
   });
 
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
     if (!auth) { // If no Auth service instance, cannot determine user state
-      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
+      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided."), isPremium: false });
       return;
     }
 
-    setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
+    setUserAuthState({ user: null, isUserLoading: true, userError: null, isPremium: false }); // Reset on auth instance change
 
     const unsubscribe = onAuthStateChanged(
       auth,
-      (firebaseUser) => { // Auth state determined
-        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+      async (firebaseUser) => { // Auth state determined
+        if (firebaseUser) {
+            const tokenResult = await firebaseUser.getIdTokenResult();
+            const isPremium = tokenResult.claims.premium === true;
+            setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, isPremium });
+        } else {
+            setUserAuthState({ user: null, isUserLoading: false, userError: null, isPremium: false });
+        }
       },
       (error) => { // Auth listener error
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
-        setUserAuthState({ user: null, isUserLoading: false, userError: error });
+        setUserAuthState({ user: null, isUserLoading: false, userError: error, isPremium: false });
       }
     );
     return () => unsubscribe(); // Cleanup
@@ -117,6 +129,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       user: userAuthState.user,
       isUserLoading: userAuthState.isUserLoading,
       userError: userAuthState.userError,
+      isPremium: userAuthState.isPremium,
     };
   }, [firebaseApp, firestore, auth, userAuthState]);
 
@@ -150,6 +163,7 @@ export const useFirebase = (): FirebaseServicesAndUser => {
     user: context.user,
     isUserLoading: context.isUserLoading,
     userError: context.userError,
+    isPremium: context.isPremium,
   };
 };
 
@@ -174,9 +188,9 @@ export const useFirebaseApp = (): FirebaseApp => {
 /**
  * Hook specifically for accessing the authenticated user's state.
  * This provides the User object, loading status, and any auth errors.
- * @returns {UserHookResult} Object with user, isUserLoading, userError.
+ * @returns {UserHookResult} Object with user, isUserLoading, userError, and premium status.
  */
-export const useUser = (): UserHookResult => { // Renamed from useAuthUser
-  const { user, isUserLoading, userError } = useFirebase(); // Leverages the main hook
-  return { user, isUserLoading, userError };
+export const useUser = (): UserHookResult => {
+  const { user, isUserLoading, userError, isPremium } = useFirebase();
+  return { user, isUserLoading, userError, isPremium };
 };

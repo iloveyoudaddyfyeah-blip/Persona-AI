@@ -127,6 +127,11 @@
             "type": "string",
             "description": "The user's persona for interacting with AI characters."
         },
+        "subscriptionStatus": {
+            "type": "string",
+            "enum": ["free", "premium"],
+            "description": "The user's current subscription status."
+        },
         "settings": {
             "type": "object",
             "description": "User-specific application settings.",
@@ -153,7 +158,13 @@
     "providers": [
       "anonymous",
       "password"
-    ]
+    ],
+    "customClaims": {
+        "premium": {
+            "type": "boolean",
+            "description": "Indicates whether the user has premium access."
+        }
+    }
   },
   "firestore": {
       "collections": {

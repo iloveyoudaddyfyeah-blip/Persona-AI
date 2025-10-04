@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import Image from 'next/image';
-import { Loader2, Save, Sparkles } from 'lucide-react';
+import { Loader2, Save, Sparkles, Crown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { regenerateCharacterProfile } from '@/app/actions';
 import { Input } from '../ui/input';
@@ -20,6 +20,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 interface CharacterProfileProps {
   character: Character;
@@ -48,7 +49,7 @@ const FormattedProfile = ({ content }: { content: string }) => {
 
 export default function CharacterProfile({ character }: CharacterProfileProps) {
   const { state, dispatch } = useCharacter();
-  const { user } = useUser();
+  const { user, isPremium } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [name, setName] = useState(character.name);
@@ -124,6 +125,8 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
 
   const hasChanges = name !== character.name || profile !== character.profile;
 
+  const isRefineDisabled = isRegenerating || state.isGenerating || !character.profileData || !isPremium;
+
   return (
     <Tabs defaultValue="profile" className="h-full flex flex-col">
         <div className="flex-shrink-0 px-6 pt-6">
@@ -171,7 +174,20 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
                     </div>
                 </CardContent>
                 <CardFooter className="flex flex-col items-start gap-4 border-t pt-6">
-                    <Label htmlFor="regen-prompt" className="text-xl">Refine with AI</Label>
+                    {!isPremium && (
+                        <Alert>
+                            <Crown className="h-4 w-4" />
+                            <AlertTitle>Unlock Premium AI Refinement!</AlertTitle>
+                            <AlertDescription className="flex justify-between items-center">
+                                <span>Refine your character's profile with custom prompts by upgrading.</span>
+                                 <Button size="sm" onClick={() => toast({ title: "Coming Soon!", description: "Payment processing is not yet implemented."})}>
+                                    <Crown className="mr-2 h-4 w-4" />
+                                    Upgrade
+                                </Button>
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    <Label htmlFor="regen-prompt" className="text-xl flex items-center gap-2">Refine with AI {!isPremium && <Crown className='h-4 w-4 text-primary' />}</Label>
                     <div className='flex w-full gap-2'>
                         <Input
                             id="regen-prompt"
@@ -179,9 +195,9 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
                             value={regenPrompt}
                             onChange={(e) => setRegenPrompt(e.target.value)}
                             className="text-lg"
-                            disabled={isRegenerating || state.isGenerating}
+                            disabled={isRefineDisabled}
                         />
-                        <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRegenerating || state.isGenerating || !character.profileData}>
+                        <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRefineDisabled}>
                             {isRegenerating ? (
                                 <Loader2 className="mr-2 h-6 w-6 animate-spin" />
                             ) : (
