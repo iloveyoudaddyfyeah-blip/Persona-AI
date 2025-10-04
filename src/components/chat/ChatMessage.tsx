@@ -22,16 +22,14 @@ const FormattedContent = ({ content, role }: { content: string; role: ChatMessag
       {parts.map((part, index) => {
         if (part.startsWith('*') && part.endsWith('*')) {
           return (
-            <em key={index} className="text-yellow-600 dark:text-yellow-400 not-italic">
+            <em key={index} className="text-muted-foreground not-italic">
               {part}
             </em>
           );
         }
         if (part.startsWith('"') && part.endsWith('"')) {
           return (
-            <span key={index} className={cn(
-              isUser ? "text-foreground" : "text-foreground"
-            )}>
+            <span key={index} className="text-primary-foreground">
               {part}
             </span>
           );
