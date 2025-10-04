@@ -26,7 +26,6 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
       new FirestorePermissionError({
         path: docRef.path,
         operation: options?.merge ? 'update' : 'create',
-        requestResourceData: data,
       })
     )
   })
@@ -47,7 +46,6 @@ export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
         new FirestorePermissionError({
           path: colRef.path,
           operation: 'create',
-          requestResourceData: data,
         })
       )
     });
@@ -67,7 +65,6 @@ export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) 
         new FirestorePermissionError({
           path: docRef.path,
           operation: 'update',
-          requestResourceData: data,
         })
       )
     });
