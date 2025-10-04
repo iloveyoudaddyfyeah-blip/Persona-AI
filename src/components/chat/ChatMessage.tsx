@@ -17,7 +17,6 @@ interface ChatMessageProps {
 const FormattedContent = ({ content, role }: { content: string; role: ChatMessageType['role'] }) => {
   const regex = /(\*[^*]+\*)|("[^"]+")/g;
   const parts = content.split(regex).filter(Boolean);
-  const isCharacter = role === 'character';
 
   return (
     <p className="whitespace-pre-wrap break-words">
@@ -31,10 +30,14 @@ const FormattedContent = ({ content, role }: { content: string; role: ChatMessag
         }
         if (part.startsWith('"') && part.endsWith('"')) {
            return (
-            <span key={index} className={cn(isCharacter ? 'text-yellow-500' : 'text-primary-foreground')}>
+            <span key={index} className="text-primary-foreground">
               {part}
             </span>
           );
+        }
+        // For character responses, non-dialogue/action parts can have a different color if desired
+        if (role === 'character') {
+             return <span key={index}>{part}</span>;
         }
         return <span key={index}>{part}</span>;
       })}
@@ -45,9 +48,16 @@ const FormattedContent = ({ content, role }: { content: string; role: ChatMessag
 
 export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
-  // Only use typewriter for the last character message WHILE the AI is generating the NEXT response.
-  const useTypewriterEffect = isCharacter && isLastMessage && isTyping;
-  const displayedText = useTypewriterEffect ? useTypewriter(message.content) : message.content;
+  
+  // A new message is being typed if it's the last message, from the character, AND the interface is "typing".
+  const isReceiving = isCharacter && isLastMessage && isTyping;
+
+  // Use the typewriter effect only for the message that is actively being received.
+  const displayedText = useTypewriter(isReceiving ? message.content : '');
+
+  // If the message is not being received, show its full content instantly.
+  const content = isReceiving ? displayedText : message.content;
+
 
   return (
     <div className={cn("flex items-start gap-4 text-xl", isCharacter ? 'justify-start' : 'justify-end')}>
@@ -69,10 +79,10 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
             : "bg-primary text-primary-foreground"
         )}
       >
-        <FormattedContent content={displayedText} role={message.role} />
+        <FormattedContent content={content} role={message.role} />
         {/* Only show the blinking caret if the text is actively being typed out */}
-        {useTypewriterEffect && displayedText.length < message.content.length && (
-            <span className="inline-block w-0.5 h-4 bg-foreground animate-[blink-caret_1s_step-end_infinite] ml-1" />
+        {isReceiving && content.length < message.content.length && (
+            <span className="inline-block w-0.5 h-5 bg-foreground animate-[blink_1s_step-end_infinite] -mb-1 ml-1" />
         )}
       </div>
     </div>

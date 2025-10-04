@@ -23,7 +23,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import Image from 'next/image';
 
 
 interface ChatInterfaceProps {
@@ -43,7 +44,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
-  }, [character.chatHistory]);
+  }, [character.chatHistory, isTyping]);
   
   const handleClearChat = () => {
     if (!user || !firestore) return;
@@ -58,21 +59,24 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
 
     const userMessage = { role: 'user' as const, content: userInput };
     // Optimistically update UI
-    dispatch({ type: 'ADD_MESSAGE', payload: { characterId: character.id, message: userMessage } });
+    const newHistoryWithUserMessage = [...(character.chatHistory || []), userMessage];
+    dispatch({ type: 'UPDATE_CHARACTER', payload: { ...character, chatHistory: newHistoryWithUserMessage } });
     setUserInput('');
     setIsTyping(true);
 
     try {
       const characterMessage = await getChatResponse(character, userInput, state.userPersona);
       
-      const updatedHistory = [...(character.chatHistory || []), userMessage, characterMessage];
+      const updatedHistory = [...newHistoryWithUserMessage, characterMessage];
       const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+      // This will trigger the onSnapshot listener in CharacterContext to update the state
       updateDocumentNonBlocking(characterRef, { chatHistory: updatedHistory });
 
     } catch (error) {
       console.error(error);
       const errorMessage = { role: 'character' as const, content: "I'm sorry, I'm having trouble thinking right now." };
-      dispatch({ type: 'ADD_MESSAGE', payload: { characterId: character.id, message: errorMessage } });
+       const updatedHistory = [...newHistoryWithUserMessage, errorMessage];
+      dispatch({ type: 'UPDATE_CHARACTER', payload: { ...character, chatHistory: updatedHistory } });
     } finally {
       setIsTyping(false);
     }
@@ -92,9 +96,18 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                 />
             ))}
             {isTyping && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>{character.name} is typing...</span>
+                 <div className="flex items-start gap-4 text-xl justify-start">
+                    <Image
+                        src={character.photoDataUri}
+                        alt={character.name}
+                        width={40}
+                        height={40}
+                        className="rounded-full border-2 border-primary pixel-art object-cover aspect-square"
+                    />
+                    <div className="max-w-[75%] rounded-lg p-3 bg-secondary text-secondary-foreground flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>{character.name} is typing...</span>
+                    </div>
                 </div>
             )}
         </div>
@@ -135,3 +148,4 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     </Card>
   );
 }
+

@@ -88,11 +88,7 @@ export default {
             height: '0',
           },
         },
-        'typewriter': {
-          from: { width: '0' },
-          to: { width: '100%' },
-        },
-        'blink-caret': {
+        'blink': {
           'from, to': { borderColor: 'transparent' },
           '50%': { borderColor: 'hsl(var(--foreground))' },
         },

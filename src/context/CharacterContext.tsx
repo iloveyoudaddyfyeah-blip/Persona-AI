@@ -29,7 +29,7 @@ type State = {
 
 type Action =
   | { type: 'ADD_CHARACTER'; payload: Character }
-  | { type: 'UPDATE_CHARACTER'; payload: Character }
+  | { type: 'UPDATE_CHARACTER'; payload: Partial<Character> & { id: string } }
   | { type: 'DELETE_CHARACTER'; payload: string }
   | { type: 'SELECT_CHARACTER'; payload: string | null }
   | { type: 'SET_VIEW'; payload: View }
@@ -113,7 +113,7 @@ function characterReducer(state: State, action: Action): State {
       return {
         ...state,
         characters: state.characters.map(c =>
-          c.id === action.payload.id ? action.payload : c
+          c.id === action.payload.id ? { ...c, ...action.payload } : c
         ),
       };
     case 'DELETE_CHARACTER':
@@ -142,8 +142,6 @@ function characterReducer(state: State, action: Action): State {
         selectedCharacterId: action.payload,
         view: action.payload ? 'viewing' : state.view,
       };
-    case 'SET_VIEW':
-      return { ...state, view: action.payload };
     case 'ADD_MESSAGE':
       return {
         ...state,
