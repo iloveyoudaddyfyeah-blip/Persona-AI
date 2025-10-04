@@ -24,7 +24,7 @@ const FormattedContent = ({ content }: { content: string }) => {
         if (part.startsWith('*') && part.endsWith('*')) {
           return (
             <em key={index} className="text-muted-foreground not-italic">
-              {part}
+              {part.slice(1, -1)}
             </em>
           );
         }
@@ -45,13 +45,10 @@ const FormattedContent = ({ content }: { content: string }) => {
 export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
   
-  // A new message is being received if it's the last message, from the character, AND the interface is "typing".
   const isReceiving = isCharacter && isLastMessage && isTyping;
 
-  // Use the typewriter effect only for the message that is actively being received.
   const typedText = useTypewriter(message.content, 20);
 
-  // If the message is being received, show the typed text. Otherwise, show the full content instantly.
   const content = isReceiving ? typedText : message.content;
 
 
@@ -76,7 +73,6 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
         )}
       >
         <FormattedContent content={content} />
-        {/* Only show the blinking caret if the text is actively being typed out */}
         {isReceiving && content.length < message.content.length && (
             <span className="inline-block w-0.5 h-5 bg-foreground animate-[blink_1s_step-end_infinite] -mb-1 ml-1" />
         )}
