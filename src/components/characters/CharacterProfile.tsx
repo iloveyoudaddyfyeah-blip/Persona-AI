@@ -90,6 +90,14 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
 
   const handleRegenerate = async () => {
     if (!user || !firestore) return;
+    if (!isPremium) {
+        toast({
+            variant: "destructive",
+            title: "Premium Feature",
+            description: "You must be a premium user to refine profiles with AI.",
+        });
+        return;
+    }
     if (!regenPrompt) {
       toast({
         variant: "destructive",
