@@ -14,16 +14,17 @@ import {
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { useUser, useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
-import { generatePersonaFromPrompt, saveUserPersona, updateUser } from '@/app/actions';
+import { generatePersonaFromPrompt, saveUserPersona } from '@/app/actions';
 import { Loader2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { Textarea } from '../ui/textarea';
 import type { UserPersona } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useUser } from '@/firebase/provider';
 
 interface CreatePersonaDialogProps {
     open: boolean;
@@ -33,7 +34,8 @@ interface CreatePersonaDialogProps {
 }
 
 export function CreatePersonaDialog({ open, onOpenChange, personaCount, isPremium }: CreatePersonaDialogProps) {
-  const { user, firestore } = useUser();
+  const { user } = useUser();
+  const firestore = useFirestore();
   const { toast } = useToast();
 
   const [name, setName] = useState('');
@@ -104,11 +106,12 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount, isPremiu
             isActive: isActive,
         };
 
-        // Use the new server action
-        await saveUserPersona(firestore, user.uid, newPersona);
+        // Use the server action to save the persona
+        saveUserPersona(firestore, user.uid, newPersona);
 
         if (isActive) {
-            await updateUser(firestore, user.uid, { activePersonaId: newPersonaId });
+            const userRef = doc(firestore, `users/${user.uid}`);
+            setDocumentNonBlocking(userRef, { activePersonaId: newPersonaId }, { merge: true });
         }
         
         toast({ title: 'Persona created!', description: `${name} is now available.` });
@@ -116,7 +119,6 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount, isPremiu
         onOpenChange(false);
     } catch (error) {
         // Error is now handled by the server action's error emitter
-        // We might not even need a toast here if the global error handler is sufficient
     } finally {
         setIsSaving(false);
     }
@@ -159,7 +161,7 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount, isPremiu
             </div>
              <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="description" className="text-right text-lg pt-2">Description</Label>
-                <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3 text-lg min-h-[100px]" placeholder="A short bio of your persona..." />
+                <Textarea id="description" value={description} onChange={(e) => setDescription(e.g.target.value)} className="col-span-3 text-lg min-h-[100px]" placeholder="A short bio of your persona..." />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="gen-prompt" className="text-right text-lg">Generate with AI</Label>

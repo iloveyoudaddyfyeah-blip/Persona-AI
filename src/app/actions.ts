@@ -125,17 +125,8 @@ export async function saveUserPersona(db: Firestore, userId: string, persona: Us
         operation: 'create',
         requestResourceData: persona,
       }));
-    });
-}
-
-export async function updateUser(db: Firestore, userId: string, data: any): Promise<void> {
-  const userRef = doc(db, `users/${userId}`);
-  updateDoc(userRef, data)
-    .catch((error) => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: userRef.path,
-        operation: 'update',
-        requestResourceData: data,
-      }));
+      // Re-throw the original error if you want the caller to be aware of it.
+      // For this app, we let the emitter handle it, so we might not re-throw.
+      // throw error; 
     });
 }

@@ -1,27 +1,60 @@
+/**
+ * @description This ruleset enforces a strict user-ownership model, where each user can only access their own data.
+ * @dataStructure All data is nested under /users/{userId}, with subcollections for characters and personas.
+ * @keySecurityDecisions
+ *   - Users can only create, read, update, and delete their own user document and associated subcollections.
+ *   - Listing of user documents at the root level is forbidden to protect user privacy.
+ *   - No public data access is allowed.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile documents.
-     * @path /databases/{database}/documents/users/{userId}
-     * @allow (create) User with ID 'user123' can create their own profile.
-     * @allow (get) User with ID 'user123' can read their own profile.
-     * @allow (update) User with ID 'user123' can update their own profile.
-     * @allow (delete) User with ID 'user123' can delete their own profile.
-     * @deny (create) User with ID 'user456' cannot create a profile for 'user123'.
-     * @deny (get) User with ID 'user456' cannot read the profile of 'user123'.
-     * @deny (update) User with ID 'user456' cannot update the profile of 'user123'.
-     * @deny (delete) User with ID 'user456' cannot delete the profile of 'user123'.
+     * @description Enforces access control for user documents. Only the authenticated user can manage their own document.
+     * @path /users/{userId}
+     * @allow (create) - User with UID 'user123' creates their own document at /users/user123 with matching 'id' field.
+     * @allow (get) - User with UID 'user123' reads their own document at /users/user123.
+     * @allow (update) - User with UID 'user123' updates their own document at /users/user123.
+     * @allow (delete) - User with UID 'user123' deletes their own document at /users/user123.
+     * @deny (create) - User with UID 'user456' tries to create a document at /users/user123.
+     * @deny (get) - User with UID 'user456' tries to read the document at /users/user123.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
 
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Enforces access control for character profiles. Only the owning user can manage their own character profiles.
+     * @path /users/{userId}/characters/{characterId}
+     * @allow (create) - User 'user123' creates a character profile with ID 'char1' under /users/user123/characters/char1.
+     * @allow (get) - User 'user123' reads the character profile with ID 'char1' under /users/user123/characters/char1.
+     * @allow (update) - User 'user123' updates the character profile with ID 'char1' under /users/user123/characters/char1.
+     * @allow (delete) - User 'user123' deletes the character profile with ID 'char1' under /users/user123/characters/char1.
+     * @deny (create) - User 'user456' tries to create a character profile under /users/user123/characters/char1.
+     * @deny (get) - User 'user456' tries to read the character profile under /users/user123/characters/char1.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/characters/{characterId} {
       function isSignedIn() {
         return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
       }
 
       allow get: if isSignedIn() && isOwner(userId);
@@ -32,69 +65,30 @@ service cloud.firestore {
     }
 
     /**
-     * @description Controls access to character profiles owned by a user.
-     * @path /databases/{database}/documents/users/{userId}/characters/{characterId}
-     * @allow (create) User with ID 'user123' can create a character profile.
-     * @allow (get) User with ID 'user123' can read their character profile.
-     * @allow (update) User with ID 'user123' can update their character profile.
-     * @allow (delete) User with ID 'user123' can delete their character profile.
-     * @deny (create) User with ID 'user456' cannot create a character profile for 'user123'.
-     * @deny (get) User with ID 'user456' cannot read the character profile of 'user123'.
-     * @deny (update) User with ID 'user456' cannot update the character profile of 'user123'.
-     * @deny (delete) User with ID 'user456' cannot delete the character profile of 'user123'.
+     * @description Enforces access control for user personas. Only the owning user can manage their own personas.
+     * @path /users/{userId}/personas/{personaId}
+     * @allow (create) - User 'user123' creates a persona with ID 'persona1' under /users/user123/personas/persona1.
+     * @allow (get) - User 'user123' reads the persona with ID 'persona1' under /users/user123/personas/persona1.
+     * @allow (update) - User 'user123' updates the persona with ID 'persona1' under /users/user123/personas/persona1.
+     * @allow (delete) - User 'user123' deletes the persona with ID 'persona1' under /users/user123/personas/persona1.
+     * @deny (create) - User 'user456' tries to create a persona under /users/user123/personas/persona1.
+     * @deny (get) - User 'user456' tries to read the persona under /users/user123/personas/persona1.
      * @principle Enforces document ownership for all operations.
      */
-    match /users/{userId}/characters/{characterId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-       function isExistingOwner(userId) {
-        return isOwner(userId) && exists(resource);
-      }
-
+    match /users/{userId}/personas/{personaId} {
       function isSignedIn() {
         return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
       }
 
       allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
       allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
-
-    /**
-     * @description Controls access to user personas owned by a user.
-     * @path /databases/{database}/documents/users/{userId}/personas/{personaId}
-     * @allow (create) User with ID 'user123' can create a persona.
-     * @allow (get) User with ID 'user123' can read their persona.
-     * @allow (update) User with ID 'user123' can update their persona.
-     * @allow (delete) User with ID 'user123' can delete their persona.
-     * @deny (create) User with ID 'user456' cannot create a persona for 'user123'.
-     * @deny (get) User with ID 'user456' cannot read the persona of 'user123'.
-     * @deny (update) User with ID 'user456' cannot update the persona of 'user123'.
-     * @deny (delete) User with ID 'user456' cannot delete the persona of 'user123'.
-     * @principle Enforces document ownership for all operations.
-     */
-      match /users/{userId}/personas/{personaId} {
-        function isOwner(userId) {
-          return request.auth.uid == userId;
-        }
-
-        function isExistingOwner(userId) {
-            return isOwner(userId) && exists(resource);
-        }
-
-        function isSignedIn() {
-          return request.auth != null;
-        }
-
-        allow get: if isSignedIn() && isOwner(userId);
-        allow list: if false;
-        allow create: if isSignedIn() && isOwner(userId);
-        allow update: if isSignedIn() && isExistingOwner(userId);
-        allow delete: if isSignedIn() && isExistingOwner(userId);
-      }
   }
 }
