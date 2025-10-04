@@ -6,20 +6,16 @@ import { ThemeToggle } from '../settings/ThemeToggle';
 import SettingsDialog from '../settings/SettingsDialog';
 import { useUser, useAuth } from '@/firebase';
 import { Button } from '../ui/button';
-import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { Loader2, LogIn, LogOut } from 'lucide-react';
+import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 
 export default function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
 
-  const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error('Error during sign-in:', error);
-    }
+  const handleLogin = () => {
+    initiateGoogleSignIn(auth);
   };
 
   const handleLogout = async () => {
