@@ -222,80 +222,88 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
 
   // Subscribe to characters collection
   useEffect(() => {
-    if (user && firestore && charactersColRef) {
-      dispatch({ type: 'SET_IS_LOADING', payload: true });
-      
-      const charactersUnsub = onSnapshot(charactersColRef, (snapshot) => {
-        const characters: Character[] = [];
-        snapshot.forEach(doc => {
-            characters.push(doc.data() as Character);
-        });
-
-        characters.sort((a, b) => a.name.localeCompare(b.name));
-        
-        dispatch({ type: 'SET_CHARACTERS', payload: characters });
-      }, (error) => {
-        console.error("Error listening to characters collection:", error);
-        dispatch({ type: 'SET_IS_LOADING', payload: false });
+    // Only subscribe if user is authenticated
+    if (!user || !firestore || !charactersColRef) {
+      if (!isUserLoading) {
+        // If we are done loading and there's no user, reset the state
+        dispatch({ type: 'RESET_STATE' });
+      }
+      return;
+    };
+    
+    dispatch({ type: 'SET_IS_LOADING', payload: true });
+    
+    const charactersUnsub = onSnapshot(charactersColRef, (snapshot) => {
+      const characters: Character[] = [];
+      snapshot.forEach(doc => {
+          characters.push(doc.data() as Character);
       });
 
-      return () => {
-        charactersUnsub();
-      };
-    } else if (!isUserLoading && !user) {
-      dispatch({ type: 'RESET_STATE' });
-    }
+      characters.sort((a, b) => a.name.localeCompare(b.name));
+      
+      dispatch({ type: 'SET_CHARACTERS', payload: characters });
+    }, (error) => {
+      console.error("Error listening to characters collection:", error);
+      dispatch({ type: 'SET_IS_LOADING', payload: false });
+    });
+
+    return () => {
+      charactersUnsub();
+    };
   }, [user, isUserLoading, firestore, charactersColRef]);
 
   // Subscribe to personas collection
   useEffect(() => {
-    if (user && firestore && personasColRef) {
-      const personasUnsub = onSnapshot(personasColRef, (snapshot) => {
-        const personas: UserPersona[] = [];
-        snapshot.forEach(doc => {
-          personas.push(doc.data() as UserPersona);
-        });
-        personas.sort((a, b) => a.name.localeCompare(b.name));
-        dispatch({ type: 'SET_USER_PERSONAS', payload: personas });
-
-        // If no personas exist for a logged-in user, create a default one
-        if (snapshot.empty && user) {
-          const personaPlaceholder = PlaceHolderImages.find(img => img.id === 'persona-placeholder');
-          const defaultPersonaId = "default";
-          const defaultPersona: UserPersona = {
-            id: defaultPersonaId,
-            name: "Default",
-            description: "A curious individual exploring the world of AI personas.",
-            photoDataUri: personaPlaceholder?.imageUrl || '',
-            isActive: true,
-          };
-          const personaRef = doc(firestore, `users/${user.uid}/personas/${defaultPersonaId}`);
-          // This write might fail if rules aren't set, but it will try.
-          // The error will be caught by our non-blocking handler.
-          setDocumentNonBlocking(personaRef, defaultPersona, { merge: false });
-          // Also try to set it as active on the user doc
-          updateUser(firestore, user.uid, { activePersonaId: defaultPersonaId });
-        } else if (personas.length > 0) {
-            // Ensure there is an active persona in the state
-            const activePersona = personas.find(p => p.isActive);
-            if (!activePersona) {
-                // If the user doc has an active one, trust that.
-                if (userData?.activePersonaId && personas.some(p => p.id === userData.activePersonaId)) {
-                    dispatch({ type: 'SET_ACTIVE_PERSONA', payload: userData.activePersonaId });
-                } else {
-                    // Otherwise, just make the first one active.
-                    dispatch({ type: 'SET_ACTIVE_PERSONA', payload: personas[0].id });
-                }
-            } else {
-                 dispatch({ type: 'SET_ACTIVE_PERSONA', payload: activePersona.id });
-            }
-        }
-
-      }, (error) => {
-        console.error("Error listening to personas collection:", error);
-      });
-      return () => personasUnsub();
+    // Only subscribe if user is authenticated
+    if (!user || !firestore || !personasColRef) {
+      return;
     }
+
+    const personasUnsub = onSnapshot(personasColRef, (snapshot) => {
+      const personas: UserPersona[] = [];
+      snapshot.forEach(doc => {
+        personas.push(doc.data() as UserPersona);
+      });
+      personas.sort((a, b) => a.name.localeCompare(b.name));
+      dispatch({ type: 'SET_USER_PERSONAS', payload: personas });
+
+      // If no personas exist for a logged-in user, create a default one
+      if (snapshot.empty && user) {
+        const personaPlaceholder = PlaceHolderImages.find(img => img.id === 'persona-placeholder');
+        const defaultPersonaId = "default";
+        const defaultPersona: UserPersona = {
+          id: defaultPersonaId,
+          name: "Default",
+          description: "A curious individual exploring the world of AI personas.",
+          photoDataUri: personaPlaceholder?.imageUrl || '',
+          isActive: true,
+        };
+        const personaRef = doc(firestore, `users/${user.uid}/personas/${defaultPersonaId}`);
+        // This write might fail if rules aren't set, but it will try.
+        // The error will be caught by our non-blocking handler.
+        setDocumentNonBlocking(personaRef, defaultPersona, { merge: false });
+        // Also try to set it as active on the user doc
+        updateUser(firestore, user.uid, { activePersonaId: defaultPersonaId });
+      } else if (personas.length > 0) {
+          // Ensure there is an active persona in the state
+          const activePersona = personas.find(p => p.isActive);
+          if (!activePersona) {
+              // If the user doc has an active one, trust that.
+              if (userData?.activePersonaId && personas.some(p => p.id === userData.activePersonaId)) {
+                  dispatch({ type: 'SET_ACTIVE_PERSONA', payload: userData.activePersonaId });
+              } else {
+                  // Otherwise, just make the first one active.
+                  dispatch({ type: 'SET_ACTIVE_PERSONA', payload: personas[0].id });
+              }
+          } else {
+               dispatch({ type: 'SET_ACTIVE_PERSONA', payload: activePersona.id });
+          }
+      }
+
+    }, (error) => {
+      console.error("Error listening to personas collection:", error);
+    });
+    return () => personasUnsub();
   }, [user, firestore, personasColRef, userData]);
 
 
