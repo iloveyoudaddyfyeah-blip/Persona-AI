@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { collection, doc, type Firestore } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { getFirebaseAdmin } from '@/firebase/server';
 
 
 function formatProfile(
@@ -106,8 +107,10 @@ export async function generatePersonaFromPrompt(prompt: string): Promise<string>
   return persona;
 }
 
-export async function saveUserPersona(db: Firestore, userId: string, persona: UserPersona) {
-  const personaRef = doc(db, 'users', userId, 'personas', persona.id);
-  // Using setDoc directly with the non-blocking wrapper.
-  setDocumentNonBlocking(personaRef, persona);
+export async function saveUserPersona(userId: string, persona: UserPersona) {
+  const { firestore } = await getFirebaseAdmin();
+  const personaRef = doc(firestore, 'users', userId, 'personas', persona.id);
+  // Using setDoc directly with the non-blocking wrapper on the server is not ideal,
+  // but for now we'll just use the admin SDK to write directly.
+  await firestore.collection('users').doc(userId).collection('personas').doc(persona.id).set(persona);
 }

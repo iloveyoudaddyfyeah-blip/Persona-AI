@@ -100,7 +100,7 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
         };
 
         // Use the server action to save the persona
-        await saveUserPersona(firestore, user.uid, newPersona);
+        await saveUserPersona(user.uid, newPersona);
 
         if (isActive) {
             const userRef = doc(firestore, `users/${user.uid}`);
