@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Character, ChatMessage } from '@/lib/types';
+import type { Character, ChatMessage, UserData } from '@/lib/types';
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { useDoc } from '@/firebase';
@@ -11,7 +11,7 @@ type View = 'welcome' | 'creating' | 'viewing';
 
 export type Tone = "default" | "witty" | "serious" | "whimsical" | "poetic" | "epic" | "noir" | "comedic" | "dramatic" | "sarcastic" | "inspirational";
 
-type Settings = {
+export type Settings = {
   theme: "light" | "dark";
   aiTone: Tone;
   aiCharLimit: number;
@@ -36,7 +36,7 @@ type Action =
   | { type: 'ADD_MESSAGE'; payload: { characterId: string; message: ChatMessage } }
   | { type: 'SET_IS_GENERATING', payload: boolean }
   | { type: 'SET_IS_LOADING', payload: boolean }
-  | { type: 'LOAD_STATE', payload: Partial<State> }
+  | { type: 'LOAD_SETTINGS', payload: Partial<Settings> }
   | { type: 'SET_THEME', payload: Settings['theme'] }
   | { type: 'SET_AI_TONE', payload: Tone }
   | { type: 'SET_AI_CHAR_LIMIT', payload: number }
@@ -66,14 +66,13 @@ const CharacterContext = createContext<{
 
 function characterReducer(state: State, action: Action): State {
   switch (action.type) {
-    case 'LOAD_STATE':
-        const loadedState = action.payload;
+    case 'LOAD_SETTINGS':
+        const loadedSettings = action.payload;
         // When loading, default to dark if theme is system
-        const loadedSettings = loadedState.settings;
         if (loadedSettings && (loadedSettings.theme as any) === 'system') {
             loadedSettings.theme = 'dark';
         }
-        return { ...state, ...loadedState, settings: { ...state.settings, ...loadedSettings }};
+        return { ...state, settings: { ...state.settings, ...loadedSettings }};
     case 'SET_CHARACTERS':
         const characters = action.payload;
         let newView = state.view;
@@ -172,7 +171,7 @@ function characterReducer(state: State, action: Action): State {
     case 'SET_USER_PERSONA':
         return { ...state, userPersona: action.payload };
     case 'RESET_STATE':
-        return {...initialState, isLoading: false, settings: state.settings};
+        return {...initialState, isLoading: false };
     default:
       return state;
   }
@@ -188,32 +187,27 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     return doc(firestore, 'users', user.uid);
   }, [user, firestore]);
 
-  const { data: userData } = useDoc<{persona: string}>(userDocRef);
+  const { data: userData } = useDoc<UserData>(userDocRef);
 
   const charactersColRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'characters');
   }, [user, firestore]);
 
+  // Load user data (persona and settings) from Firestore
   useEffect(() => {
-    if (userData && userData.persona) {
-      dispatch({ type: 'SET_USER_PERSONA', payload: userData.persona });
+    if (userData) {
+      if (userData.persona) {
+        dispatch({ type: 'SET_USER_PERSONA', payload: userData.persona });
+      }
+      if (userData.settings) {
+        dispatch({ type: 'LOAD_SETTINGS', payload: userData.settings });
+      }
     }
   }, [userData]);
 
 
-  useEffect(() => {
-    try {
-      const storedSettings = localStorage.getItem('personaCraftSettings');
-      if (storedSettings) {
-        const loadedSettings = JSON.parse(storedSettings);
-         dispatch({ type: 'LOAD_STATE', payload: { settings: loadedSettings } });
-      }
-    } catch (error) {
-      console.error("Failed to load settings from localStorage", error);
-    }
-  }, []);
-  
+  // Subscribe to characters collection
   useEffect(() => {
     if (user && firestore) {
       dispatch({ type: 'SET_IS_LOADING', payload: true });
@@ -237,18 +231,12 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
         charactersUnsub();
       };
     } else if (!isUserLoading) {
+      // If user logs out, reset state
       dispatch({ type: 'RESET_STATE' });
     }
   }, [user, isUserLoading, firestore, charactersColRef]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('personaCraftSettings', JSON.stringify(state.settings));
-    } catch (error) {
-      console.error("Failed to save settings to localStorage", error);
-    }
-  }, [state.settings]);
-
+  // Apply theme to HTML element
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');

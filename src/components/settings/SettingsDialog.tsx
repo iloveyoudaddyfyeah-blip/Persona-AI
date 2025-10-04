@@ -17,17 +17,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Slider } from "../ui/slider";
 import { useCharacter, Tone } from "@/context/CharacterContext";
 import { Settings, Bug } from 'lucide-react';
+import { useUser, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsDialog() {
   const { state, dispatch } = useCharacter();
   const { settings } = state;
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
 
-  const handleToneChange = (value: string) => {
-    dispatch({ type: 'SET_AI_TONE', payload: value as Tone });
-  };
+  const handleSettingChange = (key: string, value: any) => {
+    if (!user || !firestore) {
+      toast({
+        variant: "destructive",
+        title: "Not Logged In",
+        description: "You must be logged in to change settings.",
+      });
+      return;
+    }
 
-  const handleCharLimitChange = (value: number[]) => {
-    dispatch({ type: 'SET_AI_CHAR_LIMIT', payload: value[0] });
+    const updatedSettings = { ...settings, [key]: value };
+    
+    // Dispatch to update local state immediately
+    if (key === 'aiTone') {
+        dispatch({ type: 'SET_AI_TONE', payload: value as Tone });
+    } else if (key === 'aiCharLimit') {
+        dispatch({ type: 'SET_AI_CHAR_LIMIT', payload: value });
+    }
+
+    // Save to Firestore
+    const userRef = doc(firestore, `users/${user.uid}`);
+    setDocumentNonBlocking(userRef, { settings: updatedSettings }, { merge: true });
   };
   
   return (
@@ -42,13 +65,16 @@ export default function SettingsDialog() {
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
-            Manage AI generation settings.
+            Manage AI generation settings. These are saved to your account.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
             <div className="space-y-2">
                 <Label htmlFor="tone" className="text-base">Default AI Tone</Label>
-                <Select value={settings.aiTone} onValueChange={handleToneChange}>
+                <Select 
+                    value={settings.aiTone} 
+                    onValueChange={(value) => handleSettingChange('aiTone', value)}
+                >
                     <SelectTrigger className="text-base">
                         <SelectValue placeholder="Select a tone" />
                     </SelectTrigger>
@@ -76,7 +102,7 @@ export default function SettingsDialog() {
                         max={5000}
                         step={100}
                         value={[settings.aiCharLimit]}
-                        onValueChange={handleCharLimitChange}
+                        onValueChange={(value) => handleSettingChange('aiCharLimit', value[0])}
                     />
                     <span className='text-base font-mono w-20 text-center'>{settings.aiCharLimit}</span>
                 </div>

@@ -121,33 +121,32 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the application.  Note: Authentication details (passwords, etc.) should be handled by a separate authentication service.",
+      "description": "Represents a user of the application. This document stores user-specific data like persona and settings.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the User entity."
+        "persona": {
+            "type": "string",
+            "description": "The user's persona for interacting with AI characters."
         },
-        "email": {
-          "type": "string",
-          "description": "User's email address.",
-          "format": "email"
-        },
-        "username": {
-          "type": "string",
-          "description": "User's username."
-        },
-        "registrationDate": {
-          "type": "string",
-          "description": "Date and time the user registered.",
-          "format": "date-time"
+        "settings": {
+            "type": "object",
+            "description": "User-specific application settings.",
+            "properties": {
+                "theme": {
+                    "type": "string",
+                    "enum": ["light", "dark", "system"],
+                    "description": "The UI theme preference."
+                },
+                "aiTone": {
+                    "type": "string",
+                    "description": "The default tone for AI generation."
+                },
+                "aiCharLimit": {
+                    "type": "number",
+                    "description": "The default character limit for AI-generated biographies."
+                }
+            }
         }
-      },
-      "required": [
-        "id",
-        "email",
-        "username",
-        "registrationDate"
-      ]
+      }
     }
   },
   "auth": {
@@ -162,7 +161,7 @@
               "schema": {
                   "$ref": "#/entities/User"
               },
-              "description": "Stores user profiles. Path-based ownership: only the user can access their own profile."
+              "description": "Stores user profiles, including persona and settings. Path-based ownership: only the user can access their own document."
           },
           "/users/{userId}/characters/{characterId}": {
               "schema": {
