@@ -41,7 +41,8 @@ const prompt = ai.definePrompt({
   name: 'generatePersonalityProfilePrompt',
   input: {schema: GeneratePersonalityProfileInputSchema},
   output: {schema: GeneratePersonalityProfileOutputSchema},
-  prompt: `You are an AI that crafts highly detailed and rich personality profiles based on uploaded photos. The character's name is {{{name}}}. 
+  system: `You are an AI that crafts highly detailed and rich personality profiles based on uploaded photos. You are a master storyteller and character creator.`,
+  prompt: `The character's name is {{{name}}}. 
 
 Your response should be in a {{{tone}}} tone.
 
