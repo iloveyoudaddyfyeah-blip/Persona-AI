@@ -10,8 +10,6 @@ import {
   QuerySnapshot,
   CollectionReference,
 } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { useMemoFirebase } from '@/firebase/provider';
 
 
@@ -63,17 +61,6 @@ export function useCollection<T = any>(
     setIsLoading(true);
     setError(null);
 
-    const getPathFromQuery = (query: Query | CollectionReference): string => {
-        if ('path' in query) { // This works for CollectionReference
-            return (query as CollectionReference).path;
-        }
-        // This is a workaround for queries. The path is not on a public property.
-        if ((query as any)._query?.path?.segments) {
-            return (query as any)._query.path.segments.join('/');
-        }
-        return '[unknown path]';
-    };
-
     const unsubscribe = onSnapshot(
       memoizedTargetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
@@ -86,18 +73,10 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        const path = getPathFromQuery(memoizedTargetRefOrQuery);
-        const contextualError = new FirestorePermissionError({
-          operation: 'list',
-          path: path,
-        });
-
-        setError(contextualError);
+        console.error("Error in useCollection listener:", error);
+        setError(error);
         setData(null);
         setIsLoading(false);
-
-        // trigger global error propagation
-        errorEmitter.emit('permission-error', contextualError);
       }
     );
 

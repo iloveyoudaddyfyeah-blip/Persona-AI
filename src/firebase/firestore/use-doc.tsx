@@ -9,8 +9,6 @@ import {
   FirestoreError,
   DocumentSnapshot,
 } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { useMemoFirebase } from '@/firebase/provider';
 
 /** Utility type to add an 'id' field to a given type T. */
@@ -73,17 +71,10 @@ export function useDoc<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        const contextualError = new FirestorePermissionError({
-          operation: 'get',
-          path: memoizedDocRef.path,
-        })
-
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
-
-        // trigger global error propagation
-        errorEmitter.emit('permission-error', contextualError);
+        console.error(`Error in useDoc listener for path ${memoizedDocRef.path}:`, error);
+        setError(error);
+        setData(null);
+        setIsLoading(false);
       }
     );
 

@@ -14,8 +14,6 @@ import {
   setDoc
 } from 'firebase/firestore';
 import { collection, doc, type Firestore } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 
