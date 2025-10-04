@@ -16,6 +16,7 @@ import {
 import { collection, doc, type Firestore } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 
 function formatProfile(
@@ -109,12 +110,5 @@ export async function generatePersonaFromPrompt(prompt: string): Promise<string>
 
 export async function saveUserPersona(db: Firestore, userId: string, persona: UserPersona): Promise<void> {
   const personaRef = doc(db, 'users', userId, 'personas', persona.id);
-  setDoc(personaRef, persona)
-    .catch((error) => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: personaRef.path,
-        operation: 'create',
-        requestResourceData: persona,
-      }));
-    });
+  setDocumentNonBlocking(personaRef, persona);
 }

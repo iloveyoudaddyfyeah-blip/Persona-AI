@@ -129,34 +129,26 @@
     "providers": [
       "anonymous",
       "password"
-    ],
-    "customClaims": {
-      "premium": {
-        "type": "boolean",
-        "description": "Indicates whether the user has premium access."
-      }
-    }
+    ]
   },
   "firestore": {
-    "collections": {
-        "/users/{userId}": {
-            "schema": {
-                "$ref": "#/entities/User"
-            },
-            "description": "Stores user profiles, including settings and active persona ID."
-        },
-        "/users/{userId}/characters/{characterId}": {
-            "schema": {
-                "$ref": "#/entities/CharacterProfile"
-            },
-            "description": "Stores character profiles created by the user."
-        },
-        "/users/{userId}/personas/{personaId}": {
-          "schema": {
-              "$ref": "#/entities/UserPersona"
-          },
-          "description": "Stores the different personas created by a user."
-        }
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "Stores user profiles, including settings and active persona ID."
+    },
+    "/users/{userId}/characters/{characterId}": {
+      "schema": {
+        "$ref": "#/entities/CharacterProfile"
+      },
+      "description": "Stores character profiles created by the user."
+    },
+    "/users/{userId}/personas/{personaId}": {
+      "schema": {
+        "$ref": "#/entities/UserPersona"
+      },
+      "description": "Stores the different personas created by a user."
     }
   }
 }
