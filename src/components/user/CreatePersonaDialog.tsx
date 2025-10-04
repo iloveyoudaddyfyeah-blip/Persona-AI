@@ -30,10 +30,9 @@ interface CreatePersonaDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     personaCount: number;
-    isPremium: boolean;
 }
 
-export function CreatePersonaDialog({ open, onOpenChange, personaCount, isPremium }: CreatePersonaDialogProps) {
+export function CreatePersonaDialog({ open, onOpenChange, personaCount }: CreatePersonaDialogProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -85,12 +84,6 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount, isPremiu
         return;
     }
 
-    if (!isPremium && personaCount >= 1) {
-        toast({ variant: 'destructive', title: 'Premium Feature', description: 'Upgrade to create more than one persona.' });
-        return;
-    }
-
-
     setIsSaving(true);
     try {
         const newPersonaId = doc(collection(firestore, `users/${user.uid}/personas`)).id;
@@ -107,7 +100,7 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount, isPremiu
         };
 
         // Use the server action to save the persona
-        saveUserPersona(firestore, user.uid, newPersona);
+        await saveUserPersona(firestore, user.uid, newPersona);
 
         if (isActive) {
             const userRef = doc(firestore, `users/${user.uid}`);
@@ -161,7 +154,7 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount, isPremiu
             </div>
              <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="description" className="text-right text-lg pt-2">Description</Label>
-                <Textarea id="description" value={description} onChange={(e) => setDescription(e.g.target.value)} className="col-span-3 text-lg min-h-[100px]" placeholder="A short bio of your persona..." />
+                <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3 text-lg min-h-[100px]" placeholder="A short bio of your persona..." />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="gen-prompt" className="text-right text-lg">Generate with AI</Label>

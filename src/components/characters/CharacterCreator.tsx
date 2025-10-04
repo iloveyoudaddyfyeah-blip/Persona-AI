@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { createCharacterFromPhoto } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Upload, Crown } from 'lucide-react';
+import { Loader2, Upload } from 'lucide-react';
 import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Slider } from '../ui/slider';
@@ -17,12 +17,10 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { Character } from '@/lib/types';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { SubscriptionDialog } from '../settings/SubscriptionDialog';
 
 export default function CharacterCreator() {
   const { state, dispatch } = useCharacter();
-  const { user, isPremium, setIsPremium } = useUser();
+  const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [name, setName] = React.useState('');
@@ -71,12 +69,8 @@ export default function CharacterCreator() {
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
 
     try {
-      // Use default values if user is not premium
-      const generationTone = isPremium ? tone : 'default';
-      const generationCharLimit = isPremium ? charLimit : 1000;
-
       // 1. Call server action to get AI-generated data
-      const generatedData = await createCharacterFromPhoto(name, photo.dataUri, generationTone, generationCharLimit, user.uid);
+      const generatedData = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit, user.uid);
       
       const newCharacterId = doc(collection(firestore, 'users', user.uid, 'characters')).id;
       const newCharacter: Character = {
@@ -150,25 +144,10 @@ export default function CharacterCreator() {
                 </div>
               </div>
             </div>
-            {!isPremium && (
-                 <Alert>
-                    <Crown className="h-4 w-4" />
-                    <AlertTitle>Unlock Premium Features!</AlertTitle>
-                    <AlertDescription className="flex justify-between items-center">
-                        <span>Customize AI Tone and Biography Length by upgrading.</span>
-                        <SubscriptionDialog onUpgrade={() => setIsPremium(true)}>
-                          <Button size="sm">
-                              <Crown className="mr-2 h-4 w-4" />
-                              Upgrade
-                          </Button>
-                        </SubscriptionDialog>
-                    </AlertDescription>
-                </Alert>
-            )}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="tone" className="text-xl flex items-center gap-2">AI Tone {!isPremium && <Crown className='h-4 w-4 text-primary' />}</Label>
-                 <Select value={tone} onValueChange={(value) => setTone(value as Tone)} disabled={!isPremium}>
+                <Label htmlFor="tone" className="text-xl flex items-center gap-2">AI Tone</Label>
+                 <Select value={tone} onValueChange={(value) => setTone(value as Tone)}>
                     <SelectTrigger className="text-lg">
                         <SelectValue placeholder="Select a tone" />
                     </SelectTrigger>
@@ -188,7 +167,7 @@ export default function CharacterCreator() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="char-limit" className="text-xl flex items-center gap-2">Biography Length {!isPremium && <Crown className='h-4 w-4 text-primary' />}</Label>
+                <Label htmlFor="char-limit" className="text-xl flex items-center gap-2">Biography Length</Label>
                 <div className='flex items-center gap-4'>
                     <Slider
                         id="char-limit"
@@ -197,7 +176,6 @@ export default function CharacterCreator() {
                         step={100}
                         value={[charLimit]}
                         onValueChange={(value) => setCharLimit(value[0])}
-                        disabled={!isPremium}
                     />
                     <span className='text-lg font-mono w-20 text-center'>{charLimit}</span>
                 </div>

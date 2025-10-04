@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import Image from 'next/image';
-import { Loader2, Save, Sparkles, Crown } from 'lucide-react';
+import { Loader2, Save, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { regenerateCharacterProfile } from '@/app/actions';
 import { Input } from '../ui/input';
@@ -19,9 +19,6 @@ import UserPersonaManager from '../user/UserPersonaManager';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { cn } from '@/lib/utils';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { SubscriptionDialog } from '../settings/SubscriptionDialog';
 
 interface CharacterProfileProps {
   character: Character;
@@ -50,7 +47,7 @@ const FormattedProfile = ({ content }: { content: string }) => {
 
 export default function CharacterProfile({ character }: CharacterProfileProps) {
   const { state, dispatch } = useCharacter();
-  const { user, isPremium, setIsPremium } = useUser();
+  const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [name, setName] = useState(character.name);
@@ -90,14 +87,6 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
 
   const handleRegenerate = async () => {
     if (!user || !firestore) return;
-    if (!isPremium) {
-        toast({
-            variant: "destructive",
-            title: "Premium Feature",
-            description: "You must be a premium user to refine profiles with AI.",
-        });
-        return;
-    }
     if (!regenPrompt) {
       toast({
         variant: "destructive",
@@ -134,7 +123,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
 
   const hasChanges = name !== character.name || profile !== character.profile;
 
-  const isRefineDisabled = isRegenerating || state.isGenerating || !character.profileData || !isPremium;
+  const isRefineDisabled = isRegenerating || state.isGenerating || !character.profileData;
 
   return (
     <Tabs defaultValue="profile" className="h-full flex flex-col">
@@ -183,22 +172,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
                     </div>
                 </CardContent>
                 <CardFooter className="flex flex-col items-start gap-4 border-t pt-6">
-                    {!isPremium && (
-                        <Alert>
-                            <Crown className="h-4 w-4" />
-                            <AlertTitle>Unlock Premium AI Refinement!</AlertTitle>
-                            <AlertDescription className="flex justify-between items-center">
-                                <span>Refine your character's profile with custom prompts by upgrading.</span>
-                                <SubscriptionDialog onUpgrade={() => setIsPremium(true)}>
-                                  <Button size="sm">
-                                      <Crown className="mr-2 h-4 w-4" />
-                                      Upgrade
-                                  </Button>
-                                </SubscriptionDialog>
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                    <Label htmlFor="regen-prompt" className="text-xl flex items-center gap-2">Refine with AI {!isPremium && <Crown className='h-4 w-4 text-primary' />}</Label>
+                    <Label htmlFor="regen-prompt" className="text-xl flex items-center gap-2">Refine with AI</Label>
                     <div className='flex w-full gap-2'>
                         <Input
                             id="regen-prompt"

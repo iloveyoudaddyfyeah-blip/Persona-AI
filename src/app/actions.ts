@@ -11,9 +11,7 @@ import { generateUserPersona } from '@/ai/flows/generate-user-persona';
 import type { Character, ChatMessage, UserPersona } from '@/lib/types';
 import { Tone } from '@/context/CharacterContext';
 import {
-  deleteDoc,
-  setDoc,
-  updateDoc
+  setDoc
 } from 'firebase/firestore';
 import { collection, doc, type Firestore } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -79,17 +77,11 @@ export async function regenerateCharacterProfile(
 export async function getChatResponse(
   character: Character,
   userMessage: string,
-  userPersona: UserPersona | null,
-  isPremium: boolean
+  userPersona: UserPersona | null
 ): Promise<ChatMessage> {
   const personaDescription = userPersona?.description || 'A curious individual trying to get to know the characters.';
   
   let history = character.chatHistory || [];
-  
-  // Limit chat history for non-premium users
-  if (!isPremium && history.length >= 20) {
-    history = history.slice(-20);
-  }
 
   const historyString = history
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)
@@ -125,8 +117,5 @@ export async function saveUserPersona(db: Firestore, userId: string, persona: Us
         operation: 'create',
         requestResourceData: persona,
       }));
-      // Re-throw the original error if you want the caller to be aware of it.
-      // For this app, we let the emitter handle it, so we might not re-throw.
-      // throw error; 
     });
 }

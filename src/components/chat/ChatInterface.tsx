@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ChatMessage from './ChatMessage';
 import { getChatResponse } from '@/app/actions';
-import { Loader2, Send, Trash2, Crown } from 'lucide-react';
+import { Loader2, Send, Trash2 } from 'lucide-react';
 import { Card } from '../ui/card';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -25,18 +25,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import Image from 'next/image';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { SubscriptionDialog } from '../settings/SubscriptionDialog';
-
 
 interface ChatInterfaceProps {
   character: Character;
 }
 
 export default function ChatInterface({ character }: ChatInterfaceProps) {
-  const { state, dispatch } = useCharacter();
-  const { user, isPremium, setIsPremium } = useUser();
-  const firestore = useFirestore();
+  const { state } = useCharacter();
+  const { user, firestore } = useUser();
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -64,13 +60,12 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     const userMessage = { role: 'user' as const, content: userInput };
     // Optimistically update UI with user message first
     const newHistoryWithUserMessage = [...(character.chatHistory || []), userMessage];
-    dispatch({ type: 'UPDATE_CHARACTER', payload: { ...character, chatHistory: newHistoryWithUserMessage } });
     
     setUserInput('');
     setIsTyping(true);
 
     try {
-      const characterMessage = await getChatResponse(character, userInput, activePersona, isPremium);
+      const characterMessage = await getChatResponse(character, userInput, activePersona);
       
       const updatedHistory = [...newHistoryWithUserMessage, characterMessage];
       const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
@@ -80,15 +75,12 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
       console.error(error);
       const errorMessage = { role: 'character' as const, content: "I'm sorry, I'm having trouble thinking right now." };
        const updatedHistory = [...newHistoryWithUserMessage, errorMessage];
-       // Here we directly update the character in the context, which will then be picked up by the listener.
-       // This might feel redundant, but it ensures the UI is updated even if the DB write has a delay.
-      dispatch({ type: 'UPDATE_CHARACTER', payload: { ...character, chatHistory: updatedHistory } });
+       const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+       updateDocumentNonBlocking(characterRef, { chatHistory: updatedHistory });
     } finally {
       setIsTyping(false);
     }
   };
-
-  const isChatLocked = !isPremium && chatHistory.length >= 20;
 
   return (
     <Card className="flex flex-col h-full border-0 shadow-none rounded-t-none">
@@ -120,35 +112,17 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
             )}
         </div>
         <div className="p-4 border-t flex flex-col gap-2">
-            {isChatLocked && (
-                <Alert variant="destructive">
-                    <Crown className="h-4 w-4" />
-                    <AlertTitle>Chat Limit Reached</AlertTitle>
-                    <AlertDescription className="flex justify-between items-center">
-                        <div>
-                            Free users have a 20-message limit. Upgrade for unlimited chat history.
-                            You can also clear the history to start a new conversation.
-                        </div>
-                        <SubscriptionDialog onUpgrade={() => setIsPremium(true)}>
-                          <Button size="sm">
-                              <Crown className="mr-2 h-4 w-4" />
-                              Upgrade
-                          </Button>
-                        </SubscriptionDialog>
-                    </AlertDescription>
-                </Alert>
-            )}
             <div className="flex gap-2 items-center">
                 <form onSubmit={handleSubmit} className="flex-grow flex gap-2">
                     <Input
                     type="text"
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
-                    placeholder={isChatLocked ? "Upgrade to continue chatting" : `Talk to ${character.name}...`}
+                    placeholder={`Talk to ${character.name}...`}
                     className="text-lg"
-                    disabled={isTyping || !user || isChatLocked}
+                    disabled={isTyping || !user}
                     />
-                    <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user || isChatLocked}>
+                    <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user}>
                         <Send className="h-6 w-6" />
                     </Button>
                 </form>

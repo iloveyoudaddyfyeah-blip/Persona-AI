@@ -19,7 +19,6 @@ interface UserAuthState {
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
-  isPremium: boolean;
 }
 
 // Combined state for the Firebase context
@@ -32,8 +31,6 @@ export interface FirebaseContextState {
   user: User | null;
   isUserLoading: boolean; // True during initial auth check
   userError: Error | null; // Error from auth listener
-  isPremium: boolean;
-  setIsPremium: (isPremium: boolean) => void;
 }
 
 // Return type for useFirebase()
@@ -44,8 +41,6 @@ export interface FirebaseServicesAndUser {
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
-  isPremium: boolean;
-  setIsPremium: (isPremium: boolean) => void;
 }
 
 // Return type for useUser() - specific to user auth state
@@ -53,8 +48,7 @@ export interface UserHookResult { // Renamed from UserAuthHookResult for consist
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
-  isPremium: boolean;
-  setIsPremium: (isPremium: boolean) => void;
+  firestore: Firestore | null;
 }
 
 // React Context
@@ -90,34 +84,29 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     user: null,
     isUserLoading: true, // Start loading until first auth event
     userError: null,
-    isPremium: false,
   });
-
-  const [simulatedPremium, setSimulatedPremium] = useState(false);
 
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
     if (!auth) { // If no Auth service instance, cannot determine user state
-      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided."), isPremium: false });
+      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
       return;
     }
 
-    setUserAuthState({ user: null, isUserLoading: true, userError: null, isPremium: false }); // Reset on auth instance change
+    setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
 
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser) => { // Auth state determined
         if (firebaseUser) {
-            const tokenResult = await firebaseUser.getIdTokenResult();
-            const isPremium = tokenResult.claims.premium === true;
-            setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null, isPremium });
+            setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         } else {
-            setUserAuthState({ user: null, isUserLoading: false, userError: null, isPremium: false });
+            setUserAuthState({ user: null, isUserLoading: false, userError: null });
         }
       },
       (error) => { // Auth listener error
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
-        setUserAuthState({ user: null, isUserLoading: false, userError: error, isPremium: false });
+        setUserAuthState({ user: null, isUserLoading: false, userError: error });
       }
     );
     return () => unsubscribe(); // Cleanup
@@ -126,7 +115,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
     const servicesAvailable = !!(firebaseApp && firestore && auth);
-    const finalIsPremium = userAuthState.isPremium || simulatedPremium;
 
     return {
       areServicesAvailable: servicesAvailable,
@@ -136,10 +124,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       user: userAuthState.user,
       isUserLoading: userAuthState.isUserLoading,
       userError: userAuthState.userError,
-      isPremium: finalIsPremium,
-      setIsPremium: setSimulatedPremium,
     };
-  }, [firebaseApp, firestore, auth, userAuthState, simulatedPremium]);
+  }, [firebaseApp, firestore, auth, userAuthState]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
@@ -171,8 +157,6 @@ export const useFirebase = (): FirebaseServicesAndUser => {
     user: context.user,
     isUserLoading: context.isUserLoading,
     userError: context.userError,
-    isPremium: context.isPremium,
-    setIsPremium: context.setIsPremium,
   };
 };
 
@@ -197,9 +181,9 @@ export const useFirebaseApp = (): FirebaseApp => {
 /**
  * Hook specifically for accessing the authenticated user's state.
  * This provides the User object, loading status, and any auth errors.
- * @returns {UserHookResult} Object with user, isUserLoading, userError, and premium status.
+ * @returns {UserHookResult} Object with user, isUserLoading, and userError.
  */
 export const useUser = (): UserHookResult => {
-  const { user, isUserLoading, userError, isPremium, setIsPremium } = useFirebase();
-  return { user, isUserLoading, userError, isPremium, setIsPremium };
+  const { user, isUserLoading, userError, firestore } = useFirebase();
+  return { user, isUserLoading, userError, firestore };
 };

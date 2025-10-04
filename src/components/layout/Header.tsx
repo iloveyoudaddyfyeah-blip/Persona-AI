@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -6,12 +7,11 @@ import SettingsDialog from '../settings/SettingsDialog';
 import { useUser, useAuth } from '@/firebase';
 import { Button } from '../ui/button';
 import { signOut } from 'firebase/auth';
-import { Crown, Loader2, LogIn, LogOut } from 'lucide-react';
+import { Loader2, LogIn, LogOut } from 'lucide-react';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
-import { SubscriptionDialog } from '../settings/SubscriptionDialog';
 
 export default function Header() {
-  const { user, isUserLoading, isPremium, setIsPremium } = useUser();
+  const { user, isUserLoading } = useUser();
   const auth = useAuth();
 
   const handleLogin = () => {
@@ -59,14 +59,6 @@ export default function Header() {
       </div>
       <h1 className="text-4xl text-foreground font-headline text-center">PersonaCraft AI</h1>
       <div className="flex items-center gap-2 min-w-[150px] justify-end">
-        {!isPremium && user && (
-          <SubscriptionDialog onUpgrade={() => setIsPremium(true)}>
-            <Button>
-              <Crown className="mr-2 h-5 w-5" />
-              Upgrade
-            </Button>
-          </SubscriptionDialog>
-        )}
         <SettingsDialog />
         <ThemeToggle />
       </div>
