@@ -15,7 +15,7 @@ interface ChatMessageProps {
 const FormattedContent = ({ content, role }: { content: string; role: ChatMessageType['role'] }) => {
   const regex = /(\*[^*]+\*)|("[^"]+")/g;
   const parts = content.split(regex).filter(Boolean);
-  const isUser = role === 'user';
+  const isCharacter = role === 'character';
 
   return (
     <p className="whitespace-pre-wrap break-words">
@@ -28,8 +28,8 @@ const FormattedContent = ({ content, role }: { content: string; role: ChatMessag
           );
         }
         if (part.startsWith('"') && part.endsWith('"')) {
-          return (
-            <span key={index} className="text-primary-foreground">
+           return (
+            <span key={index} className={cn(isCharacter ? 'text-yellow-500' : 'text-primary-foreground')}>
               {part}
             </span>
           );
