@@ -93,9 +93,10 @@ export default function CharacterCreator() {
       const characterRef = doc(firestore, `users/${user.uid}/characters/${newCharacterId}`);
       setDocumentNonBlocking(characterRef, newCharacter, { merge: false });
       
-      // The onSnapshot listener will add the character to the state.
-      // We just need to select it.
+      // 3. Update the local state to show the new character.
       dispatch({ type: 'SELECT_CHARACTER', payload: newCharacter.id });
+      dispatch({ type: 'SET_VIEW', payload: 'viewing' });
+      
       toast({
         title: "Character created!",
         description: `Say hello to ${name}.`,

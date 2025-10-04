@@ -75,20 +75,34 @@ function characterReducer(state: State, action: Action): State {
         return { ...state, ...loadedState, settings: { ...state.settings, ...loadedSettings }};
     case 'SET_CHARACTERS':
         const characters = action.payload;
-        let newSelectedId = state.selectedCharacterId;
         let newView = state.view;
 
-        if (!characters.find(c => c.id === newSelectedId)) {
-            newSelectedId = characters.length > 0 ? characters[0].id : null;
+        // If no character is currently selected, and we now have characters, select the first one.
+        if (!state.selectedCharacterId && characters.length > 0) {
+            return {
+                ...state,
+                characters,
+                selectedCharacterId: characters[0].id,
+                view: 'viewing',
+                isLoading: false,
+            };
         }
 
-        if (characters.length > 0 && state.view !== 'creating') {
-            newView = 'viewing';
+        // If the current view is 'welcome' and characters are loaded, switch to 'viewing'
+        if (state.view === 'welcome' && characters.length > 0) {
+          newView = 'viewing';
         } else if (characters.length === 0) {
-            newView = 'welcome';
+          // If all characters are deleted, go back to welcome
+          return {
+            ...state,
+            characters: [],
+            selectedCharacterId: null,
+            view: 'welcome',
+            isLoading: false,
+          }
         }
-
-        return { ...state, characters, selectedCharacterId: newSelectedId, view: newView, isLoading: false };
+        
+        return { ...state, characters, view: newView, isLoading: false };
     case 'ADD_CHARACTER':
       const existing = state.characters.find(c => c.id === action.payload.id);
       if (existing) return state; // Prevent duplicates from snapshot listeners
