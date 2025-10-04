@@ -30,8 +30,8 @@ const FormattedContent = ({ content, isCharacter }: { content: string, isCharact
         }
         if (part.startsWith('"') && part.endsWith('"')) {
            return (
-            <span key={index} className={cn(isCharacter && "text-primary")}>
-              {part}
+            <span key={index}>
+              &quot;<span className={cn(isCharacter && "text-accent")}>{part.slice(1, -1)}</span>&quot;
             </span>
           );
         }
