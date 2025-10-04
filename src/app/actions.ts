@@ -10,15 +10,12 @@ import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-c
 import type { Character } from '@/lib/types';
 import { Tone } from '@/context/CharacterContext';
 import {
-  addDocumentNonBlocking,
   deleteDocumentNonBlocking,
   setDocumentNonBlocking,
   updateDocumentNonBlocking
 } from '@/firebase/non-blocking-updates';
-import { collection, doc, firestore } from 'firebase/firestore';
-import { getClientSdks } from '@/firebase/client';
+import { collection, doc } from 'firebase/firestore';
 import { initializeFirebaseOnClient } from '@/firebase/client';
-import { getFirebaseAdmin } from '@/firebase/server';
 
 
 function formatProfile(
@@ -59,7 +56,7 @@ export async function createCharacterFromPhoto(
   const { firestore } = initializeFirebaseOnClient();
   const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit });
   const profile = formatProfile(name, profileData);
-  const newCharacterId = crypto.randomUUID();
+  const newCharacterId = doc(collection(firestore, 'users')).id; // Generate ID client-side
   const newCharacter: Character = {
       id: newCharacterId,
       name,
@@ -85,10 +82,10 @@ export async function regenerateCharacterProfile(
   });
   const profile = formatProfile(character.name, newProfileData);
   
-  const updatedCharacterData = { ...character, profile, profileData: newProfileData };
+  const updatedCharacterData = { profile, profileData: newProfileData };
 
   const characterRef = doc(firestore, `users/${userId}/characters/${character.id}`);
-  setDocumentNonBlocking(characterRef, updatedCharacterData, { merge: true });
+  updateDocumentNonBlocking(characterRef, updatedCharacterData);
 
   return { profile, profileData: newProfileData };
 }
