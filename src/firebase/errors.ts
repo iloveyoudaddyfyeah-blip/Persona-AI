@@ -69,6 +69,22 @@ function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
   };
 }
 
+const MAX_STRING_LENGTH = 500;
+function truncateData(data: any): any {
+  if (!data) return data;
+
+  const replacer = (key: string, value: any) => {
+    if (typeof value === 'string' && value.length > MAX_STRING_LENGTH) {
+      return value.substring(0, MAX_STRING_LENGTH) + '...[TRUNCATED]';
+    }
+    return value;
+  };
+
+  // The process of stringifying and parsing is a deep-clone with truncation.
+  return JSON.parse(JSON.stringify(data, replacer));
+}
+
+
 /**
  * Builds the complete, simulated request object for the error message.
  * It safely tries to get the current authenticated user.
@@ -88,12 +104,14 @@ function buildRequestObject(context: SecurityRuleContext): SecurityRuleRequest {
     // This will catch errors if the Firebase app is not yet initialized.
     // In this case, we'll proceed without auth information.
   }
+  
+  const truncatedData = context.requestResourceData ? truncateData(context.requestResourceData) : undefined;
 
   return {
     auth: authObject,
     method: context.operation,
     path: `/databases/(default)/documents/${context.path}`,
-    resource: context.requestResourceData ? { data: context.requestResourceData } : undefined,
+    resource: truncatedData ? { data: truncatedData } : undefined,
   };
 }
 
