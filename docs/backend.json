@@ -1,0 +1,251 @@
+{
+  "entities": {
+    "CharacterProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CharacterProfile",
+      "type": "object",
+      "description": "Represents a character profile generated and/or customized by the user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CharacterProfile entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N CharacterProfile). The user who created/owns this profile."
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL of the uploaded photo used to generate the profile.",
+          "format": "uri"
+        },
+        "generatedProfileText": {
+          "type": "string",
+          "description": "The AI-generated personality profile text.",
+          "format": "text"
+        },
+        "customizedProfileText": {
+          "type": "string",
+          "description": "The user-customized personality profile text (if any). If null, the generatedProfileText is used.",
+          "format": "text"
+        },
+        "creationDate": {
+          "type": "string",
+          "description": "Date and time the profile was initially generated.",
+          "format": "date-time"
+        },
+        "lastModifiedDate": {
+          "type": "string",
+          "description": "Date and time the profile was last modified (either by AI or user).",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "photoUrl",
+        "generatedProfileText",
+        "creationDate",
+        "lastModifiedDate"
+      ]
+    },
+    "ChatSession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatSession",
+      "type": "object",
+      "description": "Represents a chat session between the user and the AI for a specific character profile.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ChatSession entity."
+        },
+        "characterProfileId": {
+          "type": "string",
+          "description": "Reference to CharacterProfile. (Relationship: CharacterProfile 1:N ChatSession). The character profile this chat session belongs to."
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Date and time the chat session started.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "Date and time the chat session ended (can be null if the session is still active).",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "characterProfileId",
+        "startTime"
+      ]
+    },
+    "ChatMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatMessage",
+      "type": "object",
+      "description": "Represents a single message within a chat session.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ChatMessage entity."
+        },
+        "chatSessionId": {
+          "type": "string",
+          "description": "Reference to ChatSession. (Relationship: ChatSession 1:N ChatMessage). The chat session this message belongs to."
+        },
+        "sender": {
+          "type": "string",
+          "description": "Indicates who sent the message ('user' or 'ai')."
+        },
+        "messageText": {
+          "type": "string",
+          "description": "The text content of the message."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Date and time the message was sent.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "chatSessionId",
+        "sender",
+        "messageText",
+        "timestamp"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the application.  Note: Authentication details (passwords, etc.) should be handled by a separate authentication service.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "username": {
+          "type": "string",
+          "description": "User's username."
+        },
+        "registrationDate": {
+          "type": "string",
+          "description": "Date and time the user registered.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "username",
+        "registrationDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles.  Path-based ownership: only the user can access their own profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/characterProfiles/{characterProfileId}",
+        "definition": {
+          "entityName": "CharacterProfile",
+          "schema": {
+            "$ref": "#/backend/entities/CharacterProfile"
+          },
+          "description": "Stores character profiles created by the user. Path-based ownership: only the user can access their own profiles.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "characterProfileId",
+              "description": "The unique identifier of the character profile."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/characterProfiles/{characterProfileId}/chatSessions/{chatSessionId}",
+        "definition": {
+          "entityName": "ChatSession",
+          "schema": {
+            "$ref": "#/backend/entities/ChatSession"
+          },
+          "description": "Stores chat sessions for a specific character profile.  Path-based ownership ensures only the user who owns the character profile can access the chat sessions.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "characterProfileId",
+              "description": "The unique identifier of the character profile."
+            },
+            {
+              "name": "chatSessionId",
+              "description": "The unique identifier of the chat session."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/characterProfiles/{characterProfileId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId}",
+        "definition": {
+          "entityName": "ChatMessage",
+          "schema": {
+            "$ref": "#/backend/entities/ChatMessage"
+          },
+          "description": "Stores chat messages for a specific chat session. Path-based ownership ensures only the user who owns the chat session can access the chat messages.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "characterProfileId",
+              "description": "The unique identifier of the character profile."
+            },
+            {
+              "name": "chatSessionId",
+              "description": "The unique identifier of the chat session."
+            },
+            {
+              "name": "chatMessageId",
+              "description": "The unique identifier of the chat message."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to ensure security, scalability, and ease of debugging, adhering to the core design principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters). It leverages denormalization and structural segregation to simplify security rules and enable efficient data access. The structure also enforces data clarity through explicit state modeling and consistent naming conventions.\n\n**Authorization Independence:**\n\n*   Ownership is explicitly defined via path-based ownership for CharacterProfiles, ChatSessions and ChatMessages. This eliminates the need for `get()` calls in security rules and ensures that authorization checks are self-contained.\n\n**Structural Segregation:**\n\n*   User data and character profiles are separated into distinct collections (`/users/{userId}` and `/users/{userId}/characterProfiles/{characterProfileId}`), each with its own security posture. This simplifies rules and prevents unintended access.\n\n**Access Modeling:**\n\n*   Private Data: User-owned data like CharacterProfiles are stored under `/users/{userId}`, ensuring only the user has access.\n*   Hierarchical Paths: Relationships between entities are represented through nested paths (e.g., `/users/{userId}/characterProfiles/{characterProfileId}/chatSessions/{chatSessionId}`), providing clear ownership and easy rule creation.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations by ensuring that all documents within a collection share the same security requirements.  For example, listing CharacterProfiles under `/users/{userId}/characterProfiles` only returns profiles owned by that user because of path based ownership.\n\n**Invariants:**\n\n*   Ownership is strictly enforced through path-based ownership. Timestamps are included in entities to track creation and modification times. Denormalization is used to maintain data integrity and avoid complex lookups during security checks."
+  }
+}
