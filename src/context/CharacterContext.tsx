@@ -4,11 +4,12 @@
 import type { Character, ChatMessage, UserData, UserPersona, ChatSession } from '@/lib/types';
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { useDoc } from '@/firebase';
+import { useDoc } from '@/firebase/firestore/use-doc';
 import { collection, onSnapshot, Query, doc } from 'firebase/firestore';
-import { setDocumentNonBlocking, updateUser } from '@/firebase/non-blocking-updates';
+import { updateUser, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { v4 as uuidv4 } from 'uuid';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 type View = 'welcome' | 'creating' | 'viewing';
 
@@ -213,10 +214,8 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
 
   // Subscribe to characters collection
   useEffect(() => {
-    // Only subscribe if user is authenticated
     if (!user || !firestore || !charactersColRef) {
       if (!isUserLoading) {
-        // If we are done loading and there's no user, reset the state
         dispatch({ type: 'RESET_STATE' });
       }
       return;
@@ -228,7 +227,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       const characters: Character[] = [];
       snapshot.forEach(doc => {
           const characterData = doc.data() as Character;
-          // Ensure every character has at least one chat session
           if (!characterData.chatSessions || characterData.chatSessions.length === 0) {
               const newChatId = uuidv4();
               characterData.chatSessions = [{
@@ -239,7 +237,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
               }];
               characterData.activeChatId = newChatId;
 
-              // Non-blocking update to fix character data in Firestore
               const charRef = doc(firestore, `users/${user.uid}/characters/${characterData.id}`);
               updateDocumentNonBlocking(charRef, { 
                   chatSessions: characterData.chatSessions,
@@ -247,7 +244,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
               });
           }
           if (!characterData.activeChatId) {
-            // If no active chat is set, set it to the most recent one.
             const mostRecentChat = characterData.chatSessions.sort((a,b) => b.createdAt - a.createdAt)[0];
             characterData.activeChatId = mostRecentChat.id;
              const charRef = doc(firestore, `users/${user.uid}/characters/${characterData.id}`);
@@ -261,6 +257,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       characters.sort((a, b) => a.name.localeCompare(b.name));
       
       dispatch({ type: 'SET_CHARACTERS', payload: characters });
+      dispatch({ type: 'SET_IS_LOADING', payload: false }); // Ensure loading is false after first fetch
     }, (error) => {
       console.error("Error listening to characters collection:", (error as Error).message);
       dispatch({ type: 'SET_IS_LOADING', payload: false });
@@ -273,7 +270,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
 
   // Subscribe to personas collection
   useEffect(() => {
-    // Only subscribe if user is authenticated
     if (!user || !firestore || !personasColRef) {
       return;
     }
@@ -286,7 +282,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       personas.sort((a, b) => a.name.localeCompare(b.name));
       dispatch({ type: 'SET_USER_PERSONAS', payload: personas });
 
-      // If no personas exist for a logged-in user, create a default one
       if (snapshot.empty && user) {
         const personaPlaceholder = PlaceHolderImages.find(img => img.id === 'persona-placeholder');
         const defaultPersonaId = "default";
@@ -298,19 +293,14 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
           isActive: true,
         };
         const personaRef = doc(firestore, `users/${user.uid}/personas/${defaultPersonaId}`);
-        // This write might fail if rules aren't set, but it will try.
         setDocumentNonBlocking(personaRef, defaultPersona, { merge: false });
-        // Also try to set it as active on the user doc
         updateUser(firestore, user.uid, { activePersonaId: defaultPersonaId });
       } else if (personas.length > 0) {
-          // Ensure there is an active persona in the state
           const activePersona = personas.find(p => p.isActive);
           if (!activePersona) {
-              // If the user doc has an active one, trust that.
               if (userData?.activePersonaId && personas.some(p => p.id === userData.activePersonaId)) {
                   dispatch({ type: 'SET_ACTIVE_PERSONA', payload: userData.activePersonaId });
               } else {
-                  // Otherwise, just make the first one active.
                   dispatch({ type: 'SET_ACTIVE_PERSONA', payload: personas[0].id });
               }
           } else {
