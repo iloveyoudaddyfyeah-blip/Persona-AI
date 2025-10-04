@@ -71,6 +71,18 @@ export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) 
     });
 }
 
+export async function updateUser(db: Firestore, userId: string, data: any): Promise<void> {
+  const userRef = doc(db, `users/${userId}`);
+  updateDoc(userRef, data)
+    .catch((error) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: userRef.path,
+        operation: 'update',
+        requestResourceData: data,
+      }));
+    });
+}
+
 
 /**
  * Initiates a deleteDoc operation for a document reference.

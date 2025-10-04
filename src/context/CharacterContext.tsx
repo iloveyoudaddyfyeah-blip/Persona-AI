@@ -6,7 +6,7 @@ import React, { createContext, useContext, useEffect, useReducer, ReactNode } fr
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { useDoc } from '@/firebase';
 import { collection, onSnapshot, Query, doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDocumentNonBlocking, updateUser } from '@/firebase/non-blocking-updates';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 type View = 'welcome' | 'creating' | 'viewing';
@@ -190,21 +190,21 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
   const firestore = useFirestore();
 
   const userDocRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
+    if (!user?.uid || !firestore) return null;
     return doc(firestore, 'users', user.uid);
-  }, [user, firestore]);
+  }, [user?.uid, firestore]);
 
   const { data: userData } = useDoc<UserData>(userDocRef);
 
   const charactersColRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
+    if (!user?.uid || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'characters');
-  }, [user, firestore]);
+  }, [user?.uid, firestore]);
 
   const personasColRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
+    if (!user?.uid || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'personas');
-  }, [user, firestore]);
+  }, [user?.uid, firestore]);
 
 
   // Load user data (settings) from Firestore
@@ -222,10 +222,10 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
 
   // Subscribe to characters collection
   useEffect(() => {
-    if (user && firestore) {
+    if (user && firestore && charactersColRef) {
       dispatch({ type: 'SET_IS_LOADING', payload: true });
       
-      const charactersUnsub = charactersColRef ? onSnapshot(charactersColRef as Query, (snapshot) => {
+      const charactersUnsub = onSnapshot(charactersColRef, (snapshot) => {
         const characters: Character[] = [];
         snapshot.forEach(doc => {
             characters.push(doc.data() as Character);
@@ -237,12 +237,12 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       }, (error) => {
         console.error("Error listening to characters collection:", error);
         dispatch({ type: 'SET_IS_LOADING', payload: false });
-      }) : () => {};
+      });
 
       return () => {
         charactersUnsub();
       };
-    } else if (!isUserLoading) {
+    } else if (!isUserLoading && !user) {
       dispatch({ type: 'RESET_STATE' });
     }
   }, [user, isUserLoading, firestore, charactersColRef]);
@@ -258,8 +258,8 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
         personas.sort((a, b) => a.name.localeCompare(b.name));
         dispatch({ type: 'SET_USER_PERSONAS', payload: personas });
 
-        // If no personas exist, create a default one
-        if (snapshot.empty) {
+        // If no personas exist for a logged-in user, create a default one
+        if (snapshot.empty && user) {
           const personaPlaceholder = PlaceHolderImages.find(img => img.id === 'persona-placeholder');
           const defaultPersonaId = "default";
           const defaultPersona: UserPersona = {
@@ -270,16 +270,24 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
             isActive: true,
           };
           const personaRef = doc(firestore, `users/${user.uid}/personas/${defaultPersonaId}`);
+          // This write might fail if rules aren't set, but it will try.
+          // The error will be caught by our non-blocking handler.
           setDocumentNonBlocking(personaRef, defaultPersona, { merge: false });
-          const userRef = doc(firestore, `users/${user.uid}`);
-          setDocumentNonBlocking(userRef, { activePersonaId: defaultPersonaId }, { merge: true });
-        } else {
-            // Ensure there is an active persona
+          // Also try to set it as active on the user doc
+          updateUser(firestore, user.uid, { activePersonaId: defaultPersonaId });
+        } else if (personas.length > 0) {
+            // Ensure there is an active persona in the state
             const activePersona = personas.find(p => p.isActive);
-            if (!activePersona && user?.uid && userData?.activePersonaId) {
-                 dispatch({ type: 'SET_ACTIVE_PERSONA', payload: userData.activePersonaId });
-            } else if (!activePersona && personas.length > 0) {
-                 dispatch({ type: 'SET_ACTIVE_PERSONA', payload: personas[0].id });
+            if (!activePersona) {
+                // If the user doc has an active one, trust that.
+                if (userData?.activePersonaId && personas.some(p => p.id === userData.activePersonaId)) {
+                    dispatch({ type: 'SET_ACTIVE_PERSONA', payload: userData.activePersonaId });
+                } else {
+                    // Otherwise, just make the first one active.
+                    dispatch({ type: 'SET_ACTIVE_PERSONA', payload: personas[0].id });
+                }
+            } else {
+                 dispatch({ type: 'SET_ACTIVE_PERSONA', payload: activePersona.id });
             }
         }
 

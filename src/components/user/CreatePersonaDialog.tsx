@@ -14,11 +14,11 @@ import {
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
-import { generatePersonaFromPrompt } from '@/app/actions';
+import { generatePersonaFromPrompt, saveUserPersona, updateUser } from '@/app/actions';
 import { Loader2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { Textarea } from '../ui/textarea';
@@ -104,20 +104,19 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount, isPremiu
             isActive: isActive,
         };
 
-        const personaRef = doc(firestore, `users/${user.uid}/personas/${newPersonaId}`);
-        // Corrected call: data is the second argument, options is the third
-        setDocumentNonBlocking(personaRef, newPersona, { merge: false });
+        // Use the new server action
+        await saveUserPersona(firestore, user.uid, newPersona);
 
         if (isActive) {
-            const userRef = doc(firestore, `users/${user.uid}`);
-            setDocumentNonBlocking(userRef, { activePersonaId: newPersonaId }, { merge: true });
+            await updateUser(firestore, user.uid, { activePersonaId: newPersonaId });
         }
         
         toast({ title: 'Persona created!', description: `${name} is now available.` });
         resetForm();
         onOpenChange(false);
     } catch (error) {
-        toast({ variant: 'destructive', title: 'Save failed', description: (error as Error).message });
+        // Error is now handled by the server action's error emitter
+        // We might not even need a toast here if the global error handler is sufficient
     } finally {
         setIsSaving(false);
     }

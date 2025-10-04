@@ -115,3 +115,27 @@ export async function generatePersonaFromPrompt(prompt: string): Promise<string>
   const { persona } = await generateUserPersona({ prompt });
   return persona;
 }
+
+export async function saveUserPersona(db: Firestore, userId: string, persona: UserPersona): Promise<void> {
+  const personaRef = doc(db, `users/${userId}/personas/${persona.id}`);
+  setDoc(personaRef, persona, { merge: false })
+    .catch((error) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: personaRef.path,
+        operation: 'create',
+        requestResourceData: persona,
+      }));
+    });
+}
+
+export async function updateUser(db: Firestore, userId: string, data: any): Promise<void> {
+  const userRef = doc(db, `users/${userId}`);
+  updateDoc(userRef, data)
+    .catch((error) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: userRef.path,
+        operation: 'update',
+        requestResourceData: data,
+      }));
+    });
+}
