@@ -70,18 +70,58 @@ function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
 }
 
 const MAX_STRING_LENGTH = 500;
+
+/**
+ * Safely truncates long strings within a nested object/array structure
+ * and handles circular references to prevent call stack errors.
+ * @param data The data to process.
+ * @returns A deep copy of the data with long strings truncated.
+ */
 function truncateData(data: any): any {
-  if (!data) return data;
+  // Keep track of visited objects to detect cycles.
+  const visited = new WeakSet();
 
-  const replacer = (key: string, value: any) => {
-    if (typeof value === 'string' && value.length > MAX_STRING_LENGTH) {
-      return value.substring(0, MAX_STRING_LENGTH) + '...[TRUNCATED]';
+  function recurse(current: any): any {
+    // Base cases: null, undefined, or primitive types (except strings)
+    if (current === null || typeof current !== 'object') {
+      if (typeof current === 'string' && current.length > MAX_STRING_LENGTH) {
+        return current.substring(0, MAX_STRING_LENGTH) + '...[TRUNCATED]';
+      }
+      return current;
     }
-    return value;
-  };
 
-  // The process of stringifying and parsing is a deep-clone with truncation.
-  return JSON.parse(JSON.stringify(data, replacer));
+    // If we've seen this object before, it's a circular reference.
+    if (visited.has(current)) {
+      return '[Circular Reference]';
+    }
+
+    // Mark the object as visited.
+    visited.add(current);
+
+    // Handle arrays
+    if (Array.isArray(current)) {
+      const newArray: any[] = [];
+      for (const item of current) {
+        newArray.push(recurse(item));
+      }
+      // Un-mark after processing so it can appear again if it's not a direct cycle
+      visited.delete(current);
+      return newArray;
+    }
+    
+    // Handle objects
+    const newObj: { [key: string]: any } = {};
+    for (const key in current) {
+      if (Object.prototype.hasOwnProperty.call(current, key)) {
+        newObj[key] = recurse(current[key]);
+      }
+    }
+    // Un-mark after processing
+    visited.delete(current);
+    return newObj;
+  }
+
+  return recurse(data);
 }
 
 
@@ -121,8 +161,13 @@ function buildRequestObject(context: SecurityRuleContext): SecurityRuleRequest {
  * @returns A string containing the error message and the JSON payload.
  */
 function buildErrorMessage(requestObject: SecurityRuleRequest): string {
-  return `Missing or insufficient permissions: The following request was denied by Firestore Security Rules:
+  try {
+    return `Missing or insufficient permissions: The following request was denied by Firestore Security Rules:
 ${JSON.stringify(requestObject, null, 2)}`;
+  } catch (e) {
+    // Fallback for any unforeseen stringify errors
+    return `Missing or insufficient permissions. Failed to stringify the detailed error. Operation: ${requestObject.method}, Path: ${requestObject.path}`;
+  }
 }
 
 /**
