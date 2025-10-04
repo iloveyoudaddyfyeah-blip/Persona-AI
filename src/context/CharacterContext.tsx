@@ -3,8 +3,8 @@
 
 import type { Character, ChatMessage } from '@/lib/types';
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, doc, onSnapshot } from 'firebase/firestore';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc, onSnapshot, Query } from 'firebase/firestore';
 
 type View = 'welcome' | 'creating' | 'viewing';
 
@@ -165,6 +165,17 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
+  const userDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+
+  const charactersColRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, 'users', user.uid, 'characters');
+  }, [user, firestore]);
+
+
   useEffect(() => {
     try {
       const storedSettings = localStorage.getItem('personaCraftSettings');
@@ -181,18 +192,16 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     if (user && firestore) {
       dispatch({ type: 'SET_IS_LOADING', payload: true });
 
-      const userDocRef = doc(firestore, 'users', user.uid);
-      const userUnsub = onSnapshot(userDocRef, (doc) => {
+      const userUnsub = userDocRef ? onSnapshot(userDocRef, (doc) => {
         const userData = doc.data();
         if (userData?.persona) {
           dispatch({ type: 'SET_USER_PERSONA', payload: userData.persona });
         }
       }, (error) => {
         console.error("Error listening to user document:", error);
-      });
+      }) : () => {};
       
-      const charactersColRef = collection(firestore, 'users', user.uid, 'characters');
-      const charactersUnsub = onSnapshot(charactersColRef, (snapshot) => {
+      const charactersUnsub = charactersColRef ? onSnapshot(charactersColRef as Query, (snapshot) => {
         const characters: Character[] = [];
         snapshot.forEach(doc => {
             characters.push(doc.data() as Character);
@@ -205,7 +214,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       }, (error) => {
         console.error("Error listening to characters collection:", error);
         dispatch({ type: 'SET_IS_LOADING', payload: false });
-      });
+      }) : () => {};
 
       return () => {
         userUnsub();
@@ -214,7 +223,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     } else if (!isUserLoading) {
       dispatch({ type: 'RESET_STATE' });
     }
-  }, [user, isUserLoading, firestore]);
+  }, [user, isUserLoading, firestore, userDocRef, charactersColRef]);
 
   useEffect(() => {
     try {
