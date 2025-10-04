@@ -11,11 +11,13 @@ import { generateUserPersona } from '@/ai/flows/generate-user-persona';
 import type { Character, ChatMessage, UserPersona } from '@/lib/types';
 import { Tone } from '@/context/CharacterContext';
 import {
-  deleteDocumentNonBlocking,
-  setDocumentNonBlocking,
-  updateDocumentNonBlocking
-} from '@/firebase/non-blocking-updates';
+  deleteDoc,
+  setDoc,
+  updateDoc
+} from 'firebase/firestore';
 import { collection, doc, type Firestore } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 function formatProfile(
