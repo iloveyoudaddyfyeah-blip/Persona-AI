@@ -11,13 +11,21 @@ export type ChatMessage = {
   content: string;
 };
 
+export type ChatSession = {
+  id: string;
+  name: string;
+  createdAt: number; // unix timestamp
+  messages: ChatMessage[];
+};
+
 export type Character = {
   id: string;
   name: string;
   photoDataUri: string;
   profile: string;
   profileData?: GeneratePersonalityProfileOutput;
-  chatHistory: ChatMessage[];
+  chatSessions?: ChatSession[];
+  activeChatId?: string | null;
 };
 
 export type UserPersona = {

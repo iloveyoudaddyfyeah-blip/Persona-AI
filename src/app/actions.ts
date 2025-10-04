@@ -8,7 +8,7 @@ import {
 import { modifyPersonalityProfile } from '@/ai/flows/modify-personality-profile';
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
 import { generateUserPersona } from '@/ai/flows/generate-user-persona';
-import type { Character, ChatMessage, UserPersona } from '@/lib/types';
+import type { Character, ChatMessage, UserPersona, ChatSession } from '@/lib/types';
 import { Tone } from '@/context/CharacterContext';
 import {
   setDoc
@@ -75,12 +75,13 @@ export async function regenerateCharacterProfile(
 
 export async function getChatResponse(
   character: Character,
+  activeChat: ChatSession | undefined,
   userMessage: string,
   userPersona: UserPersona | null
 ): Promise<ChatMessage> {
   const personaDescription = userPersona?.description || 'A curious individual trying to get to know the characters.';
   
-  let history = character.chatHistory || [];
+  let history = activeChat?.messages || [];
 
   const historyString = history
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)

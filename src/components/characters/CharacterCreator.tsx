@@ -17,6 +17,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { Character } from '@/lib/types';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function CharacterCreator() {
   const { state, dispatch } = useCharacter();
@@ -73,6 +74,16 @@ export default function CharacterCreator() {
       const generatedData = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit);
       
       const newCharacterId = doc(collection(firestore, 'users', user.uid, 'characters')).id;
+
+      // Create a default first chat session
+      const newChatId = uuidv4();
+      const firstChatSession = {
+        id: newChatId,
+        name: `Chat 1`,
+        createdAt: Date.now(),
+        messages: [],
+      };
+      
       const newCharacter: Character = {
           id: newCharacterId,
           name,
@@ -86,7 +97,8 @@ export default function CharacterCreator() {
             likes: generatedData.likes,
             dislikes: generatedData.dislikes,
           },
-          chatHistory: [],
+          chatSessions: [firstChatSession],
+          activeChatId: newChatId,
       };
 
       // 2. Save the complete character object to Firestore from the client

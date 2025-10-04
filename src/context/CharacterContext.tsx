@@ -1,13 +1,14 @@
 
 "use client";
 
-import type { Character, ChatMessage, UserData, UserPersona } from '@/lib/types';
+import type { Character, ChatMessage, UserData, UserPersona, ChatSession } from '@/lib/types';
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { useDoc } from '@/firebase';
 import { collection, onSnapshot, Query, doc } from 'firebase/firestore';
 import { setDocumentNonBlocking, updateUser } from '@/firebase/non-blocking-updates';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { v4 as uuidv4 } from 'uuid';
 
 type View = 'welcome' | 'creating' | 'viewing';
 
@@ -36,7 +37,6 @@ type Action =
   | { type: 'DELETE_CHARACTER'; payload: string }
   | { type: 'SELECT_CHARACTER'; payload: string | null }
   | { type: 'SET_VIEW'; payload: View }
-  | { type: 'ADD_MESSAGE'; payload: { characterId: string; message: ChatMessage } }
   | { type: 'SET_IS_GENERATING', payload: boolean }
   | { type: 'SET_IS_LOADING', payload: boolean }
   | { type: 'LOAD_SETTINGS', payload: Partial<Settings> }
@@ -154,15 +154,6 @@ function characterReducer(state: State, action: Action): State {
             ...state,
             view: action.payload,
         };
-    case 'ADD_MESSAGE':
-      return {
-        ...state,
-        characters: state.characters.map(c =>
-          c.id === action.payload.characterId
-            ? { ...c, chatHistory: [...(c.chatHistory || []), action.payload.message] }
-            : c
-        ),
-      };
     case 'SET_IS_GENERATING':
       return { ...state, isGenerating: action.payload };
     case 'SET_IS_LOADING':
@@ -236,14 +227,42 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     const charactersUnsub = onSnapshot(charactersColRef, (snapshot) => {
       const characters: Character[] = [];
       snapshot.forEach(doc => {
-          characters.push(doc.data() as Character);
+          const characterData = doc.data() as Character;
+          // Ensure every character has at least one chat session
+          if (!characterData.chatSessions || characterData.chatSessions.length === 0) {
+              const newChatId = uuidv4();
+              characterData.chatSessions = [{
+                  id: newChatId,
+                  name: 'Chat 1',
+                  createdAt: Date.now(),
+                  messages: []
+              }];
+              characterData.activeChatId = newChatId;
+
+              // Non-blocking update to fix character data in Firestore
+              const charRef = doc(firestore, `users/${user.uid}/characters/${characterData.id}`);
+              updateDocumentNonBlocking(charRef, { 
+                  chatSessions: characterData.chatSessions,
+                  activeChatId: characterData.activeChatId
+              });
+          }
+          if (!characterData.activeChatId) {
+            // If no active chat is set, set it to the most recent one.
+            const mostRecentChat = characterData.chatSessions.sort((a,b) => b.createdAt - a.createdAt)[0];
+            characterData.activeChatId = mostRecentChat.id;
+             const charRef = doc(firestore, `users/${user.uid}/characters/${characterData.id}`);
+              updateDocumentNonBlocking(charRef, { 
+                  activeChatId: characterData.activeChatId
+              });
+          }
+          characters.push(characterData);
       });
 
       characters.sort((a, b) => a.name.localeCompare(b.name));
       
       dispatch({ type: 'SET_CHARACTERS', payload: characters });
     }, (error) => {
-      console.error("Error listening to characters collection:", error);
+      console.error("Error listening to characters collection:", (error as Error).message);
       dispatch({ type: 'SET_IS_LOADING', payload: false });
     });
 
@@ -280,7 +299,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
         };
         const personaRef = doc(firestore, `users/${user.uid}/personas/${defaultPersonaId}`);
         // This write might fail if rules aren't set, but it will try.
-        // The error will be caught by our non-blocking handler.
         setDocumentNonBlocking(personaRef, defaultPersona, { merge: false });
         // Also try to set it as active on the user doc
         updateUser(firestore, user.uid, { activePersonaId: defaultPersonaId });
@@ -301,7 +319,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       }
 
     }, (error) => {
-      console.error("Error listening to personas collection:", error);
+      console.error("Error listening to personas collection:", (error as Error).message);
     });
     return () => personasUnsub();
   }, [user, firestore, personasColRef, userData]);
