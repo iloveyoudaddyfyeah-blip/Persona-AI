@@ -276,8 +276,8 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
 
     const personasUnsub = onSnapshot(personasColRef, (snapshot) => {
       const personas: UserPersona[] = [];
-      snapshot.forEach(doc => {
-        personas.push(doc.data() as UserPersona);
+      snapshot.forEach(docSnap => {
+        personas.push(docSnap.data() as UserPersona);
       });
       personas.sort((a, b) => a.name.localeCompare(b.name));
       dispatch({ type: 'SET_USER_PERSONAS', payload: personas });
@@ -342,3 +342,5 @@ export function useCharacter() {
   }
   return context;
 }
+
+    
