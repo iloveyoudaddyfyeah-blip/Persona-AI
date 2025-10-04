@@ -6,12 +6,14 @@ import { useAuth } from '@/firebase';
 import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { Chrome } from 'lucide-react';
 import Image from 'next/image';
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 
 export default function LoginScreen() {
   const auth = useAuth();
   
   const handleLogin = () => {
-    initiateGoogleSignIn(auth);
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider);
   };
 
   return (
