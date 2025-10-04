@@ -10,7 +10,7 @@ import ChatMessage from './ChatMessage';
 import { getChatResponse } from '@/app/actions';
 import { Loader2, Send } from 'lucide-react';
 import { Card } from '../ui/card';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 
 interface ChatInterfaceProps {
   character: Character;
@@ -19,6 +19,7 @@ interface ChatInterfaceProps {
 export default function ChatInterface({ character }: ChatInterfaceProps) {
   const { state, dispatch } = useCharacter();
   const { user } = useUser();
+  const firestore = useFirestore();
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -31,7 +32,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userInput.trim() || isTyping || !user) return;
+    if (!userInput.trim() || isTyping || !user || !firestore) return;
 
     const userMessage = { role: 'user' as const, content: userInput };
     // Optimistically update UI
@@ -41,7 +42,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
 
     try {
       // The backend action will save both user message and character response
-      const response = await getChatResponse(character, userInput, state.userPersona, user.uid);
+      const response = await getChatResponse(firestore, character, userInput, state.userPersona, user.uid);
       const characterMessage = { role: 'character' as const, content: response };
       // We only need to add the character's message, as the user's was added optimistically
       // and the full history is now saved in Firestore. The local state will be updated by the onSnapshot listener.

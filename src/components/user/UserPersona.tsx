@@ -9,11 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Loader2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserPersona } from '@/app/actions';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 
 export default function UserPersona() {
   const { state, dispatch } = useCharacter();
   const { user } = useUser();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [persona, setPersona] = useState(state.userPersona);
   const [isSaving, setIsSaving] = useState(false);
@@ -23,13 +24,13 @@ export default function UserPersona() {
   }, [state.userPersona]);
 
   const handleSave = async () => {
-    if (!user) {
+    if (!user || !firestore) {
         toast({ variant: 'destructive', title: 'Not logged in', description: 'You must be logged in to save your persona.' });
         return;
     }
     setIsSaving(true);
     try {
-        await updateUserPersona(user.uid, persona);
+        await updateUserPersona(firestore, user.uid, persona);
         dispatch({ type: 'SET_USER_PERSONA', payload: persona });
         toast({
         title: 'Persona Saved',

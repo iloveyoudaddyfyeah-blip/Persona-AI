@@ -14,8 +14,7 @@ import {
   setDocumentNonBlocking,
   updateDocumentNonBlocking
 } from '@/firebase/non-blocking-updates';
-import { collection, doc } from 'firebase/firestore';
-import { initializeFirebaseOnClient } from '@/firebase/client';
+import { collection, doc, Firestore } from 'firebase/firestore';
 
 
 function formatProfile(
@@ -46,14 +45,15 @@ ${motivations}
 `;
 }
 
+// Note: Firestore instance is passed from the client
 export async function createCharacterFromPhoto(
+  firestore: Firestore,
   name: string,
   photoDataUri: string,
   tone: Tone,
   charLimit: number,
   userId: string,
 ): Promise<Character> {
-  const { firestore } = initializeFirebaseOnClient();
   const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit });
   const profile = formatProfile(name, profileData);
   const newCharacterId = doc(collection(firestore, 'users')).id; // Generate ID client-side
@@ -70,12 +70,13 @@ export async function createCharacterFromPhoto(
   return newCharacter;
 }
 
+// Note: Firestore instance is passed from the client
 export async function regenerateCharacterProfile(
+  firestore: Firestore,
   character: Character,
   prompt: string,
   userId: string,
 ): Promise<Pick<Character, 'profile' | 'profileData'>> {
-    const { firestore } = initializeFirebaseOnClient();
   const newProfileData = await modifyPersonalityProfile({
     currentProfile: character.profileData!,
     prompt,
@@ -90,13 +91,14 @@ export async function regenerateCharacterProfile(
   return { profile, profileData: newProfileData };
 }
 
+// Note: Firestore instance is passed from the client
 export async function getChatResponse(
+  firestore: Firestore,
   character: Character,
   userMessage: string,
   userPersona: string,
   userId: string
 ): Promise<string> {
-    const { firestore } = initializeFirebaseOnClient();
   const historyString = (character.chatHistory || [])
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)
     .join('\n');
@@ -124,20 +126,20 @@ export async function getChatResponse(
   return response;
 }
 
-export async function updateUserPersona(userId: string, persona: string): Promise<void> {
-    const { firestore } = initializeFirebaseOnClient();
+// Note: Firestore instance is passed from the client
+export async function updateUserPersona(firestore: Firestore, userId: string, persona: string): Promise<void> {
     const userRef = doc(firestore, `users/${userId}`);
     setDocumentNonBlocking(userRef, { persona }, { merge: true });
 }
 
-export async function saveCharacterChanges(userId: string, character: Character): Promise<void> {
-    const { firestore } = initializeFirebaseOnClient();
+// Note: Firestore instance is passed from the client
+export async function saveCharacterChanges(firestore: Firestore, userId: string, character: Character): Promise<void> {
     const characterRef = doc(firestore, `users/${userId}/characters/${character.id}`);
     setDocumentNonBlocking(characterRef, character, { merge: true });
 }
 
-export async function deleteCharacterFromDb(userId: string, characterId: string): Promise<void> {
-    const { firestore } = initializeFirebaseOnClient();
+// Note: Firestore instance is passed from the client
+export async function deleteCharacterFromDb(firestore: Firestore, userId: string, characterId: string): Promise<void> {
     const characterRef = doc(firestore, `users/${userId}/characters/${characterId}`);
     deleteDocumentNonBlocking(characterRef);
 }

@@ -16,7 +16,7 @@ import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatInterface from '../chat/ChatInterface';
 import UserPersona from '../user/UserPersona';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 
 interface CharacterProfileProps {
   character: Character;
@@ -25,6 +25,7 @@ interface CharacterProfileProps {
 export default function CharacterProfile({ character }: CharacterProfileProps) {
   const { state, dispatch } = useCharacter();
   const { user } = useUser();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [name, setName] = useState(character.name);
   const [profile, setProfile] = useState(character.profile);
@@ -38,7 +39,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   }, [character]);
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || !firestore) return;
     setIsSaving(true);
     const updatedCharacter: Character = { 
         ...character, 
@@ -46,7 +47,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
         profile,
     };
     try {
-        await saveCharacterChanges(user.uid, updatedCharacter);
+        await saveCharacterChanges(firestore, user.uid, updatedCharacter);
         // The snapshot listener will update the context state
         toast({
             title: 'Character Saved',
@@ -60,7 +61,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   };
 
   const handleRegenerate = async () => {
-    if (!user) return;
+    if (!user || !firestore) return;
     if (!regenPrompt) {
       toast({
         variant: "destructive",
@@ -82,7 +83,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
     setIsRegenerating(true);
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
     try {
-      await regenerateCharacterProfile(character, regenPrompt, user.uid);
+      await regenerateCharacterProfile(firestore, character, regenPrompt, user.uid);
       setRegenPrompt('');
       toast({
         title: 'Profile Regenerating!',

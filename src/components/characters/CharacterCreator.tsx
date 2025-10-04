@@ -13,11 +13,12 @@ import { Loader2, Upload } from 'lucide-react';
 import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Slider } from '../ui/slider';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 
 export default function CharacterCreator() {
   const { state, dispatch } = useCharacter();
   const { user } = useUser();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [photo, setPhoto] = useState<{ file: File; dataUri: string } | null>(null);
@@ -53,7 +54,7 @@ export default function CharacterCreator() {
       });
       return;
     }
-    if (!user) {
+    if (!user || !firestore) {
         toast({
             variant: "destructive",
             title: "Not logged in",
@@ -66,7 +67,7 @@ export default function CharacterCreator() {
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
 
     try {
-      const newCharacter = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit, user.uid);
+      const newCharacter = await createCharacterFromPhoto(firestore, name, photo.dataUri, tone, charLimit, user.uid);
       
       // The onSnapshot listener will add the character to the state.
       // We just need to select it.

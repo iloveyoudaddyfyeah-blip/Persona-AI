@@ -5,13 +5,14 @@ import { useCharacter } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { deleteCharacterFromDb } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 
 export default function CharacterList() {
   const { state, dispatch } = useCharacter();
   const { user } = useUser();
+  const firestore = useFirestore();
   const { toast } = useToast();
 
   const handleSelectCharacter = (id: string) => {
@@ -25,13 +26,13 @@ export default function CharacterList() {
   
   const handleDeleteCharacter = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (!user) {
+    if (!user || !firestore) {
         toast({ variant: 'destructive', title: 'Not logged in' });
         return;
     }
     if (window.confirm('Are you sure you want to delete this character? This cannot be undone.')) {
       try {
-        await deleteCharacterFromDb(user.uid, id);
+        await deleteCharacterFromDb(firestore, user.uid, id);
         // The snapshot listener in context will handle updating the local state
         toast({ title: 'Character deleted' });
       } catch (error) {
