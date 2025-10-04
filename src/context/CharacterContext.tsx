@@ -3,7 +3,7 @@
 
 import type { Character, ChatMessage } from '@/lib/types';
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { collection, doc, onSnapshot } from 'firebase/firestore';
 
 type View = 'welcome' | 'creating' | 'viewing';
@@ -90,6 +90,8 @@ function characterReducer(state: State, action: Action): State {
 
         return { ...state, characters, selectedCharacterId: newSelectedId, view: newView, isLoading: false };
     case 'ADD_CHARACTER':
+      const existing = state.characters.find(c => c.id === action.payload.id);
+      if (existing) return state; // Prevent duplicates from snapshot listeners
       return { 
         ...state, 
         characters: [...state.characters, action.payload],
@@ -191,7 +193,14 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       
       const charactersColRef = collection(firestore, 'users', user.uid, 'characters');
       const charactersUnsub = onSnapshot(charactersColRef, (snapshot) => {
-        const characters = snapshot.docs.map(doc => doc.data() as Character);
+        const characters: Character[] = [];
+        snapshot.forEach(doc => {
+            characters.push(doc.data() as Character);
+        });
+
+        // Sort characters by name, or any other property
+        characters.sort((a, b) => a.name.localeCompare(b.name));
+        
         dispatch({ type: 'SET_CHARACTERS', payload: characters });
       }, (error) => {
         console.error("Error listening to characters collection:", error);

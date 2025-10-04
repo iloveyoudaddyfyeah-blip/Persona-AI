@@ -157,96 +157,31 @@
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
+      "collections": {
+          "/users/{userId}": {
+              "schema": {
+                  "$ref": "#/entities/User"
+              },
+              "description": "Stores user profiles. Path-based ownership: only the user can access their own profile."
           },
-          "description": "Stores user profiles.  Path-based ownership: only the user can access their own profile.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/characterProfiles/{characterProfileId}",
-        "definition": {
-          "entityName": "CharacterProfile",
-          "schema": {
-            "$ref": "#/backend/entities/CharacterProfile"
+          "/users/{userId}/characters/{characterId}": {
+              "schema": {
+                  "$ref": "#/entities/CharacterProfile"
+              },
+              "description": "Stores character profiles created by the user. Path-based ownership: only the user can access their own profiles."
           },
-          "description": "Stores character profiles created by the user. Path-based ownership: only the user can access their own profiles.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "characterProfileId",
-              "description": "The unique identifier of the character profile."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/characterProfiles/{characterProfileId}/chatSessions/{chatSessionId}",
-        "definition": {
-          "entityName": "ChatSession",
-          "schema": {
-            "$ref": "#/backend/entities/ChatSession"
+          "/users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}": {
+              "schema": {
+                  "$ref": "#/entities/ChatSession"
+              },
+              "description": "Stores chat sessions for a specific character profile. Path-based ownership ensures only the user who owns the character profile can access the chat sessions."
           },
-          "description": "Stores chat sessions for a specific character profile.  Path-based ownership ensures only the user who owns the character profile can access the chat sessions.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "characterProfileId",
-              "description": "The unique identifier of the character profile."
-            },
-            {
-              "name": "chatSessionId",
-              "description": "The unique identifier of the chat session."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/characterProfiles/{characterProfileId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId}",
-        "definition": {
-          "entityName": "ChatMessage",
-          "schema": {
-            "$ref": "#/backend/entities/ChatMessage"
-          },
-          "description": "Stores chat messages for a specific chat session. Path-based ownership ensures only the user who owns the chat session can access the chat messages.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "characterProfileId",
-              "description": "The unique identifier of the character profile."
-            },
-            {
-              "name": "chatSessionId",
-              "description": "The unique identifier of the chat session."
-            },
-            {
-              "name": "chatMessageId",
-              "description": "The unique identifier of the chat message."
-            }
-          ]
-        }
+          "/users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId}": {
+              "schema": {
+                  "$ref": "#/entities/ChatMessage"
+              },
+              "description": "Stores chat messages for a specific chat session. Path-based ownership ensures only the user who owns the chat session can access the chat messages."
+          }
       }
-    ],
-    "reasoning": "The Firestore data structure is designed to ensure security, scalability, and ease of debugging, adhering to the core design principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters). It leverages denormalization and structural segregation to simplify security rules and enable efficient data access. The structure also enforces data clarity through explicit state modeling and consistent naming conventions.\n\n**Authorization Independence:**\n\n*   Ownership is explicitly defined via path-based ownership for CharacterProfiles, ChatSessions and ChatMessages. This eliminates the need for `get()` calls in security rules and ensures that authorization checks are self-contained.\n\n**Structural Segregation:**\n\n*   User data and character profiles are separated into distinct collections (`/users/{userId}` and `/users/{userId}/characterProfiles/{characterProfileId}`), each with its own security posture. This simplifies rules and prevents unintended access.\n\n**Access Modeling:**\n\n*   Private Data: User-owned data like CharacterProfiles are stored under `/users/{userId}`, ensuring only the user has access.\n*   Hierarchical Paths: Relationships between entities are represented through nested paths (e.g., `/users/{userId}/characterProfiles/{characterProfileId}/chatSessions/{chatSessionId}`), providing clear ownership and easy rule creation.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations by ensuring that all documents within a collection share the same security requirements.  For example, listing CharacterProfiles under `/users/{userId}/characterProfiles` only returns profiles owned by that user because of path based ownership.\n\n**Invariants:**\n\n*   Ownership is strictly enforced through path-based ownership. Timestamps are included in entities to track creation and modification times. Denormalization is used to maintain data integrity and avoid complex lookups during security checks."
   }
 }

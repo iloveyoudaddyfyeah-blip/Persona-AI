@@ -9,8 +9,17 @@ import { modifyPersonalityProfile } from '@/ai/flows/modify-personality-profile'
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
 import type { Character } from '@/lib/types';
 import { Tone } from '@/context/CharacterContext';
+import {
+  addDocumentNonBlocking,
+  deleteDocumentNonBlocking,
+  setDocumentNonBlocking,
+  updateDocumentNonBlocking
+} from '@/firebase/non-blocking-updates';
+import { collection, doc, firestore } from 'firebase/firestore';
+import { getClientSdks } from '@/firebase/client';
+import { initializeFirebaseOnClient } from '@/firebase/client';
 import { getFirebaseAdmin } from '@/firebase/server';
-import { FieldValue } from 'firebase-admin/firestore';
+
 
 function formatProfile(
   name: string,
@@ -47,7 +56,7 @@ export async function createCharacterFromPhoto(
   charLimit: number,
   userId: string,
 ): Promise<Character> {
-  const { firestore } = await getFirebaseAdmin();
+  const { firestore } = initializeFirebaseOnClient();
   const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit });
   const profile = formatProfile(name, profileData);
   const newCharacterId = crypto.randomUUID();
@@ -59,8 +68,8 @@ export async function createCharacterFromPhoto(
       profileData,
       chatHistory: [],
   };
-  const characterRef = firestore.doc(`users/${userId}/characters/${newCharacterId}`);
-  await characterRef.set(newCharacter, { merge: false });
+  const characterRef = doc(firestore, `users/${userId}/characters/${newCharacterId}`);
+  setDocumentNonBlocking(characterRef, newCharacter, { merge: false });
   return newCharacter;
 }
 
@@ -69,7 +78,7 @@ export async function regenerateCharacterProfile(
   prompt: string,
   userId: string,
 ): Promise<Pick<Character, 'profile' | 'profileData'>> {
-  const { firestore } = await getFirebaseAdmin();
+    const { firestore } = initializeFirebaseOnClient();
   const newProfileData = await modifyPersonalityProfile({
     currentProfile: character.profileData!,
     prompt,
@@ -78,8 +87,8 @@ export async function regenerateCharacterProfile(
   
   const updatedCharacterData = { ...character, profile, profileData: newProfileData };
 
-  const characterRef = firestore.doc(`users/${userId}/characters/${character.id}`);
-  await characterRef.set(updatedCharacterData, { merge: true });
+  const characterRef = doc(firestore, `users/${userId}/characters/${character.id}`);
+  setDocumentNonBlocking(characterRef, updatedCharacterData, { merge: true });
 
   return { profile, profileData: newProfileData };
 }
@@ -90,7 +99,7 @@ export async function getChatResponse(
   userPersona: string,
   userId: string
 ): Promise<string> {
-  const { firestore } = await getFirebaseAdmin();
+    const { firestore } = initializeFirebaseOnClient();
   const historyString = (character.chatHistory || [])
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)
     .join('\n');
@@ -110,28 +119,28 @@ export async function getChatResponse(
   const newMessage = { role: 'user' as const, content: userMessage };
   const newResponse = { role: 'character' as const, content: response };
   
-  const characterRef = firestore.doc(`users/${userId}/characters/${character.id}`);
-  await characterRef.update({ 
-      chatHistory: FieldValue.arrayUnion(newMessage, newResponse) 
+  const characterRef = doc(firestore, `users/${userId}/characters/${character.id}`);
+    updateDocumentNonBlocking(characterRef, { 
+      chatHistory: [...(character.chatHistory || []), newMessage, newResponse]
   });
 
   return response;
 }
 
 export async function updateUserPersona(userId: string, persona: string): Promise<void> {
-    const { firestore } = await getFirebaseAdmin();
-    const userRef = firestore.doc(`users/${userId}`);
-    await userRef.set({ persona }, { merge: true });
+    const { firestore } = initializeFirebaseOnClient();
+    const userRef = doc(firestore, `users/${userId}`);
+    setDocumentNonBlocking(userRef, { persona }, { merge: true });
 }
 
 export async function saveCharacterChanges(userId: string, character: Character): Promise<void> {
-    const { firestore } = await getFirebaseAdmin();
-    const characterRef = firestore.doc(`users/${userId}/characters/${character.id}`);
-    await characterRef.set(character, { merge: true });
+    const { firestore } = initializeFirebaseOnClient();
+    const characterRef = doc(firestore, `users/${userId}/characters/${character.id}`);
+    setDocumentNonBlocking(characterRef, character, { merge: true });
 }
 
 export async function deleteCharacterFromDb(userId: string, characterId: string): Promise<void> {
-    const { firestore } = await getFirebaseAdmin();
-    const characterRef = firestore.doc(`users/${userId}/characters/${characterId}`);
-    await characterRef.delete();
+    const { firestore } = initializeFirebaseOnClient();
+    const characterRef = doc(firestore, `users/${userId}/characters/${characterId}`);
+    deleteDocumentNonBlocking(characterRef);
 }
