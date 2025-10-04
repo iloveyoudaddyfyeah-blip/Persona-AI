@@ -10,7 +10,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { InteractiveChatWithCharacterOutputSchema } from '@/ai/schemas';
 
 const InteractiveChatWithCharacterInputSchema = z.object({
   characterProfile: z
@@ -24,6 +23,10 @@ const InteractiveChatWithCharacterInputSchema = z.object({
 export type InteractiveChatWithCharacterInput = z.infer<
   typeof InteractiveChatWithCharacterInputSchema
 >;
+
+const InteractiveChatWithCharacterOutputSchema = z.object({
+  response: z.string().describe('The character response to the user message.'),
+});
 
 export type InteractiveChatWithCharacterOutput = z.infer<
   typeof InteractiveChatWithCharacterOutputSchema
@@ -60,7 +63,7 @@ Previous Chat History:
 
 User message: {{{userMessage}}}
 
-Respond as the character, strictly following the formatting rules. Weave information from the character's profile and the user's persona into your answer where possible. The AI has a memory store.
+Respond as the character, strictly following the formatting rules. Weave information from the character's profile and the user's persona into your answer where possible.
 
 Character response: `,
 });
