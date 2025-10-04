@@ -73,18 +73,11 @@ export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) 
     });
 }
 
-export function updateUser(db: Firestore, userId: string, data: any): void {
-  const userRef = doc(db, `users/${userId}`);
+export function updateUser(firestore: Firestore, userId: string, data: any): void {
+  const userRef = doc(firestore, `users/${userId}`);
   // Use setDoc with merge instead of updateDoc to handle document creation if it doesn't exist.
   // This is safer for the user settings document.
-  setDoc(userRef, data, { merge: true })
-    .catch((error) => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        path: userRef.path,
-        operation: 'update', // Logically it's an update of user data
-        requestResourceData: data,
-      }));
-    });
+  setDocumentNonBlocking(userRef, data, { merge: true });
 }
 
 
