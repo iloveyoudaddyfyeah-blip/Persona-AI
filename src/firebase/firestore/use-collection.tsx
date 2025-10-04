@@ -49,7 +49,7 @@ export function useCollection<T = any>(
   type StateDataType = ResultItemType[] | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Start loading true
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
@@ -64,19 +64,16 @@ export function useCollection<T = any>(
     setError(null);
 
     const getPathFromQuery = (query: Query | CollectionReference): string => {
-        if (query.type === 'collection') {
+        if ('path' in query) { // This works for CollectionReference
             return (query as CollectionReference).path;
         }
-        // This is a workaround to get the path from a query.
-        // It's not ideal but often works for debugging.
-        // The path is stored on an internal property.
+        // This is a workaround for queries. The path is not on a public property.
         if ((query as any)._query?.path?.segments) {
             return (query as any)._query.path.segments.join('/');
         }
         return '[unknown path]';
     };
 
-    // Directly use memoizedTargetRefOrQuery as it's assumed to be the final query
     const unsubscribe = onSnapshot(
       memoizedTargetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
@@ -105,7 +102,8 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery]); // Re-run if the target query/reference changes.
+  }, [memoizedTargetRefOrQuery]);
 
   return { data, isLoading, error };
 }
+

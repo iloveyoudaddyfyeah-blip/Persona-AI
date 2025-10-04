@@ -9,6 +9,8 @@ import {
   CollectionReference,
   DocumentReference,
   SetOptions,
+  Firestore,
+  doc,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {FirestorePermissionError} from '@/firebase/errors';
@@ -71,7 +73,7 @@ export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) 
     });
 }
 
-export async function updateUser(db: Firestore, userId: string, data: any): Promise<void> {
+export function updateUser(db: Firestore, userId: string, data: any): void {
   const userRef = doc(db, `users/${userId}`);
   updateDoc(userRef, data)
     .catch((error) => {
