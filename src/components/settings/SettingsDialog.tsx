@@ -16,16 +16,17 @@ import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Slider } from "../ui/slider";
 import { useCharacter, Tone } from "@/context/CharacterContext";
-import { Settings, Bug } from 'lucide-react';
+import { Settings, Bug, Crown } from 'lucide-react';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
+import { SubscriptionDialog } from './SubscriptionDialog';
 
 export default function SettingsDialog() {
   const { state, dispatch } = useCharacter();
   const { settings } = state;
-  const { user } = useUser();
+  const { user, isPremium, setIsPremium } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -35,6 +36,15 @@ export default function SettingsDialog() {
         variant: "destructive",
         title: "Not Logged In",
         description: "You must be logged in to change settings.",
+      });
+      return;
+    }
+    
+    if (!isPremium) {
+       toast({
+        variant: "destructive",
+        title: "Premium Feature",
+        description: "You must be a premium user to change default AI settings.",
       });
       return;
     }
@@ -70,10 +80,11 @@ export default function SettingsDialog() {
         </DialogHeader>
         <div className="grid gap-6 py-4">
             <div className="space-y-2">
-                <Label htmlFor="tone" className="text-base">Default AI Tone</Label>
+                <Label htmlFor="tone" className="text-base flex items-center gap-2">Default AI Tone {!isPremium && <Crown className='h-4 w-4 text-primary' />}</Label>
                 <Select 
                     value={settings.aiTone} 
                     onValueChange={(value) => handleSettingChange('aiTone', value)}
+                    disabled={!isPremium}
                 >
                     <SelectTrigger className="text-base">
                         <SelectValue placeholder="Select a tone" />
@@ -94,7 +105,7 @@ export default function SettingsDialog() {
                 </Select>
             </div>
             <div className="space-y-2">
-                <Label htmlFor="char-limit" className="text-base">Default Biography Length</Label>
+                <Label htmlFor="char-limit" className="text-base flex items-center gap-2">Default Biography Length {!isPremium && <Crown className='h-4 w-4 text-primary' />}</Label>
                 <div className='flex items-center gap-4'>
                     <Slider
                         id="char-limit"
@@ -103,10 +114,21 @@ export default function SettingsDialog() {
                         step={100}
                         value={[settings.aiCharLimit]}
                         onValueChange={(value) => handleSettingChange('aiCharLimit', value[0])}
+                        disabled={!isPremium}
                     />
                     <span className='text-base font-mono w-20 text-center'>{settings.aiCharLimit}</span>
                 </div>
               </div>
+               {!isPremium && (
+                <div className='-mt-2'>
+                    <SubscriptionDialog onUpgrade={() => setIsPremium(true)}>
+                        <Button variant="link" className="p-0 h-auto">
+                            <Crown className="mr-2 h-4 w-4" />
+                            Upgrade to unlock custom AI settings
+                        </Button>
+                    </SubscriptionDialog>
+                </div>
+            )}
         </div>
         <DialogFooter>
           <Button asChild variant="link">
