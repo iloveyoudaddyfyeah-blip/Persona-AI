@@ -121,37 +121,80 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the application. This document stores user-specific data like persona and settings.",
+      "description": "Represents a user of the application. This document stores user-specific data like settings.",
       "properties": {
-        "persona": {
-            "type": "string",
-            "description": "The user's persona for interacting with AI characters."
-        },
         "subscriptionStatus": {
-            "type": "string",
-            "enum": ["free", "premium"],
-            "description": "The user's current subscription status."
+          "type": "string",
+          "enum": [
+            "free",
+            "premium"
+          ],
+          "description": "The user's current subscription status."
         },
         "settings": {
-            "type": "object",
-            "description": "User-specific application settings.",
-            "properties": {
-                "theme": {
-                    "type": "string",
-                    "enum": ["light", "dark", "system"],
-                    "description": "The UI theme preference."
-                },
-                "aiTone": {
-                    "type": "string",
-                    "description": "The default tone for AI generation."
-                },
-                "aiCharLimit": {
-                    "type": "number",
-                    "description": "The default character limit for AI-generated biographies."
-                }
+          "type": "object",
+          "description": "User-specific application settings.",
+          "properties": {
+            "theme": {
+              "type": "string",
+              "enum": [
+                "light",
+                "dark",
+                "system"
+              ],
+              "description": "The UI theme preference."
+            },
+            "aiTone": {
+              "type": "string",
+              "description": "The default tone for AI generation."
+            },
+            "aiCharLimit": {
+              "type": "number",
+              "description": "The default character limit for AI-generated biographies."
             }
+          }
+        },
+        "activePersonaId": {
+          "type": "string",
+          "description": "The ID of the currently active UserPersona."
         }
       }
+    },
+    "UserPersona": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserPersona",
+      "type": "object",
+      "description": "Represents a single user-created persona for interacting with AI characters.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserPersona."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the persona."
+        },
+        "description": {
+          "type": "string",
+          "description": "The AI-generated or user-written description of the persona."
+        },
+        "photoDataUri": {
+          "type": "string",
+          "description": "URL of the uploaded photo for the persona.",
+          "format": "uri"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether this is the currently active persona for the user."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "photoDataUri",
+        "isActive"
+      ]
     }
   },
   "auth": {
@@ -160,10 +203,10 @@
       "password"
     ],
     "customClaims": {
-        "premium": {
-            "type": "boolean",
-            "description": "Indicates whether the user has premium access."
-        }
+      "premium": {
+        "type": "boolean",
+        "description": "Indicates whether the user has premium access."
+      }
     }
   },
   "firestore": {
@@ -172,25 +215,19 @@
               "schema": {
                   "$ref": "#/entities/User"
               },
-              "description": "Stores user profiles, including persona and settings. Path-based ownership: only the user can access their own document."
+              "description": "Stores user profiles, including settings and active persona ID."
           },
           "/users/{userId}/characters/{characterId}": {
               "schema": {
                   "$ref": "#/entities/CharacterProfile"
               },
-              "description": "Stores character profiles created by the user. Path-based ownership: only the user can access their own profiles."
+              "description": "Stores character profiles created by the user."
           },
-          "/users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}": {
-              "schema": {
-                  "$ref": "#/entities/ChatSession"
-              },
-              "description": "Stores chat sessions for a specific character profile. Path-based ownership ensures only the user who owns the character profile can access the chat sessions."
-          },
-          "/users/{userId}/characters/{characterId}/chatSessions/{chatSessionId}/chatMessages/{chatMessageId}": {
-              "schema": {
-                  "$ref": "#/entities/ChatMessage"
-              },
-              "description": "Stores chat messages for a specific chat session. Path-based ownership ensures only the user who owns the chat session can access the chat messages."
+          "/users/{userId}/personas/{personaId}": {
+            "schema": {
+                "$ref": "#/entities/UserPersona"
+            },
+            "description": "Stores the different personas created by a user."
           }
       }
   }

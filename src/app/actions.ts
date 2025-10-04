@@ -87,7 +87,7 @@ export async function getChatResponse(
   let history = character.chatHistory || [];
   
   // Limit chat history for non-premium users
-  if (!isPremium && history.length > 20) {
+  if (!isPremium && history.length >= 20) {
     history = history.slice(-20);
   }
 
@@ -117,8 +117,8 @@ export async function generatePersonaFromPrompt(prompt: string): Promise<string>
 }
 
 export async function saveUserPersona(db: Firestore, userId: string, persona: UserPersona): Promise<void> {
-  const personaRef = doc(db, `users/${userId}/personas/${persona.id}`);
-  setDoc(personaRef, persona, { merge: false })
+  const personaRef = doc(db, 'users', userId, 'personas', persona.id);
+  setDoc(personaRef, persona)
     .catch((error) => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: personaRef.path,
