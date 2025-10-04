@@ -8,11 +8,12 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Pencil } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { CreatePersonaDialog } from './CreatePersonaDialog';
+import { EditPersonaDialog } from './EditPersonaDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,32 +25,30 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import type { UserPersona } from '@/lib/types';
 
 export default function UserPersonaManager() {
   const { state } = useCharacter();
   const { user, firestore } = useUser();
   const { toast } = useToast();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState<UserPersona | null>(null);
 
   const handleSetActive = async (personaId: string) => {
     if (!user || !firestore || personaId === state.activePersonaId) return;
 
-    // 1. Deactivate old persona if there was one
     if (state.activePersonaId) {
         const oldActiveRef = doc(firestore, `users/${user.uid}/personas/${state.activePersonaId}`);
         updateDocumentNonBlocking(oldActiveRef, { isActive: false });
     }
     
-    // 2. Set new persona to active
     const newActiveRef = doc(firestore, `users/${user.uid}/personas/${personaId}`);
     updateDocumentNonBlocking(newActiveRef, { isActive: true });
 
-
-    // 3. Update the activePersonaId on the user document
     const userRef = doc(firestore, `users/${user.uid}`);
     setDocumentNonBlocking(userRef, { activePersonaId: personaId }, { merge: true });
 
-    // The snapshot listener in context will handle the UI update.
     toast({ title: "Active persona updated!" });
   };
   
@@ -60,15 +59,29 @@ export default function UserPersonaManager() {
     deleteDocumentNonBlocking(personaRef);
     toast({ title: "Persona deleted." });
   };
+  
+  const handleEditClick = (e: React.MouseEvent, persona: UserPersona) => {
+    e.stopPropagation();
+    setSelectedPersona(persona);
+    setIsEditDialogOpen(true);
+  };
 
 
   return (
     <Card className="h-full flex flex-col border-0 shadow-none rounded-t-none">
         <CreatePersonaDialog 
-            open={isDialogOpen} 
-            onOpenChange={setIsDialogOpen}
+            open={isCreateDialogOpen} 
+            onOpenChange={setIsCreateDialogOpen}
             personaCount={state.userPersonas.length}
         />
+        {selectedPersona && (
+            <EditPersonaDialog
+                key={selectedPersona.id} // Ensures dialog remounts with new persona data
+                open={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                persona={selectedPersona}
+            />
+        )}
         <CardHeader>
             <div className="flex justify-between items-center">
                 <div>
@@ -77,7 +90,7 @@ export default function UserPersonaManager() {
                         Manage your different personas. The active persona influences how AI characters interact with you.
                     </CardDescription>
                 </div>
-                <Button onClick={() => setIsDialogOpen(true)} size="lg" className="text-lg">
+                <Button onClick={() => setIsCreateDialogOpen(true)} size="lg" className="text-lg">
                     <Plus className="mr-2 h-5 w-5" />
                     New Persona
                 </Button>
@@ -88,7 +101,7 @@ export default function UserPersonaManager() {
                 <div className="flex flex-col items-center justify-center h-full text-center p-8 border-2 border-dashed rounded-lg">
                      <h3 className="text-2xl font-headline mb-2">No Personas Yet</h3>
                      <p className="text-muted-foreground mb-4">Create your first persona to start interacting with characters.</p>
-                     <Button onClick={() => setIsDialogOpen(true)}>Create a Persona</Button>
+                     <Button onClick={() => setIsCreateDialogOpen(true)}>Create a Persona</Button>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -101,30 +114,35 @@ export default function UserPersonaManager() {
                             )}
                             onClick={() => handleSetActive(persona.id)}
                         >
-                             <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 flex-shrink-0 z-10 opacity-50 group-hover:opacity-100 transition-opacity">
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action will permanently delete the persona "{persona.name}". This cannot be undone.
-                                    </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDelete(persona.id);
-                                    }}>
-                                        Continue
-                                    </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-50 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEditClick(e, persona)}>
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={e => e.stopPropagation()}>
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action will permanently delete the persona "{persona.name}". This cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel onClick={e => e.stopPropagation()}>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(persona.id);
+                                            }}>
+                                                Continue
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
 
                             <CardHeader className="flex-row gap-4 items-start pr-12">
                                 <Image 

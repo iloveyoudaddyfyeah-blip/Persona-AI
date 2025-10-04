@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,37 +15,44 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { useFirestore } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
-import { generatePersonaFromPrompt, saveUserPersona } from '@/app/actions';
+import { generatePersonaFromPrompt } from '@/app/actions';
 import { Loader2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { Textarea } from '../ui/textarea';
 import type { UserPersona } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUser } from '@/firebase/provider';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
-interface CreatePersonaDialogProps {
+interface EditPersonaDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    personaCount: number;
+    persona: UserPersona;
 }
 
-export function CreatePersonaDialog({ open, onOpenChange, personaCount }: CreatePersonaDialogProps) {
+export function EditPersonaDialog({ open, onOpenChange, persona }: EditPersonaDialogProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState(persona.name);
+  const [description, setDescription] = useState(persona.description);
   const [photo, setPhoto] = useState<{ file: File; dataUri: string } | null>(null);
   const [genPrompt, setGenPrompt] = useState('');
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const personaPlaceholder = PlaceHolderImages.find(img => img.id === 'persona-placeholder');
+
+  useEffect(() => {
+    setName(persona.name);
+    setDescription(persona.description);
+    setPhoto(null);
+    setGenPrompt('');
+  }, [persona]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,7 +76,7 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
     try {
         const generatedDesc = await generatePersonaFromPrompt(genPrompt);
         setDescription(generatedDesc);
-        toast({ title: 'Description generated!' });
+        toast({ title: 'Description regenerated!' });
     } catch (error) {
         toast({ variant: 'destructive', title: 'Generation failed', description: (error as Error).message });
     } finally {
@@ -86,59 +93,36 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
 
     setIsSaving(true);
     try {
-        const newPersonaId = doc(collection(firestore, `users/${user.uid}/personas`)).id;
+        const personaRef = doc(firestore, `users/${user.uid}/personas/${persona.id}`);
         
-        // The first persona created is automatically set to active.
-        const isActive = personaCount === 0;
-
-        const newPersona: UserPersona = {
-            id: newPersonaId,
+        const updatedPersona: Partial<UserPersona> = {
             name,
             description,
-            photoDataUri: photo?.dataUri || personaPlaceholder?.imageUrl || '',
-            isActive: isActive,
         };
 
-        // Use the server action to save the persona
-        await saveUserPersona(firestore, user.uid, newPersona);
-
-        if (isActive) {
-            const userRef = doc(firestore, `users/${user.uid}`);
-            setDocumentNonBlocking(userRef, { activePersonaId: newPersonaId }, { merge: true });
+        if (photo) {
+            updatedPersona.photoDataUri = photo.dataUri;
         }
+
+        updateDocumentNonBlocking(personaRef, updatedPersona);
         
-        toast({ title: 'Persona created!', description: `${name} is now available.` });
-        resetForm();
+        toast({ title: 'Persona updated!', description: `${name} has been saved.` });
         onOpenChange(false);
     } catch (error) {
-        console.error("Error saving persona: ", error);
-        toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save persona. Check console for details.' });
+        console.error("Error updating persona: ", error);
+        toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not update persona. Check console for details.' });
     } finally {
         setIsSaving(false);
     }
   };
 
-  const resetForm = () => {
-    setName('');
-    setDescription('');
-    setPhoto(null);
-    setGenPrompt('');
-  };
-
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-        resetForm();
-    }
-    onOpenChange(isOpen);
-  }
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Create New Persona</DialogTitle>
+          <DialogTitle className="text-2xl">Edit Persona</DialogTitle>
           <DialogDescription>
-            Craft a new persona for your interactions. Give it a name, a face, and a personality.
+            Refine your persona's details below.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
@@ -149,7 +133,7 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
             <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="photo" className="text-right text-lg pt-2">Photo</Label>
                 <div className="col-span-3 flex items-center space-x-4">
-                    <Image src={photo?.dataUri || personaPlaceholder?.imageUrl || ''} alt="Preview" width={80} height={80} className="rounded-md border object-cover aspect-square" data-ai-hint={personaPlaceholder?.imageHint} unoptimized/>
+                    <Image src={photo?.dataUri || persona.photoDataUri || personaPlaceholder?.imageUrl || ''} alt="Preview" width={80} height={80} className="rounded-md border object-cover aspect-square" data-ai-hint={personaPlaceholder?.imageHint} unoptimized/>
                     <Input id="photo" type="file" accept="image/*" onChange={handleFileChange} className="text-lg file:text-lg file:mr-4 file:py-2 file:px-4"/>
                 </div>
             </div>
@@ -158,9 +142,9 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
                 <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3 text-lg min-h-[100px]" placeholder="A short bio of your persona..." />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="gen-prompt" className="text-right text-lg">Generate with AI</Label>
+                <Label htmlFor="gen-prompt" className="text-right text-lg">Regenerate with AI</Label>
                 <div className="col-span-3 flex gap-2">
-                    <Input id="gen-prompt" value={genPrompt} onChange={(e) => setGenPrompt(e.target.value)} className="text-lg" placeholder="e.g., 'A grizzled space captain'" disabled={isGenerating} />
+                    <Input id="gen-prompt" value={genPrompt} onChange={(e) => setGenPrompt(e.target.value)} className="text-lg" placeholder="e.g., 'Make them a bit more cynical'" disabled={isGenerating} />
                     <Button onClick={handleGenerateDescription} disabled={isGenerating}>
                         {isGenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
                         <span className="sr-only">Generate</span>
@@ -174,7 +158,7 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
             </DialogClose>
             <Button type="submit" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin"/> : null}
-                Save Persona
+                Save Changes
             </Button>
         </DialogFooter>
       </DialogContent>

@@ -108,7 +108,8 @@ export async function generatePersonaFromPrompt(prompt: string): Promise<string>
   return persona;
 }
 
-export async function saveUserPersona(db: Firestore, userId: string, persona: UserPersona): Promise<void> {
+export async function saveUserPersona(db: Firestore, userId: string, persona: UserPersona) {
   const personaRef = doc(db, 'users', userId, 'personas', persona.id);
+  // Using setDoc directly with the non-blocking wrapper.
   setDocumentNonBlocking(personaRef, persona);
 }
