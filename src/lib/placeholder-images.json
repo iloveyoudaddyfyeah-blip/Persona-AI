@@ -2,9 +2,9 @@
   "placeholderImages": [
     {
       "id": "welcome-soul",
-      "description": "A cute anime girl with cat ears.",
-      "imageUrl": "https://images.unsplash.com/photo-1708034677699-6f39d9c59f6e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhbmltZSUyMGdpcmx8ZW58MHx8fHwxNzU5NTM1MzU3fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "anime girl"
+      "description": "A fox in a forest.",
+      "imageUrl": "https://images.unsplash.com/photo-1516934024742-b60b8b93356f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmb3h8ZW58MHx8fHwxNzYwMjE2NjU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fox forest"
     }
   ]
 }
