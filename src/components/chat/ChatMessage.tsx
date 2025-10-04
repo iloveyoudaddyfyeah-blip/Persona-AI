@@ -14,7 +14,7 @@ interface ChatMessageProps {
   isTyping: boolean;
 }
 
-const FormattedContent = ({ content }: { content: string }) => {
+const FormattedContent = ({ content, isCharacter }: { content: string, isCharacter: boolean }) => {
   const regex = /(\*[^*]+\*)|("[^"]+")/g;
   const parts = content.split(regex).filter(Boolean);
 
@@ -30,7 +30,7 @@ const FormattedContent = ({ content }: { content: string }) => {
         }
         if (part.startsWith('"') && part.endsWith('"')) {
            return (
-            <span key={index} className="text-primary">
+            <span key={index} className={cn(isCharacter && "text-primary")}>
               {part}
             </span>
           );
@@ -72,7 +72,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
             : "bg-primary text-primary-foreground"
         )}
       >
-        <FormattedContent content={content} />
+        <FormattedContent content={content} isCharacter={isCharacter} />
         {isReceiving && content.length < message.content.length && (
             <span className="inline-block w-0.5 h-5 bg-foreground animate-[blink_1s_step-end_infinite] -mb-1 ml-1" />
         )}
