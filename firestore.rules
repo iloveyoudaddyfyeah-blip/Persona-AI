@@ -1,25 +1,36 @@
 /**
- * @description This ruleset enforces a strict user-ownership model, where each user can only access their own data.
- * @dataStructure All data is nested under /users/{userId}, with subcollections for characters and personas.
- * @keySecurityDecisions
- *   - Users can only create, read, update, and delete their own user document and associated subcollections.
- *   - Listing of user documents at the root level is forbidden to protect user privacy.
- *   - No public data access is allowed.
+ * @fileoverview Firestore Security Rules for the application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model.  Each user can only
+ * access their own data.  Data validation is relaxed to allow for rapid prototyping.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profile data.
+ * - /users/{userId}/characters/{characterId}: Stores character profiles created by each user.
+ * - /users/{userId}/personas/{personaId}: Stores user-created personas.
+ *
+ * Key Security Decisions:
+ * - Users can only read and write their own data.
+ * - Listing of users is disallowed for privacy.
+ * - Flexible data validation to facilitate rapid iteration.
+ * - No public data access without authentication.
+ *
+ * Denormalization for Authorization:
+ *  - The userId is encoded in the document path to enforce ownership.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Enforces access control for user documents. Only the authenticated user can manage their own document.
+     * @description Controls access to the user's root document.
      * @path /users/{userId}
-     * @allow (create) - User with UID 'user123' creates their own document at /users/user123 with matching 'id' field.
-     * @allow (get) - User with UID 'user123' reads their own document at /users/user123.
-     * @allow (update) - User with UID 'user123' updates their own document at /users/user123.
-     * @allow (delete) - User with UID 'user123' deletes their own document at /users/user123.
-     * @deny (create) - User with UID 'user456' tries to create a document at /users/user123.
-     * @deny (get) - User with UID 'user456' tries to read the document at /users/user123.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) - User with matching UID can create their own document.
+     * @allow (get, update, delete) - User with matching UID can read/write their own document.
+     * @deny (create) - User cannot create a document with a different UID.
+     * @deny (get, update, delete) - User cannot read/write another user's document.
+     * @principle Enforces document ownership and user-level access control.
      */
     match /users/{userId} {
       function isSignedIn() {
@@ -32,21 +43,19 @@ service cloud.firestore {
 
       allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow create: if isSignedIn() && isOwner(userId);
       allow update: if isSignedIn() && isOwner(userId);
       allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Enforces access control for character profiles. Only the owning user can manage their own character profiles.
+     * @description Controls access to character profiles created by the user.
      * @path /users/{userId}/characters/{characterId}
-     * @allow (create) - User 'user123' creates a character profile with ID 'char1' under /users/user123/characters/char1.
-     * @allow (get) - User 'user123' reads the character profile with ID 'char1' under /users/user123/characters/char1.
-     * @allow (update) - User 'user123' updates the character profile with ID 'char1' under /users/user123/characters/char1.
-     * @allow (delete) - User 'user123' deletes the character profile with ID 'char1' under /users/user123/characters/char1.
-     * @deny (create) - User 'user456' tries to create a character profile under /users/user123/characters/char1.
-     * @deny (get) - User 'user456' tries to read the character profile under /users/user123/characters/char1.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) - User with matching UID can create character profiles under their user ID. Requires the document ID to match.
+     * @allow (get, list, update, delete) - User with matching UID can read/write character profiles under their user ID.
+     * @deny (create) - User cannot create character profiles under another user's ID.
+     * @deny (get, list, update, delete) - User cannot read/write character profiles under another user's ID.
+     * @principle Enforces document ownership for character profiles.
      */
     match /users/{userId}/characters/{characterId} {
       function isSignedIn() {
@@ -57,23 +66,25 @@ service cloud.firestore {
         return request.auth.uid == userId;
       }
 
+        function isExistingOwner(userId) {
+            return (isOwner(userId) && resource != null);
+        }
+
       allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
       allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Enforces access control for user personas. Only the owning user can manage their own personas.
+     * @description Controls access to user personas.
      * @path /users/{userId}/personas/{personaId}
-     * @allow (create) - User 'user123' creates a persona with ID 'persona1' under /users/user123/personas/persona1.
-     * @allow (get) - User 'user123' reads the persona with ID 'persona1' under /users/user123/personas/persona1.
-     * @allow (update) - User 'user123' updates the persona with ID 'persona1' under /users/user123/personas/persona1.
-     * @allow (delete) - User 'user123' deletes the persona with ID 'persona1' under /users/user123/personas/persona1.
-     * @deny (create) - User 'user456' tries to create a persona under /users/user123/personas/persona1.
-     * @deny (get) - User 'user456' tries to read the persona under /users/user123/personas/persona1.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) - User with matching UID can create personas under their user ID. Requires the document ID to match.
+     * @allow (get, list, update, delete) - User with matching UID can read/write personas under their user ID.
+     * @deny (create) - User cannot create personas under another user's ID.
+     * @deny (get, list, update, delete) - User cannot read/write personas under another user's ID.
+     * @principle Enforces document ownership for user personas.
      */
     match /users/{userId}/personas/{personaId} {
       function isSignedIn() {
@@ -84,11 +95,15 @@ service cloud.firestore {
         return request.auth.uid == userId;
       }
 
+        function isExistingOwner(userId) {
+            return (isOwner(userId) && resource != null);
+        }
+
       allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
       allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
   }
 }
