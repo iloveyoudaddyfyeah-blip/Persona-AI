@@ -3,7 +3,7 @@
 
 import type { Character, ChatMessage } from '@/lib/types';
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { collection, doc, onSnapshot, Query } from 'firebase/firestore';
 
 type View = 'welcome' | 'creating' | 'viewing';

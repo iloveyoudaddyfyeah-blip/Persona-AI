@@ -54,7 +54,7 @@ export const FirebaseContext = createContext<FirebaseContextState | undefined>(u
 
 type MemoFirebase<T> = T & { __memo?: boolean };
 
-export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | null {
+export function useMemoFirebase<T>(factory: () => T | null, deps: DependencyList): T | null {
     const memoized = useMemo(factory, deps);
 
     if (typeof memoized !== 'object' || memoized === null) {
