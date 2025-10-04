@@ -9,9 +9,7 @@ import { modifyPersonalityProfile } from '@/ai/flows/modify-personality-profile'
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
 import type { Character } from '@/lib/types';
 import { Tone } from '@/context/CharacterContext';
-import { doc } from 'firebase/firestore';
-import { getSdks } from '@/firebase';
-import { setDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { getFirebaseAdmin } from '@/firebase/server';
 
 function formatProfile(
   name: string,
@@ -48,20 +46,20 @@ export async function createCharacterFromPhoto(
   charLimit: number,
   userId: string,
 ): Promise<Character> {
-  const { firestore } = getSdks();
+  const { firestore } = getFirebaseAdmin();
   const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit });
   const profile = formatProfile(name, profileData);
+  const newCharacterId = crypto.randomUUID();
   const newCharacter: Character = {
-      id: crypto.randomUUID(),
+      id: newCharacterId,
       name,
       photoDataUri,
       profile,
       profileData,
       chatHistory: [],
   };
-  const characterRef = doc(firestore, 'users', userId, 'characters', newCharacter.id);
-  // Non-blocking write, will emit contextual error on failure
-  setDocumentNonBlocking(characterRef, newCharacter, { merge: false });
+  const characterRef = firestore.doc(`users/${userId}/characters/${newCharacterId}`);
+  await characterRef.set(newCharacter, { merge: false });
   return newCharacter;
 }
 
@@ -70,7 +68,7 @@ export async function regenerateCharacterProfile(
   prompt: string,
   userId: string,
 ): Promise<Pick<Character, 'profile' | 'profileData'>> {
-  const { firestore } = getSdks();
+  const { firestore } = getFirebaseAdmin();
   const newProfileData = await modifyPersonalityProfile({
     currentProfile: character.profileData!,
     prompt,
@@ -79,9 +77,8 @@ export async function regenerateCharacterProfile(
   
   const updatedCharacterData = { ...character, profile, profileData: newProfileData };
 
-  const characterRef = doc(firestore, 'users', userId, 'characters', character.id);
-  // Non-blocking write, will emit contextual error on failure
-  setDocumentNonBlocking(characterRef, updatedCharacterData, { merge: true });
+  const characterRef = firestore.doc(`users/${userId}/characters/${character.id}`);
+  await characterRef.set(updatedCharacterData, { merge: true });
 
   return { profile, profileData: newProfileData };
 }
@@ -92,7 +89,7 @@ export async function getChatResponse(
   userPersona: string,
   userId: string
 ): Promise<string> {
-  const { firestore } = getSdks();
+  const { firestore } = getFirebaseAdmin();
   const historyString = (character.chatHistory || [])
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)
     .join('\n');
@@ -113,30 +110,26 @@ export async function getChatResponse(
   const newResponse = { role: 'character' as const, content: response };
   const updatedChatHistory = [...(character.chatHistory || []), newMessage, newResponse];
   
-  const characterRef = doc(firestore, 'users', userId, 'characters', character.id);
-  // Non-blocking write, will emit contextual error on failure
-  updateDocumentNonBlocking(characterRef, { chatHistory: updatedChatHistory });
+  const characterRef = firestore.doc(`users/${userId}/characters/${character.id}`);
+  await characterRef.update({ chatHistory: updatedChatHistory });
 
   return response;
 }
 
 export async function updateUserPersona(userId: string, persona: string): Promise<void> {
-    const { firestore } = getSdks();
-    const userRef = doc(firestore, 'users', userId);
-    // Non-blocking write, will emit contextual error on failure
-    setDocumentNonBlocking(userRef, { persona }, { merge: true });
+    const { firestore } = getFirebaseAdmin();
+    const userRef = firestore.doc(`users/${userId}`);
+    await userRef.set({ persona }, { merge: true });
 }
 
 export async function saveCharacterChanges(userId: string, character: Character): Promise<void> {
-    const { firestore } = getSdks();
-    const characterRef = doc(firestore, 'users', userId, 'characters', character.id);
-    // Non-blocking write, will emit contextual error on failure
-    setDocumentNonBlocking(characterRef, character, { merge: true });
+    const { firestore } = getFirebaseAdmin();
+    const characterRef = firestore.doc(`users/${userId}/characters/${character.id}`);
+    await characterRef.set(character, { merge: true });
 }
 
 export async function deleteCharacterFromDb(userId: string, characterId: string): Promise<void> {
-    const { firestore } = getSdks();
-    const characterRef = doc(firestore, 'users', userId, 'characters', characterId);
-    // Non-blocking delete, will emit contextual error on failure
-    deleteDocumentNonBlocking(characterRef);
+    const { firestore } = getFirebaseAdmin();
+    const characterRef = firestore.doc(`users/${userId}/characters/${characterId}`);
+    await characterRef.delete();
 }
