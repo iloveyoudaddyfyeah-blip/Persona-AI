@@ -1,15 +1,14 @@
 
 "use client";
 
-import type { Character, ChatMessage, UserData, UserPersona, ChatSession } from '@/lib/types';
+import type { Character, UserData, UserPersona, ChatSession } from '@/lib/types';
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { collection, onSnapshot, Query, doc } from 'firebase/firestore';
-import { updateUser, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, onSnapshot, doc } from 'firebase/firestore';
+import { updateUser, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { v4 as uuidv4 } from 'uuid';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 type View = 'welcome' | 'creating' | 'viewing';
 
@@ -225,8 +224,10 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     
     const charactersUnsub = onSnapshot(charactersColRef, (snapshot) => {
       const characters: Character[] = [];
-      snapshot.forEach(doc => {
-          const characterData = doc.data() as Character;
+      snapshot.forEach(docSnap => {
+          const characterData = docSnap.data() as Character;
+          characterData.id = docSnap.id; // Ensure ID is set
+          
           if (!characterData.chatSessions || characterData.chatSessions.length === 0) {
               const newChatId = uuidv4();
               characterData.chatSessions = [{
@@ -257,7 +258,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       characters.sort((a, b) => a.name.localeCompare(b.name));
       
       dispatch({ type: 'SET_CHARACTERS', payload: characters });
-      dispatch({ type: 'SET_IS_LOADING', payload: false }); // Ensure loading is false after first fetch
     }, (error) => {
       console.error("Error listening to characters collection:", (error as Error).message);
       dispatch({ type: 'SET_IS_LOADING', payload: false });
