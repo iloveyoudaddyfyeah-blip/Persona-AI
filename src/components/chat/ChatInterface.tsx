@@ -25,6 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import Image from 'next/image';
+import { BannerAd } from '../ads/BannerAd';
 
 
 interface ChatInterfaceProps {
@@ -113,41 +114,43 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                 </div>
             )}
         </div>
-        <div className="p-4 border-t flex gap-2 items-center">
-            <form onSubmit={handleSubmit} className="flex-grow flex gap-2">
-                <Input
-                type="text"
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder={`Talk to ${character.name}...`}
-                className="text-lg"
-                disabled={isTyping || !user}
-                />
-                <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user}>
-                  <Send className="h-6 w-6" />
-                </Button>
-            </form>
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user || chatHistory.length === 0}>
-                        <Trash2 className="h-6 w-6" />
+        <div className="p-4 border-t flex flex-col gap-2">
+            <BannerAd />
+            <div className="flex gap-2 items-center">
+                <form onSubmit={handleSubmit} className="flex-grow flex gap-2">
+                    <Input
+                    type="text"
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    placeholder={`Talk to ${character.name}...`}
+                    className="text-lg"
+                    disabled={isTyping || !user}
+                    />
+                    <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user}>
+                    <Send className="h-6 w-6" />
                     </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This will permanently delete the chat history for {character.name}. This action cannot be undone.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearChat}>Continue</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-      </div>
+                </form>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user || chatHistory.length === 0}>
+                            <Trash2 className="h-6 w-6" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the chat history for {character.name}. This action cannot be undone.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleClearChat}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
+        </div>
     </Card>
   );
 }
-

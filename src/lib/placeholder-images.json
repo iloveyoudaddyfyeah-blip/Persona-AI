@@ -5,6 +5,12 @@
       "description": "An anime style girl.",
       "imageUrl": "https://images.unsplash.com/photo-1708034677699-6f39d9c59f6e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhbmltZSUyMGdpcmx8ZW58MHx8fHwxNzU5NTM1MzU3fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "anime girl"
+    },
+    {
+      "id": "ad-banner-castle",
+      "description": "A majestic castle under a starry sky.",
+      "imageUrl": "https://images.unsplash.com/photo-1597590803248-651546812499?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxmYW50YXN5JTIwY2FzdGxlfGVufDB8fHx8MTc2MDM3ODAyOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fantasy castle"
     }
   ]
 }
