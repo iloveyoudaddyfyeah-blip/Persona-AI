@@ -7,6 +7,7 @@ import {
 } from '@/ai/flows/generate-personality-profile';
 import { modifyPersonalityProfile } from '@/ai/flows/modify-personality-profile';
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
+import { generateUserPersona } from '@/ai/flows/generate-user-persona';
 import type { Character } from '@/lib/types';
 import { Tone } from '@/context/CharacterContext';
 import {
@@ -45,7 +46,6 @@ ${motivations}
 `;
 }
 
-// Note: Firestore instance is NOT passed anymore. The action only generates the data.
 export async function createCharacterFromPhoto(
   name: string,
   photoDataUri: string,
@@ -58,7 +58,6 @@ export async function createCharacterFromPhoto(
   return { ...profileData, profile };
 }
 
-// Note: Firestore instance is NOT passed anymore.
 export async function regenerateCharacterProfile(
   character: Character,
   prompt: string,
@@ -75,7 +74,6 @@ export async function regenerateCharacterProfile(
   return { profile, profileData: newProfileData };
 }
 
-// Note: Firestore instance is NOT passed anymore.
 export async function getChatResponse(
   character: Character,
   userMessage: string,
@@ -98,4 +96,10 @@ export async function getChatResponse(
   });
   
   return response;
+}
+
+
+export async function generatePersonaFromPrompt(prompt: string): Promise<string> {
+  const { persona } = await generateUserPersona({ prompt });
+  return persona;
 }
