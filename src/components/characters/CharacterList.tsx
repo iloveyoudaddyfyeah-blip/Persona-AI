@@ -3,12 +3,13 @@
 
 import { useCharacter } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, User } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { doc } from 'firebase/firestore';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import Image from 'next/image';
 
 export default function CharacterList() {
   const { state, dispatch } = useCharacter();
@@ -61,7 +62,13 @@ export default function CharacterList() {
               variant='ghost'
               className="flex-grow justify-start h-full text-lg hover:bg-transparent"
             >
-              <User className="mr-2 h-5 w-5" />
+              <Image 
+                src={char.photoDataUri} 
+                alt={char.name}
+                width={32}
+                height={32}
+                className="mr-3 h-8 w-8 rounded-md object-cover pixel-art"
+              />
               <span className="truncate flex-grow text-left">{char.name}</span>
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8 mr-2" onClick={(e) => handleDeleteCharacter(e, char.id)}>
