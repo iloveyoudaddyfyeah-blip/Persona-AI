@@ -17,7 +17,7 @@ import { Input } from "../ui/input";
 import { useFirestore } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { generatePersonaFromPrompt, saveUserPersona } from '@/app/actions';
+import { generatePersonaFromPrompt } from '@/app/actions';
 import { Loader2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { Textarea } from '../ui/textarea';
@@ -99,8 +99,8 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
             isActive: isActive,
         };
 
-        // Use the server action to save the persona
-        await saveUserPersona(user.uid, newPersona);
+        const personaRef = doc(firestore, 'users', user.uid, 'personas', newPersona.id);
+        setDocumentNonBlocking(personaRef, newPersona);
 
         if (isActive) {
             const userRef = doc(firestore, `users/${user.uid}`);
@@ -112,7 +112,7 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
         onOpenChange(false);
     } catch (error) {
         console.error("Error saving persona: ", error);
-        toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save persona. Check console for details.' });
+        toast({ variant: 'destructive', title: 'Save Failed', description: (error as Error).message });
     } finally {
         setIsSaving(false);
     }

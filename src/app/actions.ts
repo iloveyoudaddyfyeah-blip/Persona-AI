@@ -108,9 +108,7 @@ export async function generatePersonaFromPrompt(prompt: string): Promise<string>
 }
 
 export async function saveUserPersona(userId: string, persona: UserPersona) {
-  const { firestore } = await getFirebaseAdmin();
-  const personaRef = doc(firestore, 'users', userId, 'personas', persona.id);
-  // Using setDoc directly with the non-blocking wrapper on the server is not ideal,
-  // but for now we'll just use the admin SDK to write directly.
-  await firestore.collection('users').doc(userId).collection('personas').doc(persona.id).set(persona);
+    const { firestore } = await getFirebaseAdmin();
+    const personaRef = doc(firestore, 'users', userId, 'personas', persona.id);
+    await personaRef.set(persona);
 }
