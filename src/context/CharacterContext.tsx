@@ -3,8 +3,9 @@
 
 import type { Character, ChatMessage } from '@/lib/types';
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
-import { useUser, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, onSnapshot, Query } from 'firebase/firestore';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
+import { useDoc } from '@/firebase';
+import { collection, onSnapshot, Query, doc } from 'firebase/firestore';
 
 type View = 'welcome' | 'creating' | 'viewing';
 
@@ -77,8 +78,10 @@ function characterReducer(state: State, action: Action): State {
         const characters = action.payload;
         let newView = state.view;
 
-        // If no character is currently selected, and we now have characters, select the first one.
-        if (!state.selectedCharacterId && characters.length > 0) {
+        // If the current view is 'welcome' and characters are loaded, switch to 'viewing'
+        if (state.view === 'welcome' && characters.length > 0) {
+          newView = 'viewing';
+          if (!state.selectedCharacterId) {
             return {
                 ...state,
                 characters,
@@ -86,11 +89,7 @@ function characterReducer(state: State, action: Action): State {
                 view: 'viewing',
                 isLoading: false,
             };
-        }
-
-        // If the current view is 'welcome' and characters are loaded, switch to 'viewing'
-        if (state.view === 'welcome' && characters.length > 0) {
-          newView = 'viewing';
+          }
         } else if (characters.length === 0) {
           // If all characters are deleted, go back to welcome
           return {
