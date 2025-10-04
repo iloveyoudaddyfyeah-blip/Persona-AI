@@ -31,7 +31,7 @@ export default function UserPersona() {
     setIsSaving(true);
     try {
         await updateUserPersona(firestore, user.uid, persona);
-        dispatch({ type: 'SET_USER_PERSONA', payload: persona });
+        // The snapshot listener will update the context state
         toast({
         title: 'Persona Saved',
         description: `Your persona has been updated. Characters will now react to this new persona.`,

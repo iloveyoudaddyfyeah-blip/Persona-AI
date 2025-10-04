@@ -129,13 +129,13 @@ export async function getChatResponse(
 // Note: Firestore instance is passed from the client
 export async function updateUserPersona(firestore: Firestore, userId: string, persona: string): Promise<void> {
     const userRef = doc(firestore, `users/${userId}`);
-    setDocumentNonBlocking(userRef, { persona }, { merge: true });
+    updateDocumentNonBlocking(userRef, { persona });
 }
 
 // Note: Firestore instance is passed from the client
 export async function saveCharacterChanges(firestore: Firestore, userId: string, character: Character): Promise<void> {
     const characterRef = doc(firestore, `users/${userId}/characters/${character.id}`);
-    setDocumentNonBlocking(characterRef, character, { merge: true });
+    updateDocumentNonBlocking(characterRef, character);
 }
 
 // Note: Firestore instance is passed from the client
