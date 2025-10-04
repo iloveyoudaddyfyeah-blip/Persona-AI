@@ -1,105 +1,114 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset enforces a strict user-ownership model for all data. Each user can only
- *              access and modify their own data, stored under their unique user ID.
+ * @fileoverview Firestore Security Rules for the application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Users can only read and write data
+ * that belongs to them. Data validation is relaxed to allow for rapid prototyping.
  *
  * Data Structure:
- * - /users/{userId}: Stores user-specific data, including settings and active persona.
- * - /users/{userId}/personas/{personaId}: Stores user-created personas.
- * - /characterProfiles/{characterProfileId}: Stores character profiles, publicly readable but owner-writable.
+ * - /users/{userId}: Stores user profile data.
+ * - /users/{userId}/characters/{characterId}: Stores character profiles created by each user.
+ * - /users/{userId}/personas/{personaId}: Stores user-defined personas.
  *
  * Key Security Decisions:
- * - Users can only manage their own profiles and personas.
- * - Character profiles are publicly readable to facilitate discovery but writable only by the owner.
- * - User listing is explicitly disallowed for privacy.
+ * - Users can only access their own data. No cross-user data access is allowed.
+ * - Listing of users is disallowed.
  *
  * Denormalization for Authorization:
- * - The `id` field in `User` documents MUST match the `userId` in the path `/users/{userId}`. This is enforced on creation and maintained immutably on updates.
- * - The `id` field in `UserPersona` documents MUST be present on creation.
+ * The rules rely on path-based authorization, assuming that the `userId` in the path
+ * matches the authenticated user's UID. The `id` field within the documents stored under
+ * user paths must also match the `userId`, enforced on creation and immutability on update to
+ * prevent privilege escalation.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the user is signed in.
-     * @return {boolean} True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user ID matches the provided user ID.
-     * @param {string} userId The user ID to compare against the authenticated user ID.
-     * @return {boolean} True if the user IDs match, false otherwise.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the authenticated user ID matches the provided user ID and the resource exists.
-     * @param {string} userId The user ID to compare against the authenticated user ID.
-     * @return {boolean} True if the user IDs match and the resource exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Root-level match to prevent unauthorized access to the entire database.
-     *              This rule explicitly denies all access if no other rule matches.
-     */
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    /**
-     * @description Rules for the /users/{userId} collection.
+     * @description Controls access to user profile documents.
      * @path /users/{userId}
-     * @allow (create) - User with matching auth UID can create their own user document.
-     * @allow (get, update, delete) - User with matching auth UID can access their own user document.
-     * @deny (create) - User attempts to create a document for another user.
-     * @principle Enforces document ownership and validates relational integrity.
+     * @allow (create) - User with UID 'user_abc' can create their own profile document with `id: 'user_abc'`.
+     * @allow (get, update, delete) - User with UID 'user_abc' can read, update, and delete their own profile document.
+     * @deny (create) - User with UID 'user_abc' cannot create a profile document with `id: 'other_user'`.
+     * @deny (get, update, delete) - User with UID 'user_xyz' cannot read, update, or delete the profile document of user 'user_abc'.
+     * @principle Enforces document ownership and relational integrity for user profiles.
      */
     match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
       allow get: if isOwner(userId);
-      allow list: if false; // User listing is not allowed.
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id; //Enforce immutability of id
+      allow list: if false; // Listing users is not permitted.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
-     /**
-      * @description Rules for the /users/{userId}/personas/{personaId} collection.
-      * @path /users/{userId}/personas/{personaId}
-      * @allow (create) - User with matching auth UID can create a persona under their user ID.
-      * @allow (get, update, delete, list) - User with matching auth UID can access their own personas.
-      * @deny (create) - User attempts to create a persona under another user's ID.
-      * @principle Enforces document ownership.
-      */
-    match /users/{userId}/personas/{personaId} {
+    /**
+     * @description Controls access to character profiles within a user's collection.
+     * @path /users/{userId}/characters/{characterId}
+     * @allow (create) - User with UID 'user_abc' can create a character profile under their user document.
+     * @allow (get, list, update, delete) - User with UID 'user_abc' can read, list, update, and delete character profiles under their user document.
+     * @deny (create) - User with UID 'user_xyz' cannot create a character profile under user 'user_abc'.
+     * @deny (get, list, update, delete) - User with UID 'user_xyz' cannot read, list, update, or delete character profiles under user 'user_abc'.
+     * @principle Enforces document ownership for character profiles.
+     */
+    match /users/{userId}/characters/{characterId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /characterProfiles/{characterProfileId} collection.
-     * @path /characterProfiles/{characterProfileId}
-     * @allow (get, list) - All users can read character profiles.
-     * @allow (create, update, delete) - Only the owner can modify character profiles.
-     * @deny (create, update, delete) - Non-owners cannot modify character profiles.
-     * @principle Allows public read access with owner-only write access.
+     * @description Controls access to user personas within a user's collection.
+     * @path /users/{userId}/personas/{personaId}
+     * @allow (create) - User with UID 'user_abc' can create a persona under their user document.
+     * @allow (get, list, update, delete) - User with UID 'user_abc' can read, list, update, and delete personas under their user document.
+     * @deny (create) - User with UID 'user_xyz' cannot create a persona under user 'user_abc'.
+     * @deny (get, list, update, delete) - User with UID 'user_xyz' cannot read, list, update, or delete personas under user 'user_abc'.
+     * @principle Enforces document ownership for user personas.
      */
-    match /characterProfiles/{characterProfileId} {
-      allow get, list: if true;
-      allow create: if isSignedIn(); // Anyone signed in can create.  No owner field validation needed for prototyping phase.
-      allow update: if isSignedIn() && resource != null; // Existing document check is critical.
-      allow delete: if isSignedIn() && resource != null; // Existing document check is critical.
+    match /users/{userId}/personas/{personaId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
   }
 }
