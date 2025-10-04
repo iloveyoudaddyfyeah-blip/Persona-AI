@@ -45,17 +45,17 @@ export function SubscriptionDialog({ children, onUpgrade }: SubscriptionDialogPr
           </AlertDialogTitle>
           <AlertDialogDescription className="text-base pt-4 text-left">
             Unlock the full potential of AI character creation with these exclusive features:
-             <ul className="list-disc pl-5 mt-4 space-y-2">
-                <li className="flex items-start gap-2">
-                    <Sparkles className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                    <span><span className="font-bold">Custom AI Tones:</span> Shape your character's voice with a wide range of tones like witty, noir, or epic.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                    <Wand2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                    <span><span className="font-bold">Longer Biographies:</span> Generate incredibly detailed backstories up to 5,000 characters long.</span>
-                </li>
-             </ul>
           </AlertDialogDescription>
+          <ul className="list-disc pl-5 text-base text-muted-foreground space-y-2">
+            <li className="flex items-start gap-3">
+                <Sparkles className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                <span><span className="font-bold text-foreground">Custom AI Tones:</span> Shape your character's voice with a wide range of tones like witty, noir, or epic.</span>
+            </li>
+            <li className="flex items-start gap-3">
+                <Wand2 className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                <span><span className="font-bold text-foreground">Longer Biographies:</span> Generate incredibly detailed backstories up to 5,000 characters long.</span>
+            </li>
+          </ul>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Maybe Later</AlertDialogCancel>
