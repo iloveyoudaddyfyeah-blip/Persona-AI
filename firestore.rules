@@ -1,84 +1,116 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model for all data.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profile data.
+ * - /users/{userId}/characters/{characterId}: Stores character profiles created by each user.
+ * - /users/{userId}/personas/{personaId}: Stores user-created personas.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own data.
+ * - Listing of users is disallowed.
+ * - All write operations are validated against the authenticated user's ID.
+ *
+ * Denormalization for Authorization:
+ *   - Each document stored under a user path inherently has the userId for authorization.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secure the root user document. Only the authenticated user can read/write their own document.
-     * @path /databases/{database}/documents/users/{userId}
-     * @allow (create) - Authenticated user can create their own user document.
-     * @allow (get, list, update, delete) - Authenticated user can access their own user document.
-     * @deny (create) - If the user ID in the path does not match the authenticated user's ID.
-     * @deny (get, list, update, delete) - If any other user tries to access this document.
-     * @principle Enforces strict user ownership.
+     * @description Checks if the request is authenticated.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Ensures that only authenticated users can access data.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the request is made by the owner of the resource.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Enforces user-based ownership for data access.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the request is made by the existing owner of the resource.
+     * @path N/A
+     * @allow N/A
+     * @deny N/A
+     * @principle Enforces user-based ownership for data access on existing documents.
+     */
+    function isExistingOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId && resource.data != null;
+    }
+
+    /**
+     * @description Rules for the /users/{userId} collection.
+     * @path /users/{userId}
+     * @allow (create) User with ID 'user123' creates their own profile with matching ID.
+     * @allow (get) User with ID 'user123' retrieves their own profile.
+     * @allow (update) User with ID 'user123' updates their own profile.
+     * @allow (delete) User with ID 'user123' deletes their own profile.
+     * @deny (create) User with ID 'user123' tries to create a profile for 'user456'.
+     * @deny (get) User with ID 'user123' tries to retrieve the profile of 'user456'.
+     * @deny (update) User with ID 'user123' tries to update the profile of 'user456'.
+     * @deny (delete) User with ID 'user123' tries to delete the profile of 'user456'.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree, validates relational integrity between documents.
      */
     match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isExistingOwner(userId) {
-          return isOwner(userId) && resource.data != null;
-      }
-
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
+      allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secure the character profiles subcollection. Only the authenticated user can read/write their own character profiles.
-     * @path /databases/{database}/documents/users/{userId}/characters/{characterId}
-     * @allow (create) - Authenticated user can create a character profile under their user ID.
-     * @allow (get, list, update, delete) - Authenticated user can access their own character profiles.
-     * @deny (create) - If the user ID in the path does not match the authenticated user's ID.
-     * @deny (get, list, update, delete) - If any other user tries to access this document.
-     * @principle Enforces strict user ownership.
+     * @description Rules for the /users/{userId}/characters/{characterId} collection.
+     * @path /users/{userId}/characters/{characterId}
+     * @allow (create) User with ID 'user123' creates a character with any characterId under their profile.
+     * @allow (get) User with ID 'user123' retrieves a character with any characterId under their profile.
+     * @allow (update) User with ID 'user123' updates a character with any characterId under their profile.
+     * @allow (delete) User with ID 'user123' deletes a character with any characterId under their profile.
+     * @deny (create) User with ID 'user123' tries to create a character for 'user456'.
+     * @deny (get) User with ID 'user123' tries to retrieve a character from 'user456'.
+     * @deny (update) User with ID 'user123' tries to update a character from 'user456'.
+     * @deny (delete) User with ID 'user123' tries to delete a character from 'user456'.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /users/{userId}/characters/{characterId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-        function isExistingOwner(userId) {
-            return isSignedIn() && request.auth.uid == userId && resource.data != null;
-        }
-
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
+      allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secure the user personas subcollection. Only the authenticated user can read/write their own personas.
-     * @path /databases/{database}/documents/users/{userId}/personas/{personaId}
-     * @allow (create) - Authenticated user can create a persona under their user ID.
-     * @allow (get, list, update, delete) - Authenticated user can access their own personas.
-     * @deny (create) - If the user ID in the path does not match the authenticated user's ID.
-     * @deny (get, list, update, delete) - If any other user tries to access this document.
-     * @principle Enforces strict user ownership.
+     * @description Rules for the /users/{userId}/personas/{personaId} collection.
+     * @path /users/{userId}/personas/{personaId}
+     * @allow (create) User with ID 'user123' creates a persona with any personaId under their profile.
+     * @allow (get) User with ID 'user123' retrieves a persona with any personaId under their profile.
+     * @allow (update) User with ID 'user123' updates a persona with any personaId under their profile.
+     * @allow (delete) User with ID 'user123' deletes a persona with any personaId under their profile.
+     * @deny (create) User with ID 'user123' tries to create a persona for 'user456'.
+     * @deny (get) User with ID 'user123' tries to retrieve a persona from 'user456'.
+     * @deny (update) User with ID 'user123' tries to update a persona from 'user456'.
+     * @deny (delete) User with ID 'user123' tries to delete a persona from 'user456'.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /users/{userId}/personas/{personaId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-        function isExistingOwner(userId) {
-            return isSignedIn() && request.auth.uid == userId && resource.data != null;
-        }
-
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
+      allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
