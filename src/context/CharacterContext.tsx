@@ -87,21 +87,14 @@ function characterReducer(state: State, action: Action): State {
         return { ...state, settings: { ...state.settings, ...loadedSettings }};
     case 'SET_CHARACTERS':
         const characters = action.payload;
-        let newView = state.view;
         let newSelectedId = state.selectedCharacterId;
 
-        if (state.isLoading && characters.length > 0) {
-          newView = 'dashboard';
+        // If the currently selected character is no longer in the list, deselect it.
+        if (state.selectedCharacterId && !characters.some(c => c.id === state.selectedCharacterId)) {
           newSelectedId = null;
-        } else if (characters.length === 0) {
-          newView = 'dashboard';
-          newSelectedId = null;
-        } else if (!characters.some(c => c.id === state.selectedCharacterId)) {
-          newSelectedId = null;
-          newView = 'dashboard';
         }
         
-        return { ...state, characters, view: newView, selectedCharacterId: newSelectedId, isLoading: false };
+        return { ...state, characters, selectedCharacterId: newSelectedId, isLoading: false };
     case 'ADD_CHARACTER':
       const existing = state.characters.find(c => c.id === action.payload.id);
       if (existing) return state;
@@ -164,7 +157,8 @@ function characterReducer(state: State, action: Action): State {
         return { 
             ...state, 
             selectedPersonaIdToEdit: action.payload,
-            view: action.payload ? 'editing_persona' : 'dashboard'
+            view: action.payload ? 'editing_persona' : 'dashboard',
+            activeTab: 'personas'
         };
     case 'RESET_STATE':
         return {...initialState, isLoading: false };

@@ -10,7 +10,6 @@ import { useUser } from '@/firebase';
 import LoginScreen from './LoginScreen';
 import CreatePersona from '@/components/user/CreatePersona';
 import EditPersona from '@/components/user/EditPersona';
-import Sidebar from '@/components/layout/Sidebar';
 import Dashboard from './Dashboard';
 import type { DashboardTab } from './Dashboard';
 
@@ -71,9 +70,6 @@ export default function PersonaCraftClientPage() {
     <div className="flex flex-col h-screen bg-background text-foreground font-body text-xl">
       <Header />
       <div className="flex flex-grow min-h-0">
-        <aside className="w-1/4 min-w-[300px] h-full p-4 hidden md:block sticky top-0">
-          <Sidebar />
-        </aside>
         <main className="flex-grow h-full p-4 overflow-y-auto">
           {renderMainContent()}
         </main>
