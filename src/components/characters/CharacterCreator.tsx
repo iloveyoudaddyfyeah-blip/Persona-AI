@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useRef } from 'react';
-import { useCharacter, Tone, Settings } from '@/context/CharacterContext';
+import { useCharacter, Tone } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Slider } from '../ui/slider';
+import ImageCropDialog from './ImageCropDialog';
 
 
 export default function CharacterCreator() {
@@ -37,6 +38,11 @@ export default function CharacterCreator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // For image crop
+  const [imgSrc, setImgSrc] = useState('');
+  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
+
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -50,11 +56,18 @@ export default function CharacterCreator() {
       }
       const reader = new FileReader();
       reader.onload = (event) => {
-        setPhotoDataUri(event.target?.result as string);
+        setImgSrc(event.target?.result as string);
+        setIsCropDialogOpen(true);
       };
       reader.readAsDataURL(file);
     }
   };
+
+  const handleCropComplete = (croppedDataUri: string) => {
+    setPhotoDataUri(croppedDataUri);
+    setIsCropDialogOpen(false);
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +92,6 @@ export default function CharacterCreator() {
     dispatch({ type: 'SET_IS_GENERATING', payload: true });
 
     try {
-      // 1. Call server action to get AI-generated data
       const { profileData, profile, initialMessage } = await createCharacterFromPhoto({
         name,
         photoDataUri,
@@ -90,7 +102,6 @@ export default function CharacterCreator() {
       
       const newCharacterId = doc(collection(firestore, 'users', user.uid, 'characters')).id;
 
-      // Create a default first chat session
       const newChatId = uuidv4();
       const firstChatSession = {
         id: newChatId,
@@ -109,11 +120,9 @@ export default function CharacterCreator() {
           activeChatId: newChatId,
       };
 
-      // 2. Save the complete character object to Firestore from the client
       const characterRef = doc(firestore, `users/${user.uid}/characters/${newCharacterId}`);
       setDocumentNonBlocking(characterRef, newCharacter, { merge: false });
       
-      // 3. Update the local state to show the new character.
       dispatch({ type: 'SELECT_CHARACTER', payload: newCharacter.id });
       dispatch({ type: 'SET_VIEW', payload: 'viewing' });
       
@@ -141,6 +150,12 @@ export default function CharacterCreator() {
 
   return (
     <div className="w-full h-full overflow-y-auto py-8 px-4">
+      <ImageCropDialog 
+        open={isCropDialogOpen}
+        onOpenChange={setIsCropDialogOpen}
+        imgSrc={imgSrc}
+        onCropComplete={handleCropComplete}
+      />
       <Card className="w-full max-w-3xl mx-auto bg-card/80 backdrop-blur-sm">
         <CardContent className="p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
@@ -174,11 +189,11 @@ export default function CharacterCreator() {
                     </div>
                 }
                  <div className='flex-grow'>
-                    <p className={descriptionClass}>Upload a clear headshot for the best results.</p>
+                    <p className={descriptionClass}>Upload a clear headshot for the best results. You'll be able to crop it.</p>
                     <Button type='button' variant="outline" className="mt-2" onClick={() => fileInputRef.current?.click()}>
                         Choose File
                     </Button>
-                    <Input id="photo-upload" ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} required className="hidden"/>
+                    <Input id="photo-upload" ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden"/>
                  </div>
               </div>
             </div>
