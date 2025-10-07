@@ -158,30 +158,31 @@ export default function CharacterCreator() {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="default">Default</SelectItem>
-                        <SelectItem value="witty">Witty</SelectItem>
-                        <SelectItem value="serious">Serious</SelectItem>
-                        <SelectItem value="whimsical">Whimsical</SelectItem>
-                        <SelectItem value="poetic">Poetic</SelectItem>
-                        <SelectItem value="epic">Epic</SelectItem>
-                        <SelectItem value="noir">Noir</SelectItem>
-                        <SelectItem value="comedic">Comedic</SelectItem>
-                        <SelectItem value="dramatic">Dramatic</SelectItem>
-                        <SelectItem value="sarcastic">Sarcastic</SelectItem>
-                        <SelectItem value="inspirational">Inspirational</SelectItem>
-                        <SelectItem value="melancholic">Melancholic</SelectItem>
-                        <SelectItem value="cynical">Cynical</SelectItem>
-                        <SelectItem value="optimistic">Optimistic</SelectItem>
-                        <SelectItem value="philosophical">Philosophical</SelectItem>
-                        <SelectItem value="existential">Existential</SelectItem>
-                        <SelectItem value="stoic">Stoic</SelectItem>
-                        <SelectItem value="lovecraftian">Lovecraftian</SelectItem>
-                        <SelectItem value="shakespearean">Shakespearean</SelectItem>
-                        <SelectItem value="hemingway-esque">Hemingway-esque</SelectItem>
-                        <SelectItem value="cyberpunk">Cyberpunk</SelectItem>
-                        <SelectItem value="steampunk">Steampunk</SelectItem>
-                        <SelectItem value="high-fantasy">High Fantasy</SelectItem>
-                        <SelectItem value="gritty-realism">Gritty Realism</SelectItem>
-                        <SelectItem value="absurdist">Absurdist</SelectItem>
+                        <SelectItem value="joyful">Joyful</SelectItem>
+                        <SelectItem value="anxious">Anxious</SelectItem>
+                        <SelectItem value="angry">Angry</SelectItem>
+                        <SelectItem value="serene">Serene</SelectItem>
+                        <SelectItem value="passionate">Passionate</SelectItem>
+                        <SelectItem value="apathetic">Apathetic</SelectItem>
+                        <SelectItem value="fearful">Fearful</SelectItem>
+                        <SelectItem value="hopeful">Hopeful</SelectItem>
+                        <SelectItem value="jaded">Jaded</SelectItem>
+                        <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
+                        <SelectItem value="grumpy">Grumpy</SelectItem>
+                        <SelectItem value="curious">Curious</SelectItem>
+                        <SelectItem value="confident">Confident</SelectItem>
+                        <SelectItem value="shy">Shy</SelectItem>
+                        <SelectItem value="ambitious">Ambitious</SelectItem>
+                        <SelectItem value="content">Content</SelectItem>
+                        <SelectItem value="bitter">Bitter</SelectItem>
+                        <SelectItem value="loving">Loving</SelectItem>
+                        <SelectItem value="resentful">Resentful</SelectItem>
+                        <SelectItem value="brave">Brave</SelectItem>
+                        <SelectItem value="timid">Timid</SelectItem>
+                        <SelectItem value="arrogant">Arrogant</SelectItem>
+                        <SelectItem value="humble">Humble</SelectItem>
+                        <SelectItem value="playful">Playful</SelectItem>
+                        <SelectItem value="reserved">Reserved</SelectItem>
                     </SelectContent>
                 </Select>
               </div>

@@ -13,11 +13,11 @@ import { v4 as uuidv4 } from 'uuid';
 type View = 'welcome' | 'creating' | 'viewing';
 
 export type Tone = 
-  | "default" | "witty" | "serious" | "whimsical" | "poetic" | "epic" | "noir" 
-  | "comedic" | "dramatic" | "sarcastic" | "inspirational" | "melancholic" 
-  | "cynical" | "optimistic" | "philosophical" | "existential" | "stoic" 
-  | "lovecraftian" | "shakespearean" | "hemingway-esque" | "cyberpunk" 
-  | "steampunk" | "high-fantasy" | "gritty-realism" | "absurdist";
+  | "default" | "joyful" | "anxious" | "angry" | "serene" | "passionate" 
+  | "apathetic" | "fearful" | "hopeful" | "jaded" | "enthusiastic" 
+  | "grumpy" | "curious" | "confident" | "shy" | "ambitious" | "content" 
+  | "bitter" | "loving" | "resentful" | "brave" | "timid" | "arrogant" 
+  | "humble" | "playful" | "reserved";
 
 export type Settings = {
   theme: "light" | "dark";
