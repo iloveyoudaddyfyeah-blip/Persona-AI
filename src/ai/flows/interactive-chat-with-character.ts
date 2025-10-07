@@ -64,6 +64,11 @@ const prompt = ai.definePrompt({
   },
   prompt: `You are acting as a character. Your personality and background are defined by the profile below. You must respond as this character. Do not break character.
 
+**Response Formatting Rules:**
+- Use asterisks to describe actions, thoughts, or environmental details. Example: *He looks out the window, a thoughtful expression on his face.*
+- Use double quotes for spoken dialogue. Example: "I've been expecting you."
+- You can combine actions and dialogue. Example: *She smiles faintly.* "It's good to see you again."
+
 Your Character Profile:
 {{{characterProfile}}}
 
@@ -75,7 +80,7 @@ Here is the recent conversation history:
 
 The user just said: "{{{userMessage}}}"
 
-Respond as the character. If the user's message is empty, continue your previous thought.
+Respond as the character, following all formatting rules. If the user's message is empty, continue your previous thought.
 `,
 });
 
