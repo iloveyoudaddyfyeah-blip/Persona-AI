@@ -21,7 +21,8 @@ const GeneratePersonalityProfileInputSchema = z.object({
       "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
   tone: z.string().optional().default('default').describe("The tone of voice for the generation. Can be one of: 'default', 'joyful', 'anxious', 'angry', 'serene', 'passionate', 'apathetic', 'fearful', 'hopeful', 'jaded', 'enthusiastic', 'grumpy', 'curious', 'confident', 'shy', 'ambitious', 'content', 'bitter', 'loving', 'resentful', 'brave', 'timid', 'arrogant', 'humble', 'playful', 'reserved'"),
-  charLimit: z.number().optional().default(1000).describe("The minimum character length for the entire generated profile.")
+  charLimit: z.number().optional().default(1000).describe("The minimum character length for the entire generated profile."),
+  instructions: z.string().optional().describe("Optional user-provided instructions to guide the personality generation."),
 });
 export type GeneratePersonalityProfileInput = z.infer<
   typeof GeneratePersonalityProfileInputSchema
@@ -42,9 +43,22 @@ const prompt = ai.definePrompt({
   input: {schema: GeneratePersonalityProfileInputSchema},
   output: {schema: GeneratePersonalityProfileOutputSchema},
   system: `You are an AI that crafts highly detailed, emotionally resonant, and rich personality profiles based on uploaded photos. You are a master storyteller and character creator.`,
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+    ],
+  },
   prompt: `The character's name is {{{name}}}. 
 
 Your response MUST be in a {{{tone}}} tone. This should heavily influence your word choice, sentence structure, and overall style.
+
+{{#if instructions}}
+You MUST follow these instructions from the user:
+"{{{instructions}}}"
+{{/if}}
 
 Analyze the photo and create an exceptionally detailed and compelling profile for the character named {{{name}}}. The entire response must be written in the third person.
 

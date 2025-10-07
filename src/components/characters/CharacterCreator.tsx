@@ -18,6 +18,7 @@ import { doc, collection } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import type { Character } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
+import { Textarea } from '../ui/textarea';
 
 export default function CharacterCreator() {
   const { state, dispatch } = useCharacter();
@@ -28,6 +29,7 @@ export default function CharacterCreator() {
   const [photo, setPhoto] = React.useState<{ file: File; dataUri: string } | null>(null);
   const [charLimit, setCharLimit] = React.useState(state.settings.aiCharLimit);
   const [tone, setTone] = React.useState<Tone>(state.settings.aiTone);
+  const [instructions, setInstructions] = React.useState('');
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,7 +73,7 @@ export default function CharacterCreator() {
 
     try {
       // 1. Call server action to get AI-generated data
-      const { profileData, profile, initialMessage } = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit);
+      const { profileData, profile, initialMessage } = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit, instructions);
       
       const newCharacterId = doc(collection(firestore, 'users', user.uid, 'characters')).id;
 
@@ -149,6 +151,18 @@ export default function CharacterCreator() {
                 </div>
               </div>
             </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="instructions" className="text-xl">Additional Instructions (Optional)</Label>
+                <Textarea
+                    id="instructions"
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    placeholder="e.g., 'Make them a secret agent', 'They are obsessed with collecting antique maps'"
+                    className="text-lg"
+                />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="tone" className="text-xl flex items-center gap-2">AI Tone</Label>

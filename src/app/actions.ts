@@ -88,9 +88,10 @@ export async function createCharacterFromPhoto(
   name: string,
   photoDataUri: string,
   tone: Tone,
-  charLimit: number
+  charLimit: number,
+  instructions: string
 ): Promise<{ profileData: GeneratePersonalityProfileOutput; profile: string, initialMessage: string }> {
-  const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit });
+  const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit, instructions });
   const profile = formatProfile(name, profileData);
   
   const { message: initialMessage } = await generateInitialChatMessage({
