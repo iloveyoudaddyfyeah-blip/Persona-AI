@@ -1,13 +1,12 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import type { ChatMessage as ChatMessageType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Button } from '../ui/button';
-import { Pencil, Copy, Trash2, History, Play, Shuffle } from 'lucide-react';
-import { Textarea } from '../ui/textarea';
+import { Copy, Trash2, History, Play, Shuffle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -23,7 +22,6 @@ interface ChatMessageProps {
   personaPhoto?: string | null;
   isLastMessage: boolean;
   isTyping: boolean;
-  onEdit: (newContent: string) => void;
   onRewind: () => void;
   onContinue: () => void;
   onRegenerate: () => void;
@@ -81,55 +79,9 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
 };
 
 
-export default function ChatMessage({ message, characterPhoto, characterName, personaPhoto, isLastMessage, isTyping, onEdit, onRewind, onContinue, onRegenerate, onDelete, isNotLastAIMessage }: ChatMessageProps) {
+export default function ChatMessage({ message, characterPhoto, characterName, personaPhoto, isLastMessage, isTyping, onRewind, onContinue, onRegenerate, onDelete, isNotLastAIMessage }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
   const { toast } = useToast();
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(message.content);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  
-  useEffect(() => {
-    setEditedContent(message.content);
-  }, [message.content]);
-
-  useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      textareaRef.current.focus();
-      // Auto-resize textarea
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [isEditing, editedContent]);
-  
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditedContent(e.target.value);
-    if(textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-        textareaRef.current.style.height = `${e.target.scrollHeight}px`;
-    }
-  }
-
-  const handleSave = () => {
-    if (editedContent.trim() && editedContent !== message.content) {
-      onEdit(editedContent);
-    }
-    setIsEditing(false);
-  };
-  
-  const handleCancel = () => {
-    setEditedContent(message.content);
-    setIsEditing(false);
-  };
-  
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSave();
-    } else if (e.key === 'Escape') {
-      handleCancel();
-    }
-  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -165,7 +117,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, pe
             />
           )
         )}
-         <DropdownMenu onOpenChange={(open) => { if (!open && isEditing) handleSave()}}>
+         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <div
                     className={cn(
@@ -176,26 +128,10 @@ export default function ChatMessage({ message, characterPhoto, characterName, pe
                         !isCharacter && "order-1"
                     )}
                     >
-                    {isEditing ? (
-                        <Textarea
-                            ref={textareaRef}
-                            value={editedContent}
-                            onChange={handleContentChange}
-                            onKeyDown={handleKeyDown}
-                            onBlur={handleSave}
-                            className="text-lg bg-background/80 resize-none overflow-hidden w-full min-w-[300px]"
-                            autoComplete="off"
-                        />
-                    ) : (
-                        <FormattedContent content={message.content} isCharacter={isCharacter} />
-                    )}
+                    <FormattedContent content={message.content} isCharacter={isCharacter} />
                 </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align={isCharacter ? 'start' : 'end'} className="w-48">
-                <DropdownMenuItem onSelect={() => setIsEditing(true)} className="text-base py-2">
-                    <Pencil className="mr-2 h-5 w-5" />
-                    <span>Edit & Regenerate</span>
-                </DropdownMenuItem>
                 <DropdownMenuItem onSelect={handleCopy} className="text-base py-2">
                     <Copy className="mr-2 h-5 w-5" />
                     <span>Copy</span>

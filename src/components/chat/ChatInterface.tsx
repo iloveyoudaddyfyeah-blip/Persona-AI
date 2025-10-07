@@ -194,35 +194,6 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
 
     await getAIResponse(updatedMessages);
   };
-  
-  const handleEditMessage = async (index: number, newContent: string) => {
-    if (!user || !firestore || !activeChat) return;
-
-    const originalMessage = activeChat.messages[index];
-    const newHistory = [...activeChat.messages];
-    newHistory[index] = { ...newHistory[index], content: newContent };
-    
-    // If it's a character message, just save the edit locally and DO NOT regenerate.
-    if (originalMessage.role === 'character') {
-      const updatedSessions = chatSessions.map(cs =>
-        cs.id === activeChat.id ? { ...cs, messages: newHistory } : cs
-      );
-      const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
-      updateDocumentNonBlocking(characterRef, { chatSessions: updatedSessions });
-      return;
-    }
-
-    // If it's a user message, truncate history to this message and regenerate
-    const truncatedHistory = newHistory.slice(0, index + 1);
-    
-    // Optimistically update UI
-    const updatedSessionsForUI = chatSessions.map(cs =>
-      cs.id === activeChat.id ? { ...cs, messages: truncatedHistory } : cs
-    );
-    dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessionsForUI }});
-
-    await getAIResponse(truncatedHistory);
-  };
 
   const handleRewind = async (index: number) => {
     if (!user || !firestore || !activeChat) return;
@@ -374,7 +345,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
             </div>
         </div>
         <div ref={scrollAreaRef} className="flex-grow flex flex-col p-4">
-            <div className='flex-grow space-y-4 overflow-y-auto pr-2'>
+            <div className='flex-1 space-y-4 overflow-y-auto pr-2'>
                 {chatHistory.map((msg, index) => (
                     <ChatMessage 
                         key={`${activeChat?.id}-${index}`} 
@@ -384,7 +355,6 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                         personaPhoto={activePersona?.photoDataUri}
                         isLastMessage={index === chatHistory.length - 1}
                         isTyping={isTyping}
-                        onEdit={(newContent) => handleEditMessage(index, newContent)}
                         onRewind={() => handleRewind(index)}
                         onContinue={handleContinue}
                         onRegenerate={handleRegenerate}

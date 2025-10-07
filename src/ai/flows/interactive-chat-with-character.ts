@@ -75,7 +75,7 @@ Here is the recent conversation history:
 
 The user just said: "{{{userMessage}}}"
 
-Your response:
+Respond as the character. If the user's message is empty, continue your previous thought.
 `,
 });
 
@@ -90,5 +90,3 @@ const interactiveChatWithCharacterFlow = ai.defineFlow(
     return output!
   }
 );
-
-    
