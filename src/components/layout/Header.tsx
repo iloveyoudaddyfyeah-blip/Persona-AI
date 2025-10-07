@@ -5,18 +5,11 @@ import SettingsDialog from '../settings/SettingsDialog';
 import { useUser, useAuth } from '@/firebase';
 import { Button } from '../ui/button';
 import { signOut } from 'firebase/auth';
-import { Loader2, LogIn, LogOut } from 'lucide-react';
-import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { Loader2, LogOut } from 'lucide-react';
 
 export default function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
-
-  const handleLogin = () => {
-    if (auth) {
-        initiateAnonymousSignIn(auth);
-    }
-  };
 
   const handleLogout = async () => {
     if (auth) {
@@ -43,11 +36,7 @@ export default function Header() {
         </div>
       );
     }
-    return (
-      <Button variant="ghost" onClick={handleLogin} title="Login Anonymously">
-        <LogIn className="h-6 w-6 mr-2" /> Login
-      </Button>
-    );
+    return null;
   };
 
   return (

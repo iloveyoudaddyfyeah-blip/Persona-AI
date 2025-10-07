@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export default function WelcomeScreen() {
     const { dispatch } = useCharacter();

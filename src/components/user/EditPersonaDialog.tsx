@@ -104,20 +104,22 @@ export function EditPersonaDialog({ open, onOpenChange, persona }: EditPersonaDi
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right text-lg">Name</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3 text-lg" placeholder="e.g., The Investigator" />
+            <div className="space-y-2">
+                <Label htmlFor="name" className="text-lg">Name</Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="text-lg" placeholder="e.g., The Investigator" />
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="photo" className="text-right text-lg pt-2">Photo</Label>
-                <div className="col-span-3 flex items-center space-x-4">
+            <div className="space-y-2">
+                <Label htmlFor="photo" className="text-lg">Photo</Label>
+                <div className="flex items-center space-x-4">
                     <Image src={photo?.dataUri || persona.photoDataUri || personaPlaceholder?.imageUrl || ''} alt="Preview" width={80} height={80} className="rounded-md border object-cover aspect-square" data-ai-hint={personaPlaceholder?.imageHint} unoptimized/>
-                    <Input id="photo" type="file" accept="image/*" onChange={handleFileChange} className="text-lg file:text-lg file:mr-4 file:py-2 file:px-4"/>
+                    <div className="w-full">
+                      <Input id="photo" type="file" accept="image/*" onChange={handleFileChange} className="text-lg file:text-lg file:mr-4 file:py-2 file:px-4"/>
+                    </div>
                 </div>
             </div>
-             <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="description" className="text-right text-lg pt-2">Description</Label>
-                <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3 text-lg min-h-[100px]" placeholder="A short bio of your persona..." />
+             <div className="space-y-2">
+                <Label htmlFor="description" className="text-lg">Description</Label>
+                <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="text-lg min-h-[100px]" placeholder="A short bio of your persona..." />
             </div>
         </div>
         <DialogFooter>
