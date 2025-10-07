@@ -41,8 +41,8 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
         if (part.startsWith('*') && part.endsWith('*')) {
           return (
             <em key={index} className={cn(
-              "text-muted-foreground",
-              !isCharacter && 'user-action-text'
+              "not-italic",
+              isCharacter ? 'text-muted-foreground' : 'user-action-text'
             )}>
               {part.slice(1, -1)}
             </em>
