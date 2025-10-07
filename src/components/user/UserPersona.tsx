@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -6,39 +5,35 @@ import { useCharacter } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Loader2, Save, Sparkles } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { generatePersonaFromPrompt } from '@/app/actions';
 
 export default function UserPersona() {
-  const { state, dispatch } = useCharacter();
+  const { state } = useCharacter();
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const [persona, setPersona] = useState(state.userPersona);
-  const [regenPrompt, setRegenPrompt] = useState('');
-  const [isRegenerating, setIsRegenerating] = useState(false);
+  
+  const activePersona = state.userPersonas.find(p => p.isActive);
+  const [description, setDescription] = useState(activePersona?.description || '');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    setPersona(state.userPersona);
-  }, [state.userPersona]);
+    setDescription(activePersona?.description || '');
+  }, [activePersona]);
 
   const handleSave = async () => {
-    if (!user || !firestore) {
-        toast({ variant: 'destructive', title: 'Not logged in', description: 'You must be logged in to save your persona.' });
+    if (!user || !firestore || !activePersona) {
+        toast({ variant: 'destructive', title: 'Not logged in or no active persona', description: 'You must be logged in and have an active persona to save.' });
         return;
     }
     setIsSaving(true);
     try {
-        const userRef = doc(firestore, `users/${user.uid}`);
-        // Use set with merge to either create or update the document.
-        setDocumentNonBlocking(userRef, { persona }, { merge: true });
+        const personaRef = doc(firestore, `users/${user.uid}/personas/${activePersona.id}`);
+        setDocumentNonBlocking(personaRef, { description }, { merge: true });
         toast({
         title: 'Persona Saved',
         description: `Your persona has been updated. Characters will now react to this new persona.`,
@@ -50,26 +45,7 @@ export default function UserPersona() {
     }
   };
 
-  const handleRegenerate = async () => {
-    if (!regenPrompt) {
-      toast({ variant: "destructive", title: "Prompt is empty", description: "Please provide instructions for your persona." });
-      return;
-    }
-    setIsRegenerating(true);
-    try {
-      const newPersona = await generatePersonaFromPrompt(regenPrompt);
-      setPersona(newPersona);
-      setRegenPrompt('');
-      toast({ title: 'Persona Generated!', description: 'Your new persona is ready. You can edit it further or save it.' });
-    } catch (error) {
-      toast({ variant: "destructive", title: "Generation Failed", description: (error as Error).message });
-    } finally {
-      setIsRegenerating(false);
-    }
-  };
-
-
-  const hasChanges = persona !== state.userPersona;
+  const hasChanges = activePersona && description !== activePersona.description;
 
   return (
     <Card className="h-full flex flex-col border-0 shadow-none rounded-t-none">
@@ -81,35 +57,14 @@ export default function UserPersona() {
         </CardHeader>
         <CardContent className="flex-grow flex flex-col gap-4">
             <Textarea
-                value={persona}
-                onChange={(e) => setPersona(e.target.value)}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 placeholder="e.g., A hardened detective looking for clues, a friendly traveler asking for stories..."
                 className="flex-grow text-lg resize-none"
             />
         </CardContent>
         <CardFooter className="flex-col items-start gap-4 border-t pt-6">
-             <div className='flex w-full justify-between items-end'>
-                 <div className='w-full pr-4'>
-                    <Label htmlFor="regen-prompt" className="text-xl">Generate with AI</Label>
-                    <div className='flex w-full gap-2 mt-2'>
-                        <Input
-                            id="regen-prompt"
-                            placeholder="e.g., 'A witty space pirate with a heart of gold'"
-                            value={regenPrompt}
-                            onChange={(e) => setRegenPrompt(e.target.value)}
-                            className="text-lg"
-                            disabled={isRegenerating}
-                        />
-                        <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRegenerating}>
-                            {isRegenerating ? (
-                                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                            ) : (
-                                <Sparkles className="mr-2 h-6 w-6" />
-                            )}
-                            Generate
-                        </Button>
-                    </div>
-                </div>
+             <div className='flex w-full justify-end items-end'>
                 {hasChanges && (
                     <Button onClick={handleSave} className="text-lg h-12 self-end" disabled={isSaving}>
                         {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin"/> : <Save className="mr-2 h-5 w-5"/>}

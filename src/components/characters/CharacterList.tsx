@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCharacter } from '@/context/CharacterContext';
@@ -55,7 +54,7 @@ export default function CharacterList() {
 
   return (
     <div className="bg-card/50 h-full flex flex-col p-4 rounded-lg border">
-      <h2 className="text-2xl font-headline mb-4">Characters</h2>
+      <h2 className="text-2xl font-headline mb-4 px-2">Characters</h2>
       <div className="flex-grow overflow-y-auto pr-2 space-y-2">
         {state.characters.map(char => (
           <div
@@ -63,20 +62,20 @@ export default function CharacterList() {
             onClick={() => handleSelectCharacter(char.id)}
             className={cn(
               "flex items-center w-full justify-between rounded-md cursor-pointer group",
-              state.selectedCharacterId === char.id ? "bg-secondary" : "hover:bg-accent/50"
+              state.selectedCharacterId === char.id ? "bg-primary/20" : "hover:bg-secondary/50"
             )}
           >
             <div
-              className="flex-grow flex items-center justify-start text-lg h-12 px-4 rounded-md"
+              className="flex-grow flex items-center justify-start text-lg h-14 px-4 rounded-md"
             >
               <Image 
                 src={char.photoDataUri} 
                 alt={char.name}
-                width={32}
-                height={32}
-                className="mr-3 h-8 w-8 rounded-md object-cover pixel-art"
+                width={40}
+                height={40}
+                className="mr-3 h-10 w-10 rounded-md object-cover"
               />
-              <span className="truncate flex-grow text-left">{char.name}</span>
+              <span className="truncate flex-grow text-left font-medium">{char.name}</span>
             </div>
             <AlertDialog>
               <AlertDialogTrigger asChild>

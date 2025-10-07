@@ -19,6 +19,7 @@ interface ChatMessageProps {
   message: ChatMessageType;
   characterPhoto: string;
   characterName: string;
+  personaPhoto?: string | null;
   isLastMessage: boolean;
   isTyping: boolean;
   onEdit: (newContent: string) => void;
@@ -57,7 +58,7 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
 };
 
 
-export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping, onEdit, onRewind, onContinue, onRegenerate, onDelete, isNotLastAIMessage }: ChatMessageProps) {
+export default function ChatMessage({ message, characterPhoto, characterName, personaPhoto, isLastMessage, isTyping, onEdit, onRewind, onContinue, onRegenerate, onDelete, isNotLastAIMessage }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
   const { toast } = useToast();
 
@@ -120,15 +121,26 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
   return (
     <div className={cn("flex flex-col gap-1 group", isCharacter ? 'items-start' : 'items-end')}>
        <div className={cn("flex w-full items-start gap-4 text-xl", isCharacter ? 'justify-start' : 'justify-end')}>
-        {isCharacter && (
+        {isCharacter ? (
           <Image
             src={characterPhoto}
             alt={characterName}
             title={characterName}
             width={40}
             height={40}
-            className="rounded-full border-2 border-primary pixel-art object-cover aspect-square"
+            className="rounded-full border-2 border-primary object-cover aspect-square"
           />
+        ) : (
+          personaPhoto && (
+            <Image
+              src={personaPhoto}
+              alt={"Your persona"}
+              title={"Your persona"}
+              width={40}
+              height={40}
+              className="rounded-full border-2 border-secondary object-cover aspect-square order-2"
+            />
+          )
         )}
          <DropdownMenu onOpenChange={(open) => { if (!open && isEditing) handleSave()}}>
             <DropdownMenuTrigger asChild>
@@ -137,7 +149,8 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                         "rounded-lg p-3 max-w-[75%] cursor-pointer",
                         isCharacter
                         ? "bg-secondary text-secondary-foreground"
-                        : "bg-primary text-primary-foreground"
+                        : "bg-primary text-primary-foreground",
+                        !isCharacter && "order-1"
                     )}
                     >
                     {isEditing ? (
@@ -154,7 +167,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                     )}
                 </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align={isCharacter ? 'start' : 'end'}>
+            <DropdownMenuContent align={isCharacter ? 'start' : 'end'} className="w-48">
                 <DropdownMenuItem onSelect={() => setIsEditing(true)} className="text-base py-2">
                     <Pencil className="mr-2 h-5 w-5" />
                     <span>Edit</span>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -52,11 +51,11 @@ export default function Header() {
   };
 
   return (
-    <header className="p-4 border-b border-border flex items-center justify-between">
+    <header className="p-4 border-b border-border/50 flex items-center justify-between sticky top-0 z-20 bg-background/80 backdrop-blur-sm">
       <div className="flex items-center gap-2 min-w-[150px] justify-start">
         {renderAuthButton()}
       </div>
-      <h1 className="text-4xl text-foreground font-headline text-center">PersonaCraft AI</h1>
+      <h1 className="text-3xl text-foreground font-headline font-bold text-center">PersonaCraft</h1>
       <div className="flex items-center gap-2 min-w-[150px] justify-end">
         <SettingsDialog />
       </div>

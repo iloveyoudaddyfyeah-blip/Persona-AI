@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -379,6 +378,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                     message={msg} 
                     characterPhoto={character.photoDataUri} 
                     characterName={character.name}
+                    personaPhoto={activePersona?.photoDataUri}
                     isLastMessage={index === chatHistory.length - 1}
                     isTyping={isTyping}
                     onEdit={(newContent) => handleEditMessage(index, newContent)}
@@ -396,7 +396,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                         alt={character.name}
                         width={40}
                         height={40}
-                        className="rounded-full border-2 border-primary pixel-art object-cover aspect-square"
+                        className="rounded-full border-2 border-primary object-cover aspect-square"
                     />
                     <div className="max-w-[75%] rounded-lg p-3 bg-secondary text-secondary-foreground flex items-center gap-2">
                         <Loader2 className="h-5 w-5 animate-spin" />

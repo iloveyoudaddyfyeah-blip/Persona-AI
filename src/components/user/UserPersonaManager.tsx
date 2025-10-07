@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -154,7 +153,7 @@ export default function UserPersonaManager() {
                                     unoptimized
                                 />
                                 <div className="flex-grow">
-                                    <CardTitle className="text-xl">{persona.name}</CardTitle>
+                                    <CardTitle className="text-xl font-headline">{persona.name}</CardTitle>
                                     {state.activePersonaId === persona.id && (
                                         <span className="text-xs font-bold text-primary bg-primary/20 px-2 py-1 rounded-full">ACTIVE</span>
                                     )}

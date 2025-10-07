@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -17,8 +16,7 @@ import { Input } from "../ui/input";
 import { useFirestore } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { generatePersonaFromPrompt } from '@/app/actions';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Textarea } from '../ui/textarea';
 import type { UserPersona } from '@/lib/types';
@@ -40,9 +38,7 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [photo, setPhoto] = useState<{ file: File; dataUri: string } | null>(null);
-  const [genPrompt, setGenPrompt] = useState('');
 
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
   const personaPlaceholder = PlaceHolderImages.find(img => img.id === 'persona-placeholder');
@@ -57,23 +53,6 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
       const reader = new FileReader();
       reader.onload = (event) => setPhoto({ file, dataUri: event.target?.result as string });
       reader.readAsDataURL(file);
-    }
-  };
-
-  const handleGenerateDescription = async () => {
-    if (!genPrompt) {
-        toast({ variant: 'destructive', title: 'Prompt is empty' });
-        return;
-    }
-    setIsGenerating(true);
-    try {
-        const generatedDesc = await generatePersonaFromPrompt(genPrompt);
-        setDescription(generatedDesc);
-        toast({ title: 'Description generated!' });
-    } catch (error) {
-        toast({ variant: 'destructive', title: 'Generation failed', description: (error as Error).message });
-    } finally {
-        setIsGenerating(false);
     }
   };
 
@@ -122,7 +101,6 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
     setName('');
     setDescription('');
     setPhoto(null);
-    setGenPrompt('');
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -136,7 +114,7 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Create New Persona</DialogTitle>
+          <DialogTitle className="text-2xl font-headline">Create New Persona</DialogTitle>
           <DialogDescription>
             Craft a new persona for your interactions. Give it a name, a face, and a personality.
           </DialogDescription>
@@ -156,16 +134,6 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
              <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="description" className="text-right text-lg pt-2">Description</Label>
                 <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3 text-lg min-h-[100px]" placeholder="A short bio of your persona..." />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="gen-prompt" className="text-right text-lg">Generate with AI</Label>
-                <div className="col-span-3 flex gap-2">
-                    <Input id="gen-prompt" value={genPrompt} onChange={(e) => setGenPrompt(e.target.value)} className="text-lg" placeholder="e.g., 'A grizzled space captain'" disabled={isGenerating} />
-                    <Button onClick={handleGenerateDescription} disabled={isGenerating}>
-                        {isGenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-                        <span className="sr-only">Generate</span>
-                    </Button>
-                </div>
             </div>
         </div>
         <DialogFooter>

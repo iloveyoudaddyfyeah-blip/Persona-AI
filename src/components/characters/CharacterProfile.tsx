@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -66,11 +65,11 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   const handleSave = async () => {
     if (!user || !firestore) return;
     setIsSaving(true);
-    const updatedCharacterData: Partial<Character> = { 
-        name, 
-        profile,
-    };
     try {
+        const updatedCharacterData: Partial<Character> = { 
+            name, 
+            profile,
+        };
         const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
         updateDocumentNonBlocking(characterRef, updatedCharacterData);
         toast({
@@ -129,7 +128,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
     <Tabs defaultValue="profile" className="h-full flex flex-col">
         <div className="flex-shrink-0 px-6 pt-6">
             <CardHeader className="flex flex-row items-center gap-4 p-0">
-                <Image src={character.photoDataUri} alt={character.name} width={100} height={100} className="rounded-lg border-2 pixel-art aspect-square object-cover" />
+                <Image src={character.photoDataUri} alt={character.name} width={100} height={100} className="rounded-lg border-2 aspect-square object-cover" />
                 <div className='w-full'>
                     <input
                         type="text"
