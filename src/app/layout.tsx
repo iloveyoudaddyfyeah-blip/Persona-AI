@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
@@ -32,7 +33,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn("dark", poppins.variable, inter.variable)}>
-      <body className={cn("font-body antialiased", "bg-background text-foreground", "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]")}>
+      <body className={cn(
+        "font-body antialiased", 
+        "bg-background text-foreground", 
+        "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,hsl(var(--primary)/0.1),rgba(255,255,255,0))]",
+        "bg-no-repeat",
+        "bg-cover"
+        )}>
         <FirebaseClientProvider>
           <CharacterProvider>
             {children}
