@@ -6,7 +6,7 @@ import React, { createContext, useContext, useEffect, useReducer, ReactNode } fr
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { collection, onSnapshot, doc } from 'firebase/firestore';
-import { updateUser, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { updateUser, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -222,32 +222,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       const characters: Character[] = [];
       snapshot.forEach(docSnap => {
           const characterData = docSnap.data() as Character;
-          characterData.id = docSnap.id; // Ensure ID is set
-          
-          if (!characterData.chatSessions || characterData.chatSessions.length === 0) {
-              const newChatId = uuidv4();
-              characterData.chatSessions = [{
-                  id: newChatId,
-                  name: 'Chat 1',
-                  createdAt: Date.now(),
-                  messages: []
-              }];
-              characterData.activeChatId = newChatId;
-
-              const charRef = doc(firestore, `users/${user.uid}/characters/${characterData.id}`);
-              updateDocumentNonBlocking(charRef, { 
-                  chatSessions: characterData.chatSessions,
-                  activeChatId: characterData.activeChatId
-              });
-          }
-          if (!characterData.activeChatId) {
-            const mostRecentChat = characterData.chatSessions.sort((a,b) => b.createdAt - a.createdAt)[0];
-            characterData.activeChatId = mostRecentChat.id;
-             const charRef = doc(firestore, `users/${user.uid}/characters/${characterData.id}`);
-              updateDocumentNonBlocking(charRef, { 
-                  activeChatId: characterData.activeChatId
-              });
-          }
           characters.push(characterData);
       });
 
