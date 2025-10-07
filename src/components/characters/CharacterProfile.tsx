@@ -33,7 +33,7 @@ const FormattedProfile = ({ content }: { content: string }) => {
             {parts.map((part, index) => {
                 if (part.startsWith('**') && part.endsWith('**')) {
                     return (
-                        <strong key={index} className="font-bold text-xl inline-block text-foreground/90">
+                        <strong key={index} className="font-bold text-xl inline-block text-gray-400">
                             {part.slice(2, -2)}
                         </strong>
                     );
@@ -203,5 +203,3 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
     </Tabs>
   );
 }
-
-    
