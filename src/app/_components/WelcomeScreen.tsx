@@ -17,8 +17,6 @@ export default function WelcomeScreen() {
 
     return (
         <div className="relative flex flex-col items-center justify-center h-full text-center p-8">
-            <div className="absolute inset-0 bg-grid-pattern"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
             <div className="relative z-10 flex flex-col items-center">
                 {welcomeImage && (
                     <Image

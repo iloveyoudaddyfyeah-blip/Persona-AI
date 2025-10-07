@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { CharacterProvider } from '@/context/CharacterContext';
 import { Poppins, Inter } from 'next/font/google'
+import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: 'PersonaCraft AI',
@@ -30,8 +31,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`dark ${poppins.variable} ${inter.variable}`}>
-      <body className="font-body antialiased">
+    <html lang="en" className={cn("dark", poppins.variable, inter.variable)}>
+      <body className="font-body antialiased bg-grid-pattern">
         <FirebaseClientProvider>
           <CharacterProvider>
             {children}
