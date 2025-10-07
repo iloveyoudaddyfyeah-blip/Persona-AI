@@ -41,5 +41,3 @@ export type UserData = {
     subscriptionStatus?: 'free' | 'premium';
     activePersonaId?: string;
 }
-
-    

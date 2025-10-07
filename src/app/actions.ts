@@ -11,6 +11,8 @@ import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-c
 import { generateUserPersona } from '@/ai/flows/generate-user-persona';
 import type { Character, ChatMessage, UserPersona } from '@/lib/types';
 import { generateInitialChatMessage as generateInitialChatMessageFlow } from '@/ai/flows/generate-initial-chat-message';
+import { generateCharacterFromForm as generateCharacterFromFormFlow } from '@/ai/flows/generate-character-from-form';
+import type { GenerateCharacterFromFormInput } from '@/ai/flows/generate-character-from-form';
 
 function formatProfile(
   name: string,
@@ -91,6 +93,18 @@ export async function createCharacterFromPhoto(
     characterProfile: profile,
   });
 
+  return { profileData, profile, initialMessage };
+}
+
+export async function createCharacterFromForm(
+  input: GenerateCharacterFromFormInput
+): Promise<{ profileData: GeneratePersonalityProfileOutput; profile: string; initialMessage: string }> {
+  const profileData = await generateCharacterFromFormFlow(input);
+  const profile = formatProfile(input.name, profileData);
+  const { message: initialMessage } = await generateInitialChatMessageFlow({
+    characterName: input.name,
+    characterProfile: profile,
+  });
   return { profileData, profile, initialMessage };
 }
 
