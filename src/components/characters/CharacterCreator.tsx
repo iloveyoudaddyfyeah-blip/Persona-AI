@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { createCharacterFromPhoto } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
@@ -160,9 +160,14 @@ export default function CharacterCreator() {
       <Card className="w-full max-w-3xl mx-auto">
         <CardContent className="p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
-            <header className="text-center">
-              <h1 className="text-4xl font-headline mb-2">Create New Character</h1>
-              <p className={descriptionClass}>Give your new character a name, a face, and a personality blueprint.</p>
+            <header>
+                <Button type="button" variant="ghost" onClick={() => dispatch({ type: 'SET_VIEW', payload: 'dashboard'})} className="mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+                </Button>
+                <div className="text-center">
+                    <h1 className="text-4xl font-headline mb-2">Create New Character</h1>
+                    <p className={descriptionClass}>Give your new character a name, a face, and a personality blueprint.</p>
+                </div>
             </header>
 
             <div className={formSectionClass}>
@@ -286,3 +291,5 @@ export default function CharacterCreator() {
     </div>
   );
 }
+
+    

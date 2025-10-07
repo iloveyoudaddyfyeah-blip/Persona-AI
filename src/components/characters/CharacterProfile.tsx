@@ -178,25 +178,27 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
                     </div>
                 </CardContent>
                 <CardFooter className="flex flex-col items-start gap-4 border-t pt-6">
-                    <Label htmlFor="regen-prompt" className="text-xl flex items-center gap-2">Refine with AI</Label>
-                    <div className='flex w-full gap-2'>
-                        <Input
-                            id="regen-prompt"
-                            placeholder="e.g., 'Make them more mysterious and give them a secret past.'"
-                            value={regenPrompt}
-                            onChange={(e) => setRegenPrompt(e.target.value)}
-                            className="text-lg"
-                            disabled={isRefineDisabled}
-                            autoComplete="off"
-                        />
-                        <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRefineDisabled}>
-                            {isRegenerating ? (
-                                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                            ) : (
-                                <Sparkles className="mr-2 h-6 w-6" />
-                            )}
-                            Regenerate
-                        </Button>
+                    <div className='w-full space-y-2'>
+                        <Label htmlFor="regen-prompt" className="text-xl flex items-center gap-2">Refine with AI</Label>
+                        <div className='flex w-full gap-2 items-center'>
+                            <Input
+                                id="regen-prompt"
+                                placeholder="e.g., 'Make them more mysterious and give them a secret past.'"
+                                value={regenPrompt}
+                                onChange={(e) => setRegenPrompt(e.target.value)}
+                                className="text-lg"
+                                disabled={isRefineDisabled}
+                                autoComplete="off"
+                            />
+                            <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRefineDisabled}>
+                                {isRegenerating ? (
+                                    <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                                ) : (
+                                    <Sparkles className="mr-2 h-6 w-6" />
+                                )}
+                                Regenerate
+                            </Button>
+                        </div>
                     </div>
                 </CardFooter>
             </Card>
@@ -207,3 +209,5 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
     </Tabs>
   );
 }
+
+    
