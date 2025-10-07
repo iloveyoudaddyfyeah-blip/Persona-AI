@@ -162,6 +162,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, pe
                             onKeyDown={handleKeyDown}
                             onBlur={handleSave}
                             className="text-lg bg-background/80 resize-none overflow-hidden w-full min-w-[300px]"
+                            autoComplete="off"
                         />
                     ) : (
                         <FormattedContent content={message.content} isCharacter={isCharacter} />

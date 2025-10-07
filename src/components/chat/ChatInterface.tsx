@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -422,6 +423,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                     placeholder={`Talk to ${character.name}...`}
                     className="text-lg"
                     disabled={isTyping || !user || !activeChat}
+                    autoComplete="off"
                     />
                     <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user || !activeChat}>
                         <Send className="h-6 w-6" />

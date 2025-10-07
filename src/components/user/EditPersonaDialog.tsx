@@ -106,7 +106,7 @@ export function EditPersonaDialog({ open, onOpenChange, persona }: EditPersonaDi
         <div className="grid gap-6 py-4">
             <div className="space-y-2">
                 <Label htmlFor="name" className="text-lg">Name</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="text-lg" placeholder="e.g., The Investigator" />
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="text-lg" placeholder="e.g., The Investigator" autoComplete="off" />
             </div>
 
             <div className="space-y-4 rounded-lg border p-4">
@@ -122,7 +122,7 @@ export function EditPersonaDialog({ open, onOpenChange, persona }: EditPersonaDi
 
              <div className="space-y-2">
                 <Label htmlFor="description" className="text-lg">Description</Label>
-                <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="text-lg min-h-[100px]" placeholder="A short bio of your persona..." />
+                <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="text-lg min-h-[100px]" placeholder="A short bio of your persona..." autoComplete="off" />
             </div>
         </div>
         <DialogFooter>

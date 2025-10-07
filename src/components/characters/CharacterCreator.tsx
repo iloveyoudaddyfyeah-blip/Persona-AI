@@ -175,6 +175,7 @@ export default function CharacterCreator() {
                 placeholder="e.g., Alex"
                 required
                 className="text-lg h-12 bg-secondary/30"
+                autoComplete="off"
               />
             </div>
 
@@ -208,6 +209,7 @@ export default function CharacterCreator() {
                 onChange={(e) => setInstructions(e.target.value)}
                 placeholder="Add any specific instructions here..."
                 className="text-lg min-h-[100px] bg-secondary/30"
+                autoComplete="off"
               />
             </div>
             

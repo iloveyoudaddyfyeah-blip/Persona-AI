@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -135,6 +136,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         className="text-4xl font-headline bg-transparent outline-none w-full border-b border-transparent focus:border-foreground"
+                        autoComplete="off"
                     />
                     <TabsList className="mt-2">
                         <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -154,6 +156,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
                             onChange={(e) => setProfile(e.target.value)}
                             placeholder="Character profile..."
                             className="flex-grow text-lg resize-none"
+                            autoComplete="off"
                         />
                     ) : (
                        <FormattedProfile content={profile} />
@@ -180,6 +183,7 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
                             onChange={(e) => setRegenPrompt(e.target.value)}
                             className="text-lg"
                             disabled={isRefineDisabled}
+                            autoComplete="off"
                         />
                         <Button onClick={handleRegenerate} className="text-lg h-12" disabled={isRefineDisabled}>
                             {isRegenerating ? (
