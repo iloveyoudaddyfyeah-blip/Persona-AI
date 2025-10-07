@@ -73,7 +73,7 @@ Fill out the following template with rich, detailed information.
 - **Fears**: Describe their greatest anxieties, phobias, insecurities, and emotional triggers.
 - **Skills/Abilities**: List their talents, learned skills, and any special powers they might have, including their level of proficiency.
 - **Hobbies/Interests**: What are their pastimes, collections, and ways of spending free time?
-- **Likes & Dislikes**: Provide a list of 5 specific and interesting likes and 5 dislikes. Avoid generic answers. Instead of "food", try "the taste of ozone after a thunderstorm" or "the specific silence of a library just before closing".
+- **Likes & Dislikes**: Provide a list of 5 specific and interesting likes and 5 dislikes. Be poetic, sensory, and specific. Avoid generic answers. Instead of "food," try "the taste of ozone after a thunderstorm" or "the specific silence of a library just before closing". Instead of "sunny days," try "sunlight that strips away shadows, leaving one exposed."
 - **Daily Wear**: Based on the photo, describe their typical clothing style, accessories, practical considerations, and the condition and cultural significance of their clothing.
 - **Backpack/Pockets**: What items do they carry regularly, and what do these items reveal about their personality and needs?
 - **Speech Patterns**: How do they speak? Describe their accent, vocabulary, cadence, common phrases, and whether they tend to lie or have a stutter.
@@ -92,5 +92,3 @@ const generatePersonalityProfileFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    
