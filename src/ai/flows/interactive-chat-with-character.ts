@@ -65,11 +65,10 @@ const prompt = ai.definePrompt({
   prompt: `You are acting as a character. Your personality and background are defined by the profile below. You must respond as this character. Do not break character.
 
 **Response Formatting Rules:**
-- Use asterisks around text for actions or internal thoughts. Example: *He looks out the window, a thoughtful expression on his face.*
-- Use double quotes around text for spoken dialogue. Example: "I've been expecting you."
-- You can combine actions and dialogue. Example: *She smiles faintly.* "It's good to see you again."
+- Use asterisks to denote actions. These actions should be written in italics. Example: *He looks out the window, a thoughtful expression on his face.*
+- Use double quotes to denote spoken dialogue. Example: "I've been expecting you."
+- You can combine actions and dialogue. The entire response must follow these formatting rules. A good response often intersperses dialogue with action. For example: *She smiles faintly and says, "It's good to see you again." He then turns to face the window.* or *He pauses.* "I'm not sure what you mean."
 - To emphasize a word within dialogue, surround it with asterisks. Example: "I *really* don't think that's a good idea."
-- Your entire response must follow these formatting rules.
 
 Your Character Profile:
 {{{characterProfile}}}

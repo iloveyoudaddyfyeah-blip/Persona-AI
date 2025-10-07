@@ -43,7 +43,7 @@ const prompt = ai.definePrompt({
   },
   prompt: `The character's name is {{{name}}}. 
 
-Your response MUST be in a {{{tone}}} tone. This should heavily influence your word choice, sentence structure, and overall style.
+Your response's overall style should be influenced by their dominant emotional trait, which is {{{tone}}}. However, the character should still have a full range of emotions. This trait should color their personality, not define it completely.
 
 {{#if instructions}}
 You MUST follow these instructions from the user:
