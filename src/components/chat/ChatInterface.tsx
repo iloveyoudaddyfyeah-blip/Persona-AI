@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ChatMessage from './ChatMessage';
 import { getChatResponse } from '@/app/actions';
-import { Loader2, Plus, Send, Trash2, RotateCcw } from 'lucide-react';
+import { Loader2, Plus, Send, Trash2, RotateCcw, ArrowDown } from 'lucide-react';
 import { Card } from '../ui/card';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -37,6 +37,7 @@ import {
 import { ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface ChatInterfaceProps {
   character: Character;
@@ -49,6 +50,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isSessionLoading, setIsSessionLoading] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const activePersona = state.userPersonas.find(p => p.id === state.activePersonaId) || null;
@@ -56,12 +58,39 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
   const activeChat = chatSessions.find(c => c.id === character.activeChatId);
   const chatHistory = activeChat?.messages || [];
 
-  useEffect(() => {
+  const scrollToBottom = (behavior: 'smooth' | 'auto' = 'smooth') => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+        scrollAreaRef.current.scrollTo({
+            top: scrollAreaRef.current.scrollHeight,
+            behavior: behavior,
+        });
+    }
+  };
+
+  useEffect(() => {
+    // Scroll to bottom immediately on new messages, but only if we are already near the bottom
+    if (scrollAreaRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
+        // If user is within 300px of the bottom, auto-scroll
+        if (scrollHeight - scrollTop - clientHeight < 300) {
+            scrollToBottom('smooth');
+        }
     }
   }, [activeChat, isTyping, chatHistory.length]);
   
+  const handleScroll = () => {
+    if (scrollAreaRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
+        // Show button if user is more than 300px from the bottom
+        if (scrollHeight - scrollTop - clientHeight > 300) {
+            setShowScrollToBottom(true);
+        } else {
+            setShowScrollToBottom(false);
+        }
+    }
+  };
+
+
   const handleNewChat = async () => {
     if (!user || !firestore || isSessionLoading || !character.initialMessage) return;
     setIsSessionLoading(true);
@@ -344,7 +373,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                 </AlertDialog>
             </div>
         </div>
-        <div ref={scrollAreaRef} className="flex-grow p-4 overflow-y-auto">
+        <div className="flex-grow p-4 overflow-y-auto relative" ref={scrollAreaRef} onScroll={handleScroll}>
             <div className='space-y-4 pr-2'>
                 {chatHistory.map((msg, index) => (
                     <ChatMessage 
@@ -385,6 +414,17 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                     </div>
                 )}
             </div>
+             <Button
+                onClick={() => scrollToBottom('smooth')}
+                className={cn(
+                    "absolute bottom-4 right-8 rounded-full h-12 w-12 transition-opacity duration-300",
+                    showScrollToBottom ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}
+                size="icon"
+                variant="secondary"
+                >
+                <ArrowDown className="h-6 w-6" />
+            </Button>
         </div>
         <div className="p-4 border-t flex-shrink-0">
             <form onSubmit={handleSubmit} className="flex gap-2">
