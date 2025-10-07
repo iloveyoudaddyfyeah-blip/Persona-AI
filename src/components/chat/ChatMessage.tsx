@@ -6,7 +6,7 @@ import type { ChatMessage as ChatMessageType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Button } from '../ui/button';
-import { Pencil, Check, X, RotateCcw, ChevronRight, RotateCw } from 'lucide-react';
+import { Pencil, Check, X, History, Play, Shuffle } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 
 interface ChatMessageProps {
@@ -26,7 +26,7 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
   const parts = content.split(regex).filter(Boolean);
 
   return (
-    <p className="whitespace-pre-wrap break-words">
+    <div className="whitespace-pre-wrap break-words">
       {parts.map((part, index) => {
         if (part.startsWith('*') && part.endsWith('*')) {
           return (
@@ -44,7 +44,7 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
         }
         return <span key={index}>{part}</span>;
       })}
-    </p>
+    </div>
   );
 };
 
@@ -55,9 +55,11 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const content = message.content;
   
+  useEffect(() => {
+    setEditedContent(message.content);
+  }, [message.content]);
+
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
@@ -65,7 +67,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-  }, [isEditing]);
+  }, [isEditing, editedContent]);
   
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEditedContent(e.target.value);
@@ -97,7 +99,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
   };
 
   const showContinueButton = isCharacter && isLastMessage && !isTyping;
-  const showRegenerateButton = isCharacter && isLastMessage && !isTyping;
+  const showRegenerateButton = isLastMessage && !isTyping && message.role === 'character';
 
 
   return (
@@ -128,10 +130,9 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                 onChange={handleContentChange}
                 onKeyDown={handleKeyDown}
                 className="text-lg bg-background/80 resize-none overflow-hidden w-full"
-                rows={1}
             />
           ) : (
-             <FormattedContent content={content} isCharacter={isCharacter} />
+             <FormattedContent content={message.content} isCharacter={isCharacter} />
           )}
         </div>
       </div>
@@ -153,16 +154,16 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                     <Pencil className="h-4 w-4" />
                 </Button>
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRewind} title="Rewind to here">
-                    <RotateCcw className="h-4 w-4" />
+                    <History className="h-4 w-4" />
                 </Button>
                 {showContinueButton && (
                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onContinue} title="Continue">
-                        <ChevronRight className="h-4 w-4" />
+                        <Play className="h-4 w-4" />
                     </Button>
                 )}
                  {showRegenerateButton && (
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRegenerate} title="Regenerate">
-                        <RotateCw className="h-4 w-4" />
+                        <Shuffle className="h-4 w-4" />
                     </Button>
                 )}
             </>
@@ -171,5 +172,3 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
     </div>
   );
 }
-
-    
