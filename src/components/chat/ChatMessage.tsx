@@ -48,34 +48,46 @@ const EmphasizedText = ({ text }: { text: string }) => {
   )
 };
 
+const FormattedContent = ({ content, isCharacter }: { content: string, isCharacter: boolean }) => {
+    // Regex to capture parts enclosed in asterisks, quotes, or just plain text
+    const regex = /(\*[^*]*\*|"[^"]*"|[^"*]+)/g;
+    const parts = content.match(regex) || [];
 
-const FormattedContent = ({ content, isCharacter }: { content:string, isCharacter: boolean }) => {
-  const regex = /(\*[^*]+\*)|("[^"]+")/g;
-  const parts = content.split(regex).filter(Boolean);
+    return (
+        <div className="whitespace-pre-wrap break-words">
+            {parts.map((part, index) => {
+                if (part.startsWith('*') && part.endsWith('*')) {
+                    // This is an action block. We need to parse for quotes inside it.
+                    const innerContent = part.slice(1, -1);
+                    const innerRegex = /("[^"]*")/g;
+                    const innerParts = innerContent.split(innerRegex).filter(Boolean);
 
-  return (
-    <div className="whitespace-pre-wrap break-words">
-      {parts.map((part, index) => {
-        if (part.startsWith('*') && part.endsWith('*')) {
-          return (
-            <em key={index} className={cn(
-              isCharacter ? "ai-action-text" : "user-action-text"
-            )}>
-              {part.slice(1, -1)}
-            </em>
-          );
-        }
-        if (part.startsWith('"') && part.endsWith('"')) {
-           return (
-            <span key={index} className={cn(isCharacter ? "text-accent ai-quote" : "user-quote-text")}>
-              <EmphasizedText text={part.slice(1, -1)} />
-            </span>
-          );
-        }
-        return <span key={index}>{part}</span>;
-      })}
-    </div>
-  );
+                    return (
+                        <em key={index} className={cn(isCharacter ? "ai-action-text" : "user-action-text")}>
+                            {innerParts.map((innerPart, innerIndex) => {
+                                if (innerPart.startsWith('"') && innerPart.endsWith('"')) {
+                                    return (
+                                        <span key={innerIndex} className={cn(isCharacter ? "text-accent ai-quote" : "user-quote-text")}>
+                                          <EmphasizedText text={innerPart.slice(1, -1)} />
+                                        </span>
+                                    );
+                                }
+                                return <span key={innerIndex}>{innerPart}</span>;
+                            })}
+                        </em>
+                    );
+                }
+                if (part.startsWith('"') && part.endsWith('"')) {
+                    return (
+                        <span key={index} className={cn(isCharacter ? "text-accent ai-quote" : "user-quote-text")}>
+                           <EmphasizedText text={part.slice(1, -1)} />
+                        </span>
+                    );
+                }
+                return <span key={index}>{part}</span>;
+            })}
+        </div>
+    );
 };
 
 
