@@ -140,8 +140,8 @@ export default function CharacterCreator() {
   const descriptionClass = "text-sm text-muted-foreground";
 
   return (
-    <div className="flex items-center justify-center h-full p-4">
-      <Card className="w-full max-w-3xl bg-card/80 backdrop-blur-sm">
+    <div className="w-full h-full overflow-y-auto py-8 px-4">
+      <Card className="w-full max-w-3xl mx-auto bg-card/80 backdrop-blur-sm">
         <CardContent className="p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
             <header className="text-center">
@@ -268,5 +268,3 @@ export default function CharacterCreator() {
     </div>
   );
 }
-
-    
