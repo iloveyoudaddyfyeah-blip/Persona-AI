@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -47,7 +46,7 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
         if (part.startsWith('"') && part.endsWith('"')) {
            return (
             <span key={index}>
-              &quot;<span className={cn(isCharacter ? "text-accent" : "text-black dark:text-white")}>{part.slice(1, -1)}</span>&quot;
+              &quot;<span className={cn(isCharacter ? "text-accent" : "user-quote-text")}>{part.slice(1, -1)}</span>&quot;
             </span>
           );
         }
@@ -170,6 +169,12 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                         <span>Rewind to here</span>
                     </DropdownMenuItem>
                 )}
+                 {!isCharacter && (
+                    <DropdownMenuItem onSelect={onRegenerate} className="text-base py-2">
+                        <Shuffle className="mr-2 h-5 w-5" />
+                        <span>Regenerate AI Response</span>
+                    </DropdownMenuItem>
+                 )}
                 <DropdownMenuItem onSelect={onDelete} className="text-destructive text-base py-2">
                     <Trash2 className="mr-2 h-5 w-5" />
                     <span>Delete</span>

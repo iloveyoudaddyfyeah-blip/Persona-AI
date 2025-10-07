@@ -73,6 +73,14 @@
     image-rendering: pixelated;
     image-rendering: crisp-edges;
   }
+
+  .user-quote-text {
+    @apply text-black;
+  }
+
+  .dark .user-quote-text {
+    @apply text-white;
+  }
 }
 
 @layer components {
