@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import Image from 'next/image';
-import { Loader2, Save, Sparkles } from 'lucide-react';
+import { Loader2, Save, Sparkles, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { regenerateCharacterProfile } from '@/app/actions';
 import { Input } from '../ui/input';
@@ -127,20 +127,26 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
   return (
     <Tabs defaultValue="profile" className="h-full flex flex-col">
         <div className="flex-shrink-0 px-6 pt-6">
-            <CardHeader className="flex flex-row items-center gap-4 p-0">
-                <Image src={character.photoDataUri} alt={character.name} width={100} height={100} className="rounded-lg border-2 aspect-square object-cover" />
-                <div className='w-full'>
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="text-4xl font-headline bg-transparent outline-none w-full border-b border-transparent focus:border-foreground"
-                        autoComplete="off"
-                    />
-                    <TabsList className="mt-2">
-                        <TabsTrigger value="profile">Profile</TabsTrigger>
-                        <TabsTrigger value="chat">Chat</TabsTrigger>
-                    </TabsList>
+            <CardHeader className="flex flex-col items-start gap-4 p-0">
+                <Button variant="ghost" onClick={() => dispatch({ type: 'SET_VIEW', payload: 'dashboard' })} className="mb-2">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Characters
+                </Button>
+                <div className='flex flex-row items-center gap-4 w-full'>
+                    <Image src={character.photoDataUri} alt={character.name} width={100} height={100} className="rounded-lg border-2 aspect-square object-cover" />
+                    <div className='w-full'>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="text-4xl font-headline bg-transparent outline-none w-full border-b border-transparent focus:border-foreground"
+                            autoComplete="off"
+                        />
+                        <TabsList className="mt-2">
+                            <TabsTrigger value="profile">Profile</TabsTrigger>
+                            <TabsTrigger value="chat">Chat</TabsTrigger>
+                        </TabsList>
+                    </div>
                 </div>
             </CardHeader>
         </div>

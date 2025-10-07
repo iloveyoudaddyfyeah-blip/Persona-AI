@@ -90,7 +90,7 @@ export default function CharacterGrid() {
                             </AlertDialogContent>
                         </AlertDialog>
                     </div>
-                    <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden">
+                    <div className="relative w-full aspect-square overflow-hidden">
                         <Image 
                             src={char.photoDataUri}
                             alt={char.name}
