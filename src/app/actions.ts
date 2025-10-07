@@ -10,7 +10,7 @@ import { modifyPersonalityProfile } from '@/ai/flows/modify-personality-profile'
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
 import { generateUserPersona } from '@/ai/flows/generate-user-persona';
 import type { Character, ChatMessage, UserPersona } from '@/lib/types';
-import { generateInitialChatMessage } from '@/ai/flows/generate-initial-chat-message';
+import { generateInitialChatMessage as generateInitialChatMessageFlow } from '@/ai/flows/generate-initial-chat-message';
 
 function formatProfile(
   name: string,
@@ -86,12 +86,20 @@ export async function createCharacterFromPhoto(
   const profileData = await generatePersonalityProfile(input);
   const profile = formatProfile(input.name, profileData);
 
-  const { message: initialMessage } = await generateInitialChatMessage({
+  const { message: initialMessage } = await generateInitialChatMessageFlow({
     characterName: input.name,
     characterProfile: profile,
   });
 
   return { profileData, profile, initialMessage };
+}
+
+export async function generateInitialChatMessage(character: Character): Promise<string> {
+    const { message } = await generateInitialChatMessageFlow({
+        characterName: character.name,
+        characterProfile: character.profile,
+    });
+    return message;
 }
 
 

@@ -7,7 +7,7 @@ import { useCharacter } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ChatMessage from './ChatMessage';
-import { getChatResponse } from '@/app/actions';
+import { getChatResponse, generateInitialChatMessage } from '@/app/actions';
 import { Loader2, Plus, Send, Trash2, RotateCcw } from 'lucide-react';
 import { Card } from '../ui/card';
 import { useUser, useFirestore } from '@/firebase';
@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChatInterfaceProps {
   character: Character;
@@ -44,8 +45,10 @@ interface ChatInterfaceProps {
 export default function ChatInterface({ character }: ChatInterfaceProps) {
   const { state, dispatch } = useCharacter();
   const { user, firestore } = useUser();
+  const { toast } = useToast();
   const [userInput, setUserInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isSessionLoading, setIsSessionLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const activePersona = state.userPersonas.find(p => p.id === state.activePersonaId) || null;
@@ -59,21 +62,30 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     }
   }, [activeChat, isTyping, chatHistory.length]);
   
-  const handleNewChat = () => {
-    if (!user || !firestore) return;
-    const newChatId = uuidv4();
-    const newChatSession: ChatSession = {
-        id: newChatId,
-        name: `Chat ${chatSessions.length + 1}`,
-        createdAt: Date.now(),
-        messages: [],
-    };
-    const updatedSessions = [...chatSessions, newChatSession];
-    const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
-    updateDocumentNonBlocking(characterRef, { 
-        chatSessions: updatedSessions,
-        activeChatId: newChatId
-    });
+  const handleNewChat = async () => {
+    if (!user || !firestore || isSessionLoading) return;
+    setIsSessionLoading(true);
+    try {
+        const initialMessage = await generateInitialChatMessage(character);
+        const newChatId = uuidv4();
+        const newChatSession: ChatSession = {
+            id: newChatId,
+            name: `Chat ${chatSessions.length + 1}`,
+            createdAt: Date.now(),
+            messages: [{ role: 'character', content: initialMessage }],
+        };
+        const updatedSessions = [...chatSessions, newChatSession];
+        const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+        updateDocumentNonBlocking(characterRef, { 
+            chatSessions: updatedSessions,
+            activeChatId: newChatId
+        });
+        toast({ title: "New chat created!"});
+    } catch(e) {
+        toast({ variant: 'destructive', title: "Could not create new chat." });
+    } finally {
+        setIsSessionLoading(false);
+    }
   };
 
   const handleSelectChat = (chatId: string) => {
@@ -82,15 +94,23 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     updateDocumentNonBlocking(characterRef, { activeChatId: chatId });
   }
 
-  const handleResetChat = () => {
-    if (!user || !firestore || !activeChat) return;
+  const handleResetChat = async () => {
+    if (!user || !firestore || !activeChat || isSessionLoading) return;
+    setIsSessionLoading(true);
+    try {
+        const initialMessage = await generateInitialChatMessage(character);
+        const updatedSessions = chatSessions.map(cs => 
+            cs.id === activeChat.id ? { ...cs, messages: [{ role: 'character', content: initialMessage }] } : cs
+        );
 
-    const updatedSessions = chatSessions.map(cs => 
-        cs.id === activeChat.id ? { ...cs, messages: [] } : cs
-    );
-
-    const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
-    updateDocumentNonBlocking(characterRef, { chatSessions: updatedSessions });
+        const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+        updateDocumentNonBlocking(characterRef, { chatSessions: updatedSessions });
+        toast({ title: "Chat has been reset."});
+    } catch(e) {
+        toast({ variant: 'destructive', title: "Could not reset chat." });
+    } finally {
+        setIsSessionLoading(false);
+    }
   };
   
   const handleDeleteChat = () => {
@@ -103,15 +123,8 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
       newActiveChatId = updatedSessions.sort((a,b) => b.createdAt - a.createdAt)[0].id;
     } else {
       // Or create a new one if all are deleted
-      const newChatId = uuidv4();
-      const firstChat: ChatSession = {
-        id: newChatId,
-        name: 'Chat 1',
-        createdAt: Date.now(),
-        messages: []
-      };
-      updatedSessions.push(firstChat);
-      newActiveChatId = newChatId;
+      handleNewChat();
+      return;
     }
 
     const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
@@ -326,14 +339,14 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                 </DropdownMenuContent>
             </DropdownMenu>
              <div className="flex gap-2">
-                <Button onClick={handleNewChat} className="text-lg">
-                    <Plus className="mr-2 h-5 w-5" />
+                <Button onClick={handleNewChat} className="text-lg" disabled={isSessionLoading}>
+                    {isSessionLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Plus className="mr-2 h-5 w-5" />}
                     New Chat
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                         <Button variant="outline" className="text-lg" disabled={!activeChat || activeChat.messages.length === 0}>
-                            <RotateCcw className="mr-2 h-5 w-5" />
+                         <Button variant="outline" className="text-lg" disabled={!activeChat || activeChat.messages.length === 0 || isSessionLoading}>
+                            {isSessionLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <RotateCcw className="mr-2 h-5 w-5" />}
                             Reset Chat
                         </Button>
                     </AlertDialogTrigger>
@@ -341,7 +354,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                         <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will permanently delete all messages in the chat session "{activeChat?.name}". This action cannot be undone.
+                            This will permanently delete all messages in the chat session "{activeChat?.name}" and start over with the character's introduction.
                         </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
