@@ -10,12 +10,7 @@ import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-c
 import { generateUserPersona } from '@/ai/flows/generate-user-persona';
 import type { Character, ChatMessage, UserPersona, ChatSession } from '@/lib/types';
 import { Tone } from '@/context/CharacterContext';
-import {
-  setDoc
-} from 'firebase/firestore';
-import { collection, doc, type Firestore } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { getFirebaseAdmin } from '@/firebase/server';
+import { generateInitialChatMessage } from '@/ai_flows/generate-initial-chat-message';
 
 
 function formatProfile(
@@ -51,10 +46,16 @@ export async function createCharacterFromPhoto(
   photoDataUri: string,
   tone: Tone,
   charLimit: number
-): Promise<GeneratePersonalityProfileOutput & { profile: string }> {
+): Promise<{ profileData: GeneratePersonalityProfileOutput; profile: string, initialMessage: string }> {
   const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit });
   const profile = formatProfile(name, profileData);
-  return { ...profileData, profile };
+  
+  const { message: initialMessage } = await generateInitialChatMessage({
+    characterName: name,
+    characterProfile: profile,
+  });
+
+  return { profileData, profile, initialMessage };
 }
 
 export async function regenerateCharacterProfile(
@@ -107,9 +108,3 @@ export async function generatePersonaFromPrompt(prompt: string): Promise<string>
   const { persona } = await generateUserPersona({ prompt });
   return persona;
 }
-
-export const saveUserPersona = async (userId: string, persona: UserPersona) => {
-    const { firestore } = await getFirebaseAdmin();
-    const personaRef = doc(firestore, 'users', userId, 'personas', persona.id);
-    await personaRef.set(persona);
-};

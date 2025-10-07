@@ -71,7 +71,7 @@ export default function CharacterCreator() {
 
     try {
       // 1. Call server action to get AI-generated data
-      const generatedData = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit);
+      const { profileData, profile, initialMessage } = await createCharacterFromPhoto(name, photo.dataUri, tone, charLimit);
       
       const newCharacterId = doc(collection(firestore, 'users', user.uid, 'characters')).id;
 
@@ -81,22 +81,15 @@ export default function CharacterCreator() {
         id: newChatId,
         name: `Chat 1`,
         createdAt: Date.now(),
-        messages: [],
+        messages: [{ role: 'character' as const, content: initialMessage }],
       };
       
       const newCharacter: Character = {
           id: newCharacterId,
           name,
           photoDataUri: photo.dataUri,
-          profile: generatedData.profile,
-          profileData: {
-            biography: generatedData.biography,
-            traits: generatedData.traits,
-            hobbies: generatedData.hobbies,
-            motivations: generatedData.motivations,
-            likes: generatedData.likes,
-            dislikes: generatedData.dislikes,
-          },
+          profile: profile,
+          profileData: profileData,
           chatSessions: [firstChatSession],
           activeChatId: newChatId,
       };
