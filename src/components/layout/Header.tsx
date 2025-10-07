@@ -6,11 +6,13 @@ import SettingsDialog from '../settings/SettingsDialog';
 import { useUser, useAuth } from '@/firebase';
 import { Button } from '../ui/button';
 import { signOut } from 'firebase/auth';
-import { Loader2, LogOut } from 'lucide-react';
+import { Loader2, LogOut, UserSquare } from 'lucide-react';
+import { useCharacter } from '@/context/CharacterContext';
 
 export default function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const { dispatch } = useCharacter();
 
   const handleLogout = async () => {
     if (auth) {
@@ -47,6 +49,10 @@ export default function Header() {
       </div>
       <h1 className="text-3xl text-foreground font-headline font-bold text-center">PersonaCraft</h1>
       <div className="flex items-center gap-2 min-w-[150px] justify-end">
+        <Button variant="ghost" size="icon" onClick={() => dispatch({ type: 'SET_VIEW', payload: 'persona_manager' })}>
+          <UserSquare className="h-6 w-6" />
+          <span className="sr-only">Manage Personas</span>
+        </Button>
         <SettingsDialog />
       </div>
     </header>

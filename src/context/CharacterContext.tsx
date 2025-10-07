@@ -10,7 +10,7 @@ import { updateUser, setDocumentNonBlocking } from '@/firebase/non-blocking-upda
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { v4 as uuidv4 } from 'uuid';
 
-type View = 'welcome' | 'creating' | 'viewing';
+type View = 'welcome' | 'creating' | 'viewing' | 'persona_manager' | 'creating_persona' | 'editing_persona';
 
 export type Tone = 
   | "default" | "joyful" | "anxious" | "angry" | "serene" | "passionate" 
@@ -33,6 +33,7 @@ type State = {
   settings: Settings;
   userPersonas: UserPersona[];
   activePersonaId: string | null;
+  selectedPersonaIdToEdit: string | null;
 };
 
 type Action =
@@ -49,6 +50,7 @@ type Action =
   | { type: 'SET_USER_PERSONAS', payload: UserPersona[] }
   | { type: 'SET_ACTIVE_PERSONA', payload: string | null }
   | { type: 'SET_CHARACTERS', payload: Character[] }
+  | { type: 'EDIT_PERSONA', payload: string | null }
   | { type: 'RESET_STATE' };
 
 
@@ -64,6 +66,7 @@ const initialState: State = {
   },
   userPersonas: [],
   activePersonaId: null,
+  selectedPersonaIdToEdit: null,
 };
 
 const CharacterContext = createContext<{
@@ -80,7 +83,6 @@ function characterReducer(state: State, action: Action): State {
         const characters = action.payload;
         let newView = state.view;
 
-        // If the current view is 'welcome' and characters are loaded, switch to 'viewing'
         if (state.view === 'welcome' && characters.length > 0) {
           newView = 'viewing';
           if (!state.selectedCharacterId) {
@@ -93,7 +95,6 @@ function characterReducer(state: State, action: Action): State {
             };
           }
         } else if (characters.length === 0) {
-          // If all characters are deleted, go back to welcome
           return {
             ...state,
             characters: [],
@@ -164,6 +165,12 @@ function characterReducer(state: State, action: Action): State {
         return { ...state, userPersonas: action.payload };
     case 'SET_ACTIVE_PERSONA':
         return { ...state, activePersonaId: action.payload };
+    case 'EDIT_PERSONA':
+        return { 
+            ...state, 
+            selectedPersonaIdToEdit: action.payload,
+            view: action.payload ? 'editing_persona' : state.view
+        };
     case 'RESET_STATE':
         return {...initialState, isLoading: false };
     default:

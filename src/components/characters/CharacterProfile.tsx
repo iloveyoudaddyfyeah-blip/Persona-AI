@@ -15,7 +15,6 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatInterface from '../chat/ChatInterface';
-import UserPersonaManager from '../user/UserPersonaManager';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -141,7 +140,6 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
                     <TabsList className="mt-2">
                         <TabsTrigger value="profile">Profile</TabsTrigger>
                         <TabsTrigger value="chat">Chat</TabsTrigger>
-                        <TabsTrigger value="persona">Your Persona</TabsTrigger>
                     </TabsList>
                 </div>
             </CardHeader>
@@ -199,9 +197,6 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
         </TabsContent>
         <TabsContent value="chat" className="flex-grow mt-0">
             <ChatInterface character={character} />
-        </TabsContent>
-         <TabsContent value="persona" className="flex-grow mt-0">
-            <UserPersonaManager />
         </TabsContent>
     </Tabs>
   );

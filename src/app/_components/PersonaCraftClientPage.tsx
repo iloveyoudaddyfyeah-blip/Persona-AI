@@ -10,13 +10,17 @@ import WelcomeScreen from './WelcomeScreen';
 import { Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import LoginScreen from './LoginScreen';
+import UserPersonaManager from '@/components/user/UserPersonaManager';
+import CreatePersona from '@/components/user/CreatePersona';
+import EditPersona from '@/components/user/EditPersona';
 
 export default function PersonaCraftClientPage() {
   const { state } = useCharacter();
-  const { view, characters, selectedCharacterId, isGenerating, isLoading } = state;
+  const { view, characters, selectedCharacterId, isGenerating, isLoading, selectedPersonaIdToEdit } = state;
   const { user, isUserLoading } = useUser();
 
   const selectedCharacter = characters.find(c => c.id === selectedCharacterId);
+  const personaToEdit = state.userPersonas.find(p => p.id === selectedPersonaIdToEdit);
 
   if (isUserLoading || isLoading) {
     return (
@@ -50,6 +54,15 @@ export default function PersonaCraftClientPage() {
           return <CharacterProfile character={selectedCharacter} />;
         }
         return <WelcomeScreen />; // Fallback if no character is selected
+      case 'persona_manager':
+        return <UserPersonaManager />;
+      case 'creating_persona':
+        return <CreatePersona />;
+      case 'editing_persona':
+        if (personaToEdit) {
+            return <EditPersona persona={personaToEdit} />;
+        }
+        return <UserPersonaManager />; // Fallback
       case 'welcome':
       default:
         return <WelcomeScreen />;

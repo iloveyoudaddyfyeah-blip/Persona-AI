@@ -1,18 +1,17 @@
+
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useCharacter } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Pencil } from 'lucide-react';
+import { Plus, Trash2, Pencil, Home } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { CreatePersonaDialog } from './CreatePersonaDialog';
-import { EditPersonaDialog } from './EditPersonaDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,15 +23,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import type { UserPersona } from '@/lib/types';
 
 export default function UserPersonaManager() {
-  const { state } = useCharacter();
+  const { state, dispatch } = useCharacter();
   const { user, firestore } = useUser();
   const { toast } = useToast();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedPersona, setSelectedPersona] = useState<UserPersona | null>(null);
 
   const handleSetActive = async (personaId: string) => {
     if (!user || !firestore || personaId === state.activePersonaId) return;
@@ -51,36 +46,33 @@ export default function UserPersonaManager() {
     toast({ title: "Active persona updated!" });
   };
   
-  const handleDelete = (personaId: string) => {
+  const handleDelete = (e: React.MouseEvent, personaId: string) => {
+    e.stopPropagation();
     if (!user || !firestore) return;
 
     const personaRef = doc(firestore, `users/${user.uid}/personas/${personaId}`);
     deleteDocumentNonBlocking(personaRef);
     toast({ title: "Persona deleted." });
+
+    if(state.activePersonaId === personaId) {
+        const otherPersonas = state.userPersonas.filter(p => p.id !== personaId);
+        if (otherPersonas.length > 0) {
+            handleSetActive(otherPersonas[0].id);
+        } else {
+            // No personas left, might need to create a default or handle this case
+            dispatch({ type: 'SET_ACTIVE_PERSONA', payload: null });
+        }
+    }
   };
   
-  const handleEditClick = (e: React.MouseEvent, persona: UserPersona) => {
+  const handleEditClick = (e: React.MouseEvent, personaId: string) => {
     e.stopPropagation();
-    setSelectedPersona(persona);
-    setIsEditDialogOpen(true);
+    dispatch({ type: 'EDIT_PERSONA', payload: personaId });
   };
 
 
   return (
-    <Card className="h-full flex flex-col border-0 shadow-none rounded-t-none">
-        <CreatePersonaDialog 
-            open={isCreateDialogOpen} 
-            onOpenChange={setIsCreateDialogOpen}
-            personaCount={state.userPersonas.length}
-        />
-        {selectedPersona && (
-            <EditPersonaDialog
-                key={selectedPersona.id} // Ensures dialog remounts with new persona data
-                open={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-                persona={selectedPersona}
-            />
-        )}
+    <Card className="h-full flex flex-col border-0 shadow-none bg-transparent">
         <CardHeader>
             <div className="flex justify-between items-center">
                 <div>
@@ -89,18 +81,24 @@ export default function UserPersonaManager() {
                         Manage your different personas. The active persona influences how AI characters interact with you.
                     </CardDescription>
                 </div>
-                <Button onClick={() => setIsCreateDialogOpen(true)} size="lg" className="text-lg">
-                    <Plus className="mr-2 h-5 w-5" />
-                    New Persona
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={() => dispatch({ type: 'SET_VIEW', payload: 'welcome' })} size="lg" className="text-lg" variant="outline">
+                        <Home className="mr-2 h-5 w-5" />
+                        Back to Home
+                    </Button>
+                    <Button onClick={() => dispatch({ type: 'SET_VIEW', payload: 'creating_persona' })} size="lg" className="text-lg">
+                        <Plus className="mr-2 h-5 w-5" />
+                        New Persona
+                    </Button>
+                </div>
             </div>
         </CardHeader>
         <CardContent className="flex-grow flex flex-col gap-4">
             {state.userPersonas.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8 border-2 border-dashed rounded-lg">
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 border-2 border-dashed rounded-lg bg-card">
                      <h3 className="text-2xl font-headline mb-2">No Personas Yet</h3>
                      <p className="text-muted-foreground mb-4">Create your first persona to start interacting with characters.</p>
-                     <Button onClick={() => setIsCreateDialogOpen(true)}>Create a Persona</Button>
+                     <Button onClick={() => dispatch({ type: 'SET_VIEW', payload: 'creating_persona' })}>Create a Persona</Button>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -108,18 +106,18 @@ export default function UserPersonaManager() {
                         <Card 
                             key={persona.id} 
                             className={cn(
-                                "cursor-pointer hover:shadow-lg transition-shadow group relative",
+                                "cursor-pointer hover:shadow-lg transition-shadow group relative flex flex-col",
                                 state.activePersonaId === persona.id && "border-primary ring-2 ring-primary"
                             )}
                             onClick={() => handleSetActive(persona.id)}
                         >
-                            <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-50 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleEditClick(e, persona)}>
+                            <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/50 hover:bg-background" onClick={(e) => handleEditClick(e, persona.id)}>
                                     <Pencil className="h-4 w-4" />
                                 </Button>
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={e => e.stopPropagation()}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/50 hover:bg-background" onClick={e => e.stopPropagation()}>
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
                                     </AlertDialogTrigger>
@@ -132,10 +130,7 @@ export default function UserPersonaManager() {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel onClick={e => e.stopPropagation()}>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDelete(persona.id);
-                                            }}>
+                                            <AlertDialogAction onClick={(e) => handleDelete(e, persona.id)}>
                                                 Continue
                                             </AlertDialogAction>
                                         </AlertDialogFooter>
@@ -159,7 +154,7 @@ export default function UserPersonaManager() {
                                     )}
                                 </div>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="flex-grow">
                                 <p className="text-muted-foreground line-clamp-3">{persona.description}</p>
                             </CardContent>
                         </Card>
