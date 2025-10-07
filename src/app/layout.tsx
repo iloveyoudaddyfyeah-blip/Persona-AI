@@ -32,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn("dark", poppins.variable, inter.variable)}>
-      <body className="font-body antialiased bg-grid-pattern">
+      <body className={cn("font-body antialiased", "bg-background text-foreground", "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]")}>
         <FirebaseClientProvider>
           <CharacterProvider>
             {children}
