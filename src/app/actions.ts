@@ -17,35 +17,70 @@ function formatProfile(
   name: string,
   profileData: GeneratePersonalityProfileOutput
 ): string {
-  const { biography, dailyWear, age, height, fears, traits, hobbies, motivations, likes, dislikes } =
-    profileData;
+  const { 
+    appearance,
+    biography,
+    significantRelationships,
+    personality,
+    motivations,
+    fears,
+    skillsAbilities,
+    hobbiesInterests,
+    likes,
+    dislikes,
+    dailyWear,
+    backpackOrPockets,
+    speechPatterns,
+    age,
+    height
+   } = profileData;
+   
   return `**Name:** ${name}
 **Age:** ${age}
 **Height:** ${height}
+**Appearance:** ${appearance}
 
 **Biography:**
-${biography}
+- **Early Life:** ${biography.earlyLife}
+- **Turning Points:** ${biography.turningPoints}
+- **Education/Training:** ${biography.education}
+- **Present Circumstances:** ${biography.presentCircumstances}
 
-**Daily Wear:**
-${dailyWear}
+**Significant Relationships:**
+${significantRelationships}
+
+**Personality:**
+- **Core Traits:** ${personality.coreTraits}
+- **Flaws:** ${personality.flaws}
+- **Quirks:** ${personality.quirks}
+- **Values:** ${personality.values}
+
+**Motivations:**
+${motivations}
 
 **Fears:**
 ${fears}
 
-**Personality Traits:**
-${traits}
+**Skills/Abilities:**
+${skillsAbilities}
 
-**Hobbies:**
-${hobbies}
-
-**Motivations:**
-${motivations}
+**Hobbies/Interests:**
+${hobbiesInterests}
 
 **Likes:**
 - ${likes.join('\n- ')}
 
 **Dislikes:**
 - ${dislikes.join('\n- ')}
+
+**Daily Wear:**
+${dailyWear}
+
+**Carried Items (Backpack/Pockets):**
+${backpackOrPockets}
+
+**Speech Patterns:**
+${speechPatterns}
 `;
 }
 
