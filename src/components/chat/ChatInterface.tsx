@@ -274,7 +274,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
 
   return (
     <Card className="flex flex-col h-full border-0 shadow-none rounded-t-none">
-        <div className="p-4 border-b flex justify-between items-center">
+        <div className="p-4 border-b flex justify-between items-center flex-shrink-0">
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="text-lg">
@@ -344,8 +344,8 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                 </AlertDialog>
             </div>
         </div>
-        <div ref={scrollAreaRef} className="flex-grow flex flex-col p-4">
-            <div className='flex-1 space-y-4 overflow-y-auto pr-2'>
+        <div ref={scrollAreaRef} className="flex-grow p-4 overflow-y-auto">
+            <div className='space-y-4 pr-2'>
                 {chatHistory.map((msg, index) => (
                     <ChatMessage 
                         key={`${activeChat?.id}-${index}`} 
@@ -386,7 +386,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                 )}
             </div>
         </div>
-        <div className="p-4 border-t">
+        <div className="p-4 border-t flex-shrink-0">
             <form onSubmit={handleSubmit} className="flex gap-2">
                 <Input
                 type="text"
@@ -406,3 +406,4 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
   );
 }
 
+    
