@@ -31,6 +31,26 @@ interface ChatMessageProps {
   isNotLastAIMessage: boolean;
 }
 
+const EmphasizedText = ({ text }: { text: string }) => {
+  const regex = /(\*[^*]+\*)/g;
+  const parts = text.split(regex).filter(Boolean);
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.startsWith('*') && part.endsWith('*')) {
+          return (
+            <strong key={index}>
+              {part.slice(1, -1)}
+            </strong>
+          );
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </>
+  )
+};
+
+
 const FormattedContent = ({ content, isCharacter }: { content:string, isCharacter: boolean }) => {
   const regex = /(\*[^*]+\*)|("[^"]+")/g;
   const parts = content.split(regex).filter(Boolean);
@@ -42,7 +62,7 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
           return (
             <em key={index} className={cn(
               "not-italic",
-              isCharacter ? 'text-muted-foreground' : 'user-action-text'
+              !isCharacter && 'user-action-text'
             )}>
               {part.slice(1, -1)}
             </em>
@@ -50,8 +70,8 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
         }
         if (part.startsWith('"') && part.endsWith('"')) {
            return (
-            <span key={index} className={cn(isCharacter ? "text-accent" : "user-quote-text")}>
-              {part.slice(1, -1)}
+            <span key={index} className={cn(isCharacter ? "text-accent ai-quote" : "user-quote-text")}>
+              <EmphasizedText text={part.slice(1, -1)} />
             </span>
           );
         }
