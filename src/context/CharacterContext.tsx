@@ -23,7 +23,34 @@ export type Tone =
   | "calm" | "irritable" | "cheerful" | "dramatic" | "stoic" | "flirtatious" 
   | "formal" | "informal" | "witty" | "pompous" | "insecure" | "nurturing" 
   | "distant" | "methodical" | "chaotic" | "mysterious" | "direct"
-  | "dreamy" | "stern" | "goofy" | "brooding";
+  | "dreamy" | "stern" | "goofy" | "brooding"
+  // Fear & Insecurity
+  | "paranoid" | "apprehensive" | "worried" | "panicked" | "terrified" 
+  | "vulnerable" | "helpless" | "overwhelmed"
+  // Brave & Heroic
+  | "heroic" | "valiant" | "daring" | "fearless" | "courageous" | "bold" 
+  | "gallant" | "indomitable" | "resolute" | "steadfast"
+  // Anger & Hostility
+  | "furious" | "enraged" | "livid" | "irate" | "hostile" | "aggressive" 
+  | "vengeful" | "spiteful" | "contemptuous" | "scornful"
+  // Joy & Happiness
+  | "ecstatic" | "elated" | "jubilant" | "gleeful" | "euphoric" | "radiant" 
+  | "lighthearted" | "effervescent" | "exuberant"
+  // Calm & Serene
+  | "seraphic" | "tranquil" | "placid" | "peaceful" | "composed" | "halcyon" 
+  | "unruffled" | "sedate" | "restful"
+  // Sadness & Melancholy
+  | "despondent" | "somber" | "morose" | "gloomy" | "grief-stricken" 
+  | "heartbroken" | "forlorn" | "disconsolate" | "crestfallen"
+  // Detached & Apathetic
+  | "alienated" | "detached" | "uninterested" | "listless" | "indifferent" 
+  | "dispassionate" | "neutral" | "aloof"
+  // Arrogance & Pride
+  | "haughty" | "conceited" | "smug" | "pretentious" | "imperious" 
+  | "domineering" | "boastful" | "self-righteous"
+  // Humility & Shyness
+  | "meek" | "modest" | "unassuming" | "retiring" | "demure" 
+  | "unpretentious" | "self-effacing";
 
 export type Settings = {
   aiTone: Tone;
