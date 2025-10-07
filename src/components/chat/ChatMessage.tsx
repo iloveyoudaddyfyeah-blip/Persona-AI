@@ -117,7 +117,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
         )}
         <div
           className={cn(
-            "rounded-lg p-3 w-full max-w-[75%]",
+            "rounded-lg p-3 max-w-[75%]",
             isCharacter
               ? "bg-secondary text-secondary-foreground"
               : "bg-primary text-primary-foreground"
