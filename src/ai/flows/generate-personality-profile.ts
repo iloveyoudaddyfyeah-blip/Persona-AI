@@ -46,15 +46,18 @@ const prompt = ai.definePrompt({
 
 Your response MUST be in a {{{tone}}} tone. This should heavily influence your word choice, sentence structure, and overall style.
 
-Analyze the photo and create an exceptionally detailed and compelling profile for the character named {{{name}}}. 
+Analyze the photo and create an exceptionally detailed and compelling profile for the character named {{{name}}}. The entire response must be written in the third person.
 
 The total length of your entire response (biography, traits, hobbies, etc. combined) must be at least {{{charLimit}}} characters.
 
-- **Biography**: Write a compelling narrative about {{{name}}}. It should feel personal and human, not like a formal summary. Tell their story.
+- **Biography**: Write a compelling narrative about {{{name}}}. It should feel personal and human, not like a formal summary. Tell their story as if you were a close friend recounting their life.
 - **Daily Wear**: Based on the photo, describe what this person's typical daily clothing style is like.
+- **Age**: Estimate the character's age based on the photo.
+- **Height**: Estimate the character's height based on the photo.
+- **Fears**: Describe their primary fears in detail.
 - **Traits**: Describe their key personality traits with nuance and depth. Avoid one-word answers.
 - **Hobbies**: List hobbies that feel specific and revealing about the character. These should be more than simple activities; they should tell a story.
-- **Motivations**: What are their deepest drivers, fears, and secret desires? What do they truly want?
+- **Motivations**: What are their deepest drivers and secret desires? What do they truly want?
 - **Likes & Dislikes**: Provide a list of 5 specific and interesting likes and 5 dislikes. Avoid generic answers. Instead of "food", try "the taste of ozone after a thunderstorm" or "the specific silence of a library just before closing". These should be deeply personal to the character.
 
 Photo: {{media url=photoDataUri}}`,
