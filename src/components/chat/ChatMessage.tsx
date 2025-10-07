@@ -23,7 +23,7 @@ interface ChatMessageProps {
   onDelete: () => void;
 }
 
-const FormattedContent = ({ content, isCharacter }: { content:string, isCharacter: boolean }) => {
+const FormattedContent = ({ content }: { content:string }) => {
   const regex = /(\*[^*]+\*)|("[^"]+")/g;
   const parts = content.split(regex).filter(Boolean);
 
@@ -40,7 +40,7 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
         if (part.startsWith('"') && part.endsWith('"')) {
            return (
             <span key={index}>
-              &quot;<span className={cn(isCharacter && "text-accent")}>{part.slice(1, -1)}</span>&quot;
+              &quot;<span className="text-accent">{part.slice(1, -1)}</span>&quot;
             </span>
           );
         }
@@ -114,7 +114,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
 
   return (
     <div className={cn("flex flex-col gap-1 group", isCharacter ? 'items-start' : 'items-end')}>
-      <div className={cn("flex items-start gap-4 text-xl", isCharacter ? 'justify-start' : 'justify-end')}>
+      <div className={cn("flex items-start gap-4 text-xl w-full", isCharacter ? 'justify-start' : 'justify-end')}>
         {isCharacter && (
           <Image
             src={characterPhoto}
@@ -134,15 +134,16 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
           )}
         >
           {isEditing ? (
-            <Textarea
+             <Textarea
                 ref={textareaRef}
                 value={editedContent}
                 onChange={handleContentChange}
                 onKeyDown={handleKeyDown}
-                className="text-lg bg-background/80 resize-none overflow-hidden w-full"
+                onBlur={handleSave}
+                className="text-lg bg-background/80 resize-none overflow-hidden w-full min-w-[200px]"
             />
           ) : (
-             <FormattedContent content={message.content} isCharacter={isCharacter} />
+             <FormattedContent content={message.content} />
           )}
         </div>
       </div>
@@ -190,3 +191,4 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
     </div>
   );
 }
+

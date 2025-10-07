@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ChatMessage from './ChatMessage';
 import { getChatResponse } from '@/app/actions';
-import { Loader2, Plus, Send, Trash2, RotateCcw, RotateCw } from 'lucide-react';
+import { Loader2, Plus, Send, Trash2, RotateCcw } from 'lucide-react';
 import { Card } from '../ui/card';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -128,6 +128,13 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
         return;
     };
 
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'character') {
+      setIsTyping(false);
+      return; // Don't respond to our own message
+    }
+
+
     setIsTyping(true);
     try {
         const characterMessage = await getChatResponse(character, messages, activePersona);
@@ -193,8 +200,8 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     const originalMessage = activeChat.messages[index];
     const newHistory = [...activeChat.messages];
     newHistory[index] = { ...newHistory[index], content: newContent };
-
-    // If it's a character message, just save the edit locally.
+    
+    // If it's a character message, just save the edit locally and DO NOT regenerate.
     if (originalMessage.role === 'character') {
       const updatedSessions = chatSessions.map(cs =>
         cs.id === activeChat.id ? { ...cs, messages: newHistory } : cs
@@ -204,7 +211,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
       return;
     }
 
-    // If it's a user message, truncate and regenerate
+    // If it's a user message, truncate history to this message and regenerate
     const truncatedHistory = newHistory.slice(0, index + 1);
     
     // Optimistically update UI
@@ -228,6 +235,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessions }});
 
     const lastMessage = newHistory[newHistory.length - 1];
+    // We only re-run AI if the rewind point was a user message.
     if(lastMessage.role === 'user') {
        await getAIResponse(newHistory);
     }
@@ -244,25 +252,39 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     );
     dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessionsForUI }});
 
-    await getAIResponse(truncatedHistory);
+    // We only re-run AI if we delete a message and the last one remaining is a user's.
+    if (truncatedHistory.length > 0 && truncatedHistory[truncatedHistory.length -1].role === 'user') {
+      await getAIResponse(truncatedHistory);
+    }
   };
 
 
   const handleContinue = async () => {
-    if (!user || !firestore || !activeChat) return;
-    // An empty user message can signal the AI to continue.
+    if (!user || !firestore || !activeChat || isTyping) return;
+    // An empty user message signals the AI to continue.
     const continueMessage = { role: 'user' as const, content: '' };
     const currentHistory = activeChat.messages;
-    await getAIResponse([...currentHistory, continueMessage]);
+    const historyForAI = [...currentHistory, continueMessage];
+
+    // Optimistically update the UI to show the typing indicator
+    setIsTyping(true);
+
+    await getAIResponse(historyForAI);
   };
 
   const handleRegenerate = async () => {
-    if (!user || !firestore || !activeChat) return;
+    if (!user || !firestore || !activeChat || isTyping) return;
 
+    // Find the last message that isn't from the character.
     const lastUserMessageIndex = chatHistory.slice().reverse().findIndex(m => m.role === 'user');
+    
     if (lastUserMessageIndex === -1) return; // No user message to respond to
 
-    const historyToRegen = chatHistory.slice(0, chatHistory.length - lastUserMessageIndex);
+    // The index in the original array
+    const lastUserMessageActualIndex = chatHistory.length - 1 - lastUserMessageIndex;
+
+    // Truncate the history to include only up to that last user message.
+    const historyToRegen = chatHistory.slice(0, lastUserMessageActualIndex + 1);
 
     // Optimistically remove AI responses from UI
     const updatedSessionsForUI = chatSessions.map(cs =>
@@ -349,7 +371,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
         <div ref={scrollAreaRef} className="flex-grow overflow-y-auto p-4 space-y-4">
             {chatHistory.map((msg, index) => (
                 <ChatMessage 
-                    key={index} 
+                    key={`${activeChat?.id}-${index}`} 
                     message={msg} 
                     characterPhoto={character.photoDataUri} 
                     characterName={character.name}
