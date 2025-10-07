@@ -75,11 +75,7 @@
   }
 
   .user-quote-text {
-    @apply text-black;
-  }
-
-  .dark .user-quote-text {
-    @apply text-white;
+    color: #000 !important;
   }
 }
 

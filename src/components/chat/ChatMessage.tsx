@@ -147,7 +147,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                             onChange={handleContentChange}
                             onKeyDown={handleKeyDown}
                             onBlur={handleSave}
-                            className="text-lg bg-background/80 resize-none overflow-hidden w-full min-w-[200px]"
+                            className="text-lg bg-background/80 resize-none overflow-hidden w-full min-w-[300px]"
                         />
                     ) : (
                         <FormattedContent content={message.content} isCharacter={isCharacter} />
@@ -169,7 +169,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                         <span>Rewind to here</span>
                     </DropdownMenuItem>
                 )}
-                 {!isCharacter && (
+                 {!isCharacter && isLastMessage && (
                     <DropdownMenuItem onSelect={onRegenerate} className="text-base py-2">
                         <Shuffle className="mr-2 h-5 w-5" />
                         <span>Regenerate AI Response</span>
