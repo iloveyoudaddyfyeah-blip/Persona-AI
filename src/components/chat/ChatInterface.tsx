@@ -373,46 +373,48 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                 </AlertDialog>
             </div>
         </div>
-        <div ref={scrollAreaRef} className="flex-grow overflow-y-auto p-4 space-y-4">
-            {chatHistory.map((msg, index) => (
-                <ChatMessage 
-                    key={`${activeChat?.id}-${index}`} 
-                    message={msg} 
-                    characterPhoto={character.photoDataUri} 
-                    characterName={character.name}
-                    personaPhoto={activePersona?.photoDataUri}
-                    isLastMessage={index === chatHistory.length - 1}
-                    isTyping={isTyping}
-                    onEdit={(newContent) => handleEditMessage(index, newContent)}
-                    onRewind={() => handleRewind(index)}
-                    onContinue={handleContinue}
-                    onRegenerate={handleRegenerate}
-                    onDelete={() => handleDeleteMessage(index)}
-                    isNotLastAIMessage={msg.role === 'character' && index < chatHistory.length -1}
-                />
-            ))}
-            {isTyping && (
-                 <div className="flex items-start gap-4 text-xl justify-start">
-                    <Image
-                        src={character.photoDataUri}
-                        alt={character.name}
-                        width={40}
-                        height={40}
-                        className="rounded-full border-2 border-primary object-cover aspect-square"
+        <div ref={scrollAreaRef} className="flex-grow flex flex-col p-4">
+            <div className='flex-grow space-y-4 overflow-y-auto pr-2'>
+                {chatHistory.map((msg, index) => (
+                    <ChatMessage 
+                        key={`${activeChat?.id}-${index}`} 
+                        message={msg} 
+                        characterPhoto={character.photoDataUri} 
+                        characterName={character.name}
+                        personaPhoto={activePersona?.photoDataUri}
+                        isLastMessage={index === chatHistory.length - 1}
+                        isTyping={isTyping}
+                        onEdit={(newContent) => handleEditMessage(index, newContent)}
+                        onRewind={() => handleRewind(index)}
+                        onContinue={handleContinue}
+                        onRegenerate={handleRegenerate}
+                        onDelete={() => handleDeleteMessage(index)}
+                        isNotLastAIMessage={msg.role === 'character' && index < chatHistory.length -1}
                     />
-                    <div className="max-w-[75%] rounded-lg p-3 bg-secondary text-secondary-foreground flex items-center gap-2">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>{character.name} is typing...</span>
+                ))}
+                {isTyping && (
+                    <div className="flex items-start gap-4 text-xl justify-start">
+                        <Image
+                            src={character.photoDataUri}
+                            alt={character.name}
+                            width={40}
+                            height={40}
+                            className="rounded-full border-2 border-primary object-cover aspect-square"
+                        />
+                        <div className="max-w-[75%] rounded-lg p-3 bg-secondary text-secondary-foreground flex items-center gap-2">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <span>{character.name} is typing...</span>
+                        </div>
                     </div>
-                </div>
-            )}
-             {!activeChat && (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8 border-2 border-dashed rounded-lg">
-                     <h3 className="text-2xl font-headline mb-2">No Chat Selected</h3>
-                     <p className="text-muted-foreground mb-4">Create or select a chat to begin.</p>
-                     <Button onClick={handleNewChat}>Start New Chat</Button>
-                </div>
-            )}
+                )}
+                {!activeChat && (
+                    <div className="flex flex-col items-center justify-center h-full text-center p-8 border-2 border-dashed rounded-lg">
+                        <h3 className="text-2xl font-headline mb-2">No Chat Selected</h3>
+                        <p className="text-muted-foreground mb-4">Create or select a chat to begin.</p>
+                        <Button onClick={handleNewChat}>Start New Chat</Button>
+                    </div>
+                )}
+            </div>
         </div>
         <div className="p-4 border-t">
             <form onSubmit={handleSubmit} className="flex gap-2">
@@ -433,3 +435,4 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     </Card>
   );
 }
+

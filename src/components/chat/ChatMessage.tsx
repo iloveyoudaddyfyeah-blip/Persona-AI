@@ -194,7 +194,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, pe
             <DropdownMenuContent align={isCharacter ? 'start' : 'end'} className="w-48">
                 <DropdownMenuItem onSelect={() => setIsEditing(true)} className="text-base py-2">
                     <Pencil className="mr-2 h-5 w-5" />
-                    <span>Edit</span>
+                    <span>Edit & Regenerate</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={handleCopy} className="text-base py-2">
                     <Copy className="mr-2 h-5 w-5" />

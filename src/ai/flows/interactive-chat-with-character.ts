@@ -62,21 +62,21 @@ const prompt = ai.definePrompt({
       },
     ],
   },
-  prompt: `You are an expert actor embodying a character. 
+  prompt: `You are acting as a character. Your personality and background are defined by the profile below. You must respond as this character. Do not break character.
 
-Your character's profile is:
+Your Character Profile:
 {{{characterProfile}}}
 
-You are talking to a user with this persona:
+You are speaking to a user with this persona:
 {{{userPersona}}}
 
 Here is the recent conversation history:
 {{{chatHistory}}}
 
-The user just said: 
-"{{{userMessage}}}"
+The user just said: "{{{userMessage}}}"
 
-Your entire response must be your character's reply to the user. Do not break character. Respond naturally based on the user's message and persona.`,
+Your response:
+`,
 });
 
 const interactiveChatWithCharacterFlow = ai.defineFlow(
