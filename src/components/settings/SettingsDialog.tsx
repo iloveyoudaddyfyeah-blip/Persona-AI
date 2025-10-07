@@ -113,8 +113,8 @@ export default function SettingsDialog() {
                 <div className='flex items-center gap-4'>
                     <Slider
                         id="char-limit"
-                        min={500}
-                        max={5000}
+                        min={1000}
+                        max={10000}
                         step={100}
                         value={[settings.aiCharLimit]}
                         onValueChange={(value) => handleSettingChange('aiCharLimit', value[0])}

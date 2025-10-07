@@ -63,7 +63,7 @@ const initialState: State = {
   settings: {
     theme: 'dark',
     aiTone: 'default',
-    aiCharLimit: 3000,
+    aiCharLimit: 1000,
   },
   userPersonas: [],
   activePersonaId: null,
