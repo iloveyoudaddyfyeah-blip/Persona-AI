@@ -4,6 +4,18 @@
  */
 import {z} from 'genkit';
 
+export const GeneratePersonalityProfileInputSchema = z.object({
+  name: z.string().describe("The character's name."),
+  photoDataUri: z
+    .string()
+    .describe(
+      "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
+    ),
+  tone: z.string().optional().default('default').describe("The tone of voice for the generation. Can be one of: 'default', 'joyful', 'anxious', 'angry', 'serene', 'passionate', 'apathetic', 'fearful', 'hopeful', 'jaded', 'enthusiastic', 'grumpy', 'curious', 'confident', 'shy', 'ambitious', 'content', 'bitter', 'loving', 'resentful', 'brave', 'timid', 'arrogant', 'humble', 'playful', 'reserved'"),
+  charLimit: z.number().optional().default(1000).describe("The minimum character length for the entire generated profile."),
+  instructions: z.string().optional().describe("Optional user-provided instructions to guide the personality generation."),
+});
+
 export const GeneratePersonalityProfileOutputSchema = z.object({
   appearance: z.string().describe("Brief overview of appearance, key identifiers, notable features, distinguishing marks, grooming habits, and any modifications."),
   biography: z.object({
