@@ -30,7 +30,7 @@ interface ChatMessageProps {
   isNotLastAIMessage: boolean;
 }
 
-const FormattedContent = ({ content }: { content:string }) => {
+const FormattedContent = ({ content, isCharacter }: { content:string, isCharacter: boolean }) => {
   const regex = /(\*[^*]+\*)|("[^"]+")/g;
   const parts = content.split(regex).filter(Boolean);
 
@@ -47,7 +47,7 @@ const FormattedContent = ({ content }: { content:string }) => {
         if (part.startsWith('"') && part.endsWith('"')) {
            return (
             <span key={index}>
-              &quot;<span className="text-accent">{part.slice(1, -1)}</span>&quot;
+              &quot;<span className={cn(isCharacter ? "text-accent" : "text-black dark:text-white")}>{part.slice(1, -1)}</span>&quot;
             </span>
           );
         }
@@ -151,7 +151,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                             className="text-lg bg-background/80 resize-none overflow-hidden w-full min-w-[200px]"
                         />
                     ) : (
-                        <FormattedContent content={message.content} />
+                        <FormattedContent content={message.content} isCharacter={isCharacter} />
                     )}
                 </div>
             </DropdownMenuTrigger>
@@ -180,7 +180,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
 
        <div className={cn("flex items-center gap-1 transition-opacity", 
         isCharacter ? 'pl-16' : 'pr-0',
-        showActionButtons ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        showActionButtons ? 'opacity-100' : 'opacity-0'
       )}>
             {showActionButtons && (
                 <>
