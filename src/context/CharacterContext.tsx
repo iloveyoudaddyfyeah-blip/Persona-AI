@@ -18,7 +18,11 @@ export type Tone =
   | "apathetic" | "fearful" | "hopeful" | "jaded" | "enthusiastic" 
   | "grumpy" | "curious" | "confident" | "shy" | "ambitious" | "content" 
   | "bitter" | "loving" | "resentful" | "brave" | "timid" | "arrogant" 
-  | "humble" | "playful" | "reserved";
+  | "humble" | "playful" | "reserved" | "melancholy" | "whimsical" 
+  | "sarcastic" | "cynical" | "optimistic" | "pessimistic" | "nervous" 
+  | "calm" | "irritable" | "cheerful" | "dramatic" | "stoic" | "flirtatious" 
+  | "formal" | "informal" | "witty" | "pompous" | "insecure" | "nurturing" 
+  | "distant" | "methodical" | "chaotic" | "mysterious" | "direct";
 
 export type Settings = {
   aiTone: Tone;

@@ -253,6 +253,30 @@ export default function CharacterCreator() {
                       <SelectItem value="humble">Humble</SelectItem>
                       <SelectItem value="playful">Playful</SelectItem>
                       <SelectItem value="reserved">Reserved</SelectItem>
+                      <SelectItem value="melancholy">Melancholy</SelectItem>
+                      <SelectItem value="whimsical">Whimsical</SelectItem>
+                      <SelectItem value="sarcastic">Sarcastic</SelectItem>
+                      <SelectItem value="cynical">Cynical</SelectItem>
+                      <SelectItem value="optimistic">Optimistic</SelectItem>
+                      <SelectItem value="pessimistic">Pessimistic</SelectItem>
+                      <SelectItem value="nervous">Nervous</SelectItem>
+                      <SelectItem value="calm">Calm</SelectItem>
+                      <SelectItem value="irritable">Irritable</SelectItem>
+                      <SelectItem value="cheerful">Cheerful</SelectItem>
+                      <SelectItem value="dramatic">Dramatic</SelectItem>
+                      <SelectItem value="stoic">Stoic</SelectItem>
+                      <SelectItem value="flirtatious">Flirtatious</SelectItem>
+                      <SelectItem value="formal">Formal</SelectItem>
+                      <SelectItem value="informal">Informal</SelectItem>
+                      <SelectItem value="witty">Witty</SelectItem>
+                      <SelectItem value="pompous">Pompous</SelectItem>
+                      <SelectItem value="insecure">Insecure</SelectItem>
+                      <SelectItem value="nurturing">Nurturing</SelectItem>
+                      <SelectItem value="distant">Distant</SelectItem>
+                      <SelectItem value="methodical">Methodical</SelectItem>
+                      <SelectItem value="chaotic">Chaotic</SelectItem>
+                      <SelectItem value="mysterious">Mysterious</SelectItem>
+                      <SelectItem value="direct">Direct</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
