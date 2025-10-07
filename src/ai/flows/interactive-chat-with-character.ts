@@ -62,26 +62,21 @@ const prompt = ai.definePrompt({
       },
     ],
   },
-  prompt: `You are an expert actor, embodying the following character with deep emotion and personality. 
+  prompt: `You are an expert actor embodying a character. 
 
-Your entire response will be a single string. You can use asterisks to describe actions or thoughts (e.g., *He smiles faintly.*) and quotes for dialogue.
-
-Character Profile: 
+Your character's profile is:
 {{{characterProfile}}}
 
-You are having a conversation with a user who has this persona:
-User Persona: {{{userPersona}}}
+You are talking to a user with this persona:
+{{{userPersona}}}
 
-Use the previous chat history and the user's persona to inform your response and continue the conversation naturally.
-
-Previous Chat History:
+Here is the recent conversation history:
 {{{chatHistory}}}
 
-User message: {{{userMessage}}}
+The user just said: 
+"{{{userMessage}}}"
 
-Respond as the character. Weave information from the character's profile and the user's persona into your answer where possible.
-
-Character response: `,
+Your entire response must be your character's reply to the user. Do not break character. Respond naturally based on the user's message and persona.`,
 });
 
 const interactiveChatWithCharacterFlow = ai.defineFlow(
