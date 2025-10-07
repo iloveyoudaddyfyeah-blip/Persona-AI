@@ -153,18 +153,8 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
         let finalMessages: ChatMessageType[];
 
         if(messages.at(-1)?.role === 'user' && messages.at(-1)?.content === '') {
-          // This was a 'continue' request. We need to find the last *actual* character message and append to it.
-          const lastCharMsgIndex = messages.slice(0, -1).findLastIndex(m => m.role === 'character');
-          
-          if(lastCharMsgIndex !== -1) {
-            // Found a previous character message to append to.
-            finalMessages = [...messages.slice(0, -1)]; // remove the empty user message
-            const lastCharMsg = finalMessages[lastCharMsgIndex];
-            finalMessages[lastCharMsgIndex] = {...lastCharMsg, content: lastCharMsg.content + " " + characterMessage.content};
-          } else {
-            // No previous character message, just add the new one.
-             finalMessages = [...messages.slice(0, -1), characterMessage];
-          }
+          // This was a 'continue' request. We replace the empty user message with the new character message.
+          finalMessages = [...messages.slice(0, -1), characterMessage];
         } else {
            finalMessages = [...messages, characterMessage];
         }
@@ -445,3 +435,5 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     </Card>
   );
 }
+
+    
