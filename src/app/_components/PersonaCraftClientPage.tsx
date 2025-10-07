@@ -3,7 +3,6 @@
 
 import { useCharacter } from '@/context/CharacterContext';
 import Header from '@/components/layout/Header';
-import CharacterList from '@/components/characters/CharacterList';
 import CharacterCreator from '@/components/characters/CharacterCreator';
 import CharacterProfile from '@/components/characters/CharacterProfile';
 import WelcomeScreen from './WelcomeScreen';
@@ -13,6 +12,7 @@ import LoginScreen from './LoginScreen';
 import UserPersonaManager from '@/components/user/UserPersonaManager';
 import CreatePersona from '@/components/user/CreatePersona';
 import EditPersona from '@/components/user/EditPersona';
+import Sidebar from '@/components/layout/Sidebar';
 
 export default function PersonaCraftClientPage() {
   const { state } = useCharacter();
@@ -74,7 +74,7 @@ export default function PersonaCraftClientPage() {
       <Header />
       <div className="flex flex-grow min-h-0">
         <aside className="w-1/4 min-w-[300px] h-full p-4 hidden md:block sticky top-0">
-          <CharacterList />
+          <Sidebar />
         </aside>
         <main className="flex-grow h-full p-4 overflow-y-auto">
           {renderMainContent()}
