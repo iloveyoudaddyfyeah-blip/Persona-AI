@@ -6,8 +6,9 @@ import type { ChatMessage as ChatMessageType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Button } from '../ui/button';
-import { Pencil, Check, X, History, Play, Shuffle } from 'lucide-react';
+import { Pencil, Check, X, History, Play, Shuffle, Copy, Trash2 } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -19,6 +20,7 @@ interface ChatMessageProps {
   onRewind: () => void;
   onContinue: () => void;
   onRegenerate: () => void;
+  onDelete: () => void;
 }
 
 const FormattedContent = ({ content, isCharacter }: { content:string, isCharacter: boolean }) => {
@@ -49,8 +51,9 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
 };
 
 
-export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping, onEdit, onRewind, onContinue, onRegenerate }: ChatMessageProps) {
+export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping, onEdit, onRewind, onContinue, onRegenerate, onDelete }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
+  const { toast } = useToast();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content);
@@ -98,13 +101,20 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
     }
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(message.content);
+    toast({
+        title: "Copied to clipboard!",
+    });
+  }
+
   const showContinueButton = isCharacter && isLastMessage && !isTyping;
   const showRegenerateButton = isLastMessage && !isTyping && message.role === 'character';
 
 
   return (
     <div className={cn("flex flex-col gap-1 group", isCharacter ? 'items-start' : 'items-end')}>
-      <div className={cn("flex items-start gap-4 text-xl w-full", isCharacter ? 'justify-start' : 'justify-end')}>
+      <div className={cn("flex items-start gap-4 text-xl", isCharacter ? 'justify-start' : 'justify-end')}>
         {isCharacter && (
           <Image
             src={characterPhoto}
@@ -153,8 +163,16 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditing(true)} title="Edit">
                     <Pencil className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRewind} title="Rewind to here">
-                    <History className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopy} title="Copy">
+                    <Copy className="h-4 w-4" />
+                </Button>
+                {isCharacter && (
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRewind} title="Rewind to here">
+                        <History className="h-4 w-4" />
+                    </Button>
+                )}
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete} title="Delete">
+                    <Trash2 className="h-4 w-4 text-destructive/70" />
                 </Button>
                 {showContinueButton && (
                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onContinue} title="Continue">

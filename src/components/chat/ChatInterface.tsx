@@ -123,11 +123,34 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
 
   const getAIResponse = async (messages: ChatMessageType[]) => {
     if (!user || !firestore || !activeChat) return;
+    if (messages.length === 0) {
+        setIsTyping(false);
+        return;
+    };
 
     setIsTyping(true);
     try {
         const characterMessage = await getChatResponse(character, messages, activePersona);
-        const finalMessages = [...messages, characterMessage];
+        
+        let finalMessages: ChatMessageType[];
+
+        if(messages.at(-1)?.role === 'user' && messages.at(-1)?.content === '') {
+          // This was a 'continue' request. We need to find the last *actual* character message and append to it.
+          const lastCharMsgIndex = messages.slice(0, -1).findLastIndex(m => m.role === 'character');
+          
+          if(lastCharMsgIndex !== -1) {
+            // Found a previous character message to append to.
+            finalMessages = [...messages.slice(0, -1)]; // remove the empty user message
+            const lastCharMsg = finalMessages[lastCharMsgIndex];
+            finalMessages[lastCharMsgIndex] = {...lastCharMsg, content: lastCharMsg.content + " " + characterMessage.content};
+          } else {
+            // No previous character message, just add the new one.
+             finalMessages = [...messages.slice(0, -1), characterMessage];
+          }
+        } else {
+           finalMessages = [...messages, characterMessage];
+        }
+
         const finalSessions = chatSessions.map(cs => 
             cs.id === activeChat.id ? { ...cs, messages: finalMessages } : cs
         );
@@ -171,12 +194,11 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     const newHistory = [...activeChat.messages];
     newHistory[index] = { ...newHistory[index], content: newContent };
 
-    // Just update the message locally if it's an AI message
+    // If it's a character message, just save the edit locally.
     if (originalMessage.role === 'character') {
       const updatedSessions = chatSessions.map(cs =>
         cs.id === activeChat.id ? { ...cs, messages: newHistory } : cs
       );
-      // We only update firestore, the local state is updated via snapshot listener
       const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
       updateDocumentNonBlocking(characterRef, { chatSessions: updatedSessions });
       return;
@@ -210,6 +232,21 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
        await getAIResponse(newHistory);
     }
   };
+
+  const handleDeleteMessage = async (index: number) => {
+    if (!user || !firestore || !activeChat) return;
+
+    const truncatedHistory = activeChat.messages.slice(0, index);
+
+    // Optimistically update UI
+    const updatedSessionsForUI = chatSessions.map(cs =>
+        cs.id === activeChat.id ? { ...cs, messages: truncatedHistory } : cs
+    );
+    dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessionsForUI }});
+
+    await getAIResponse(truncatedHistory);
+  };
+
 
   const handleContinue = async () => {
     if (!user || !firestore || !activeChat) return;
@@ -322,6 +359,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                     onRewind={() => handleRewind(index)}
                     onContinue={handleContinue}
                     onRegenerate={handleRegenerate}
+                    onDelete={() => handleDeleteMessage(index)}
                 />
             ))}
             {isTyping && (
