@@ -14,7 +14,7 @@ interface ChatMessageProps {
   isTyping: boolean;
 }
 
-const FormattedContent = ({ content, isCharacter }: { content: string, isCharacter: boolean }) => {
+const FormattedContent = ({ content, isCharacter }: { content:string, isCharacter: boolean }) => {
   const regex = /(\*[^*]+\*)|("[^"]+")/g;
   const parts = content.split(regex).filter(Boolean);
 
