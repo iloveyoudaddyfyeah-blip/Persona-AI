@@ -8,10 +8,8 @@ import {
 import { modifyPersonalityProfile } from '@/ai/flows/modify-personality-profile';
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
 import { generateUserPersona } from '@/ai/flows/generate-user-persona';
-import type { Character, ChatMessage, UserPersona, ChatSession } from '@/lib/types';
-import { Tone } from '@/context/CharacterContext';
-import { generateInitialChatMessage } from '@/ai_flows/generate-initial-chat-message';
-
+import type { Character, ChatMessage, UserPersona, ChatSession, GenerateCharacterFromFormInput } from '@/lib/types';
+import { generateCharacterFromForm } from '@/ai/flows/generate-character-from-form';
 
 function formatProfile(
   name: string,
@@ -85,21 +83,12 @@ ${speechPatterns}
 }
 
 export async function createCharacterFromPhoto(
-  name: string,
-  photoDataUri: string,
-  tone: Tone,
-  charLimit: number,
-  instructions: string
+  input: GenerateCharacterFromFormInput & { photoDataUri: string }
 ): Promise<{ profileData: GeneratePersonalityProfileOutput; profile: string, initialMessage: string }> {
-  const profileData = await generatePersonalityProfile({ name, photoDataUri, tone, charLimit, instructions });
-  const profile = formatProfile(name, profileData);
+  const profileData = await generateCharacterFromForm(input);
+  const profile = formatProfile(input.name, profileData);
   
-  const { message: initialMessage } = await generateInitialChatMessage({
-    characterName: name,
-    characterProfile: profile,
-  });
-
-  return { profileData, profile, initialMessage };
+  return { profileData, profile, initialMessage: input.welcomeMessage };
 }
 
 export async function regenerateCharacterProfile(

@@ -41,3 +41,10 @@ export type UserData = {
     subscriptionStatus?: 'free' | 'premium';
     activePersonaId?: string;
 }
+
+export type GenerateCharacterFromFormInput = {
+    name: string;
+    intro: string;
+    personality: string;
+    welcomeMessage: string;
+}
