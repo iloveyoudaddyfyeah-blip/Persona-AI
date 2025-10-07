@@ -62,7 +62,7 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
           return (
             <em key={index} className={cn(
               "not-italic",
-              !isCharacter && 'user-action-text'
+              isCharacter ? "ai-action-text" : "user-action-text"
             )}>
               {part.slice(1, -1)}
             </em>

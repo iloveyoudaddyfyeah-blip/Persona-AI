@@ -76,10 +76,16 @@
 
   .user-action-text {
     color: hsl(var(--user-action-text));
+    font-style: italic;
+  }
+
+  .ai-action-text {
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
   }
 
   .ai-quote strong {
-    color: hsl(var(--accent) / 0.8);
+    color: hsl(var(--accent) / 0.5);
     font-weight: 600;
   }
 }
