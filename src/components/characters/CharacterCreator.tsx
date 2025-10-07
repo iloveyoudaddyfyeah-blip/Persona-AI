@@ -277,6 +277,10 @@ export default function CharacterCreator() {
                       <SelectItem value="chaotic">Chaotic</SelectItem>
                       <SelectItem value="mysterious">Mysterious</SelectItem>
                       <SelectItem value="direct">Direct</SelectItem>
+                      <SelectItem value="dreamy">Dreamy</SelectItem>
+                      <SelectItem value="stern">Stern</SelectItem>
+                      <SelectItem value="goofy">Goofy</SelectItem>
+                      <SelectItem value="brooding">Brooding</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

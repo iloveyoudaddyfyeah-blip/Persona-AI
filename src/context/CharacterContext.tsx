@@ -22,7 +22,8 @@ export type Tone =
   | "sarcastic" | "cynical" | "optimistic" | "pessimistic" | "nervous" 
   | "calm" | "irritable" | "cheerful" | "dramatic" | "stoic" | "flirtatious" 
   | "formal" | "informal" | "witty" | "pompous" | "insecure" | "nurturing" 
-  | "distant" | "methodical" | "chaotic" | "mysterious" | "direct";
+  | "distant" | "methodical" | "chaotic" | "mysterious" | "direct"
+  | "dreamy" | "stern" | "goofy" | "brooding";
 
 export type Settings = {
   aiTone: Tone;
