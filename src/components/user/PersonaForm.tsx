@@ -24,23 +24,17 @@ interface PersonaFormProps {
 export default function PersonaForm({ onSave, onCancel, formType, initialData }: PersonaFormProps) {
   const { toast } = useToast();
   
+  const personaPlaceholder = PlaceHolderImages.find(img => img.id === 'persona-placeholder');
+
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [photoDataUri, setPhotoDataUri] = useState(initialData?.photoDataUri || '');
+  const [photoDataUri, setPhotoDataUri] = useState(initialData?.photoDataUri || personaPlaceholder?.imageUrl || '');
   const [aiPrompt, setAiPrompt] = useState('');
 
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const personaPlaceholder = PlaceHolderImages.find(img => img.id === 'persona-placeholder');
-
-  useEffect(() => {
-    if (!photoDataUri && personaPlaceholder) {
-        setPhotoDataUri(personaPlaceholder.imageUrl);
-    }
-  }, [photoDataUri, personaPlaceholder]);
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -133,7 +127,7 @@ export default function PersonaForm({ onSave, onCancel, formType, initialData }:
             <div className={formSectionClass}>
               <Label className={labelClass}>Persona Photo</Label>
               <div className="flex items-center gap-4 p-4 rounded-md border bg-secondary/30">
-                <Image src={photoDataUri || ''} alt="Persona photo" width={80} height={80} className="rounded-md object-cover aspect-square" data-ai-hint={personaPlaceholder?.imageHint} unoptimized/>
+                <Image src={photoDataUri || personaPlaceholder?.imageUrl || ''} alt="Persona photo" width={80} height={80} className="rounded-md object-cover aspect-square" data-ai-hint={personaPlaceholder?.imageHint} unoptimized/>
                  <div className='flex-grow'>
                     <p className={descriptionClass}>Upload a custom image for your persona. If left blank, a default will be used.</p>
                     <Button type='button' variant="outline" className="mt-2" onClick={() => fileInputRef.current?.click()}>
