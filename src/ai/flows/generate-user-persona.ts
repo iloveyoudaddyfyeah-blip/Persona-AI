@@ -35,6 +35,14 @@ const prompt = ai.definePrompt({
   name: 'generateUserPersonaPrompt',
   input: {schema: GenerateUserPersonaInputSchema},
   output: {schema: GenerateUserPersonaOutputSchema},
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+    ],
+  },
   prompt: `You are an AI that helps users define their persona for interacting with AI characters.
 Based on the user's prompt, generate a compelling persona description.
 The persona should be described in the third person.

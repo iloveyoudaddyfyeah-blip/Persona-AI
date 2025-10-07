@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Analyzes an uploaded photo to infer personality traits and background information.
@@ -39,6 +40,14 @@ const prompt = ai.definePrompt({
   name: 'photoAnalysisPrompt',
   input: {schema: PhotoAnalysisInputSchema},
   output: {schema: PhotoAnalysisOutputSchema},
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+    ],
+  },
   prompt: `Analyze the following photo to infer personality traits and background information about the person in the photo.\n\nPhoto: {{media url=photoDataUri}}\n\nFocus on facial features, attire, and background details to determine personality traits and any relevant background information.  Do not mention the specific features, attire, background, etc. that led you to your conclusion. Just provide the conclusion.\n\nOutput the personality traits and background information as separate strings.  The background information should be very specific and informative. Limit to 100 words each.\n\nPersonality Traits:\n{{output.personalityTraits}}\n\nBackground Information:\n{{output.backgroundInformation}}`,
 });
 
