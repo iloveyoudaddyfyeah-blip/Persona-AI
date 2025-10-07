@@ -156,7 +156,7 @@ export default function CharacterCreator() {
         imgSrc={imgSrc}
         onCropComplete={handleCropComplete}
       />
-      <Card className="w-full max-w-3xl mx-auto bg-card/80 backdrop-blur-sm">
+      <Card className="w-full max-w-3xl mx-auto">
         <CardContent className="p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
             <header className="text-center">

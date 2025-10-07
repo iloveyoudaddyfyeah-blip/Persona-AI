@@ -53,7 +53,7 @@ export default function CharacterList() {
 
 
   return (
-    <div className="bg-card/50 h-full flex flex-col p-4 rounded-lg border">
+    <div className="bg-card h-full flex flex-col p-4 rounded-lg border">
       <h2 className="text-2xl font-headline mb-4 px-2">Characters</h2>
       <div className="flex-grow overflow-y-auto pr-2 space-y-2">
         {state.characters.map(char => (

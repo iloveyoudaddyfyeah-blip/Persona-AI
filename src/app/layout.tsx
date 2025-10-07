@@ -36,9 +36,9 @@ export default function RootLayout({
       <body className={cn(
         "font-body antialiased", 
         "bg-background text-foreground", 
+        "bg-grid-pattern",
         "bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,hsl(var(--primary)/0.1),rgba(255,255,255,0))]",
         "bg-no-repeat",
-        "bg-cover"
         )}>
         <FirebaseClientProvider>
           <CharacterProvider>
