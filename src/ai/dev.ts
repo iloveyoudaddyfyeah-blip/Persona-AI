@@ -8,4 +8,5 @@ import '@/ai/flows/interactive-chat-with-character.ts';
 import '@/ai_flows/generate-initial-chat-message.ts';
 import '@/ai/flows/modify-personality-profile.ts';
 import '@/ai/flows/generate-user-persona.ts';
+import '@/ai/flows/generate-persona-image.ts';
 

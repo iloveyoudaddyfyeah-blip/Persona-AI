@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -17,7 +18,7 @@ export default function UserPersona() {
   const firestore = useFirestore();
   const { toast } = useToast();
   
-  const activePersona = state.userPersonas.find(p => p.isActive);
+  const activePersona = state.userPersonas.find(p => p.id === state.activePersonaId);
   const [description, setDescription] = useState(activePersona?.description || '');
   const [isSaving, setIsSaving] = useState(false);
 

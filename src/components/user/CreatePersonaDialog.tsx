@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -16,13 +17,14 @@ import { Input } from "../ui/input";
 import { useFirestore } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { Textarea } from '../ui/textarea';
 import type { UserPersona } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUser } from '@/firebase/provider';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { generateImageFromPrompt } from '@/app/actions';
 
 interface CreatePersonaDialogProps {
     open: boolean;
@@ -37,9 +39,11 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [photo, setPhoto] = useState<{ file: File; dataUri: string } | null>(null);
+  const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
+  const [imagePrompt, setImagePrompt] = useState('');
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   
   const personaPlaceholder = PlaceHolderImages.find(img => img.id === 'persona-placeholder');
 
@@ -51,10 +55,27 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
         return;
       }
       const reader = new FileReader();
-      reader.onload = (event) => setPhoto({ file, dataUri: event.target?.result as string });
+      reader.onload = (event) => setPhotoDataUri(event.target?.result as string);
       reader.readAsDataURL(file);
     }
   };
+
+  const handleGenerateImage = async () => {
+    if (!imagePrompt) {
+        toast({ variant: "destructive", title: "Prompt is empty", description: "Please describe the image you want to generate." });
+        return;
+    }
+    setIsGeneratingImage(true);
+    try {
+        const generatedUri = await generateImageFromPrompt(imagePrompt);
+        setPhotoDataUri(generatedUri);
+        toast({ title: "Image generated!" });
+    } catch (error) {
+        toast({ variant: "destructive", title: "Image generation failed", description: (error as Error).message });
+    } finally {
+        setIsGeneratingImage(false);
+    }
+  }
 
   const handleSave = async () => {
     if (!user || !firestore) return;
@@ -74,7 +95,7 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
             id: newPersonaId,
             name,
             description,
-            photoDataUri: photo?.dataUri || personaPlaceholder?.imageUrl || '',
+            photoDataUri: photoDataUri || personaPlaceholder?.imageUrl || '',
             isActive: isActive,
         };
 
@@ -100,7 +121,8 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
   const resetForm = () => {
     setName('');
     setDescription('');
-    setPhoto(null);
+    setPhotoDataUri(null);
+    setImagePrompt('');
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -124,16 +146,36 @@ export function CreatePersonaDialog({ open, onOpenChange, personaCount }: Create
                 <Label htmlFor="name" className="text-lg">Name</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="text-lg" placeholder="e.g., The Investigator" />
             </div>
-            <div className="space-y-2">
-                <Label htmlFor="photo" className="text-lg">Photo</Label>
-                 <div className="flex items-center space-x-4">
-                    <Image src={photo?.dataUri || personaPlaceholder?.imageUrl || ''} alt="Preview" width={80} height={80} className="rounded-md border object-cover aspect-square" data-ai-hint={personaPlaceholder?.imageHint} unoptimized/>
-                    <div className="w-full">
-                      <Input id="photo" type="file" accept="image/*" onChange={handleFileChange} className="text-lg file:text-lg file:mr-4 file:py-2 file:px-4"/>
+            
+            <div className="space-y-4 rounded-lg border p-4">
+                <Label className="text-lg">Persona Image</Label>
+                <div className="flex items-center space-x-4">
+                    <Image src={photoDataUri || personaPlaceholder?.imageUrl || ''} alt="Preview" width={80} height={80} className="rounded-md border object-cover aspect-square" data-ai-hint={personaPlaceholder?.imageHint} unoptimized/>
+                    <div className="w-full space-y-2">
+                        <Label htmlFor="photo-upload">Upload an Image</Label>
+                        <Input id="photo-upload" type="file" accept="image/*" onChange={handleFileChange} className="text-lg file:text-lg file:mr-4 file:py-2 file:px-4"/>
                     </div>
                 </div>
+
+                <div className="flex items-center">
+                    <div className="flex-grow border-t border-muted"></div>
+                    <span className="mx-4 text-sm text-muted-foreground">OR</span>
+                    <div className="flex-grow border-t border-muted"></div>
+                </div>
+                
+                <div className="w-full space-y-2">
+                    <Label htmlFor="image-prompt">Generate an Image with AI</Label>
+                     <div className="flex gap-2">
+                        <Input id="image-prompt" value={imagePrompt} onChange={(e) => setImagePrompt(e.target.value)} className="text-lg" placeholder="e.g., A stoic warrior with a facial scar" />
+                        <Button onClick={handleGenerateImage} disabled={isGeneratingImage} variant="secondary">
+                            {isGeneratingImage ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+                        </Button>
+                    </div>
+                </div>
+
             </div>
-             <div className="space-y-2">
+
+            <div className="space-y-2">
                 <Label htmlFor="description" className="text-lg">Description</Label>
                 <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="text-lg min-h-[100px]" placeholder="A short bio of your persona..." />
             </div>

@@ -11,6 +11,7 @@ import { generateUserPersona } from '@/ai/flows/generate-user-persona';
 import type { Character, ChatMessage, UserPersona, ChatSession } from '@/lib/types';
 import { Tone } from '@/context/CharacterContext';
 import { generateInitialChatMessage } from '@/ai_flows/generate-initial-chat-message';
+import { generatePersonaImage } from '@/ai/flows/generate-persona-image';
 
 
 function formatProfile(
@@ -155,4 +156,9 @@ export async function getChatResponse(
 export async function generatePersonaFromPrompt(prompt: string): Promise<string> {
   const { persona } = await generateUserPersona({ prompt });
   return persona;
+}
+
+export async function generateImageFromPrompt(prompt: string): Promise<string> {
+  const { photoDataUri } = await generatePersonaImage({ prompt });
+  return photoDataUri;
 }
