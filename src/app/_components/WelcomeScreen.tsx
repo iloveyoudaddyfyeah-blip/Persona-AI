@@ -17,7 +17,7 @@ export default function WelcomeScreen() {
 
     return (
         <div className="relative flex flex-col items-center justify-center h-full text-center p-8">
-            <div className="relative z-10 flex flex-col items-center">
+            <div className="relative z-10 flex flex-col items-center p-8 rounded-lg bg-card/80 backdrop-blur-sm">
                 {welcomeImage && (
                     <Image
                         src={welcomeImage.imageUrl}
