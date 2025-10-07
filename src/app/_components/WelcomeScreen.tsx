@@ -17,7 +17,7 @@ export default function WelcomeScreen() {
 
     return (
         <div className="relative flex flex-col items-center justify-center h-full text-center p-8">
-            <div className="relative z-10 flex flex-col items-center p-8 rounded-lg bg-card/80 backdrop-blur-sm">
+            <div className="relative z-10 flex flex-col items-center p-8 rounded-lg bg-card/80 backdrop-blur-sm max-w-4xl">
                 {welcomeImage && (
                     <Image
                         src={welcomeImage.imageUrl}
@@ -33,7 +33,7 @@ export default function WelcomeScreen() {
                     Welcome to <span className="text-primary">PersonaCraft AI</span>
                 </h1>
                 <p className="text-xl md:text-2xl max-w-3xl mb-8 text-muted-foreground leading-relaxed">
-                    Breathe life into new identities. Upload a photo and let our AI craft a rich, detailed character, complete with a unique personality, backstory, and voice.
+                    You have no characters yet. Create one to get started.
                 </p>
                 <Button onClick={handleNewCharacter} className="text-xl h-14 px-8 rounded-full font-bold" size="lg">
                     <Sparkles className="mr-3 h-6 w-6" />

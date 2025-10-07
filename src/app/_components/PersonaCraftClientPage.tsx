@@ -5,7 +5,7 @@ import { useCharacter } from '@/context/CharacterContext';
 import Header from '@/components/layout/Header';
 import CharacterCreator from '@/components/characters/CharacterCreator';
 import CharacterProfile from '@/components/characters/CharacterProfile';
-import WelcomeScreen from './WelcomeScreen';
+import CharacterGrid from '@/components/characters/CharacterGrid';
 import { Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import LoginScreen from './LoginScreen';
@@ -53,7 +53,7 @@ export default function PersonaCraftClientPage() {
         if (selectedCharacter) {
           return <CharacterProfile character={selectedCharacter} />;
         }
-        return <WelcomeScreen />; // Fallback if no character is selected
+        return <CharacterGrid />; // Fallback if no character is selected
       case 'persona_manager':
         return <UserPersonaManager />;
       case 'creating_persona':
@@ -65,7 +65,7 @@ export default function PersonaCraftClientPage() {
         return <UserPersonaManager />; // Fallback
       case 'welcome':
       default:
-        return <WelcomeScreen />;
+        return <CharacterGrid />;
     }
   };
 

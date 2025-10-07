@@ -3,7 +3,7 @@
 
 import { useCharacter } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ScrollArea } from '../ui/scroll-area';
 
 export default function CharacterList() {
   const { state, dispatch } = useCharacter();
@@ -30,11 +31,6 @@ export default function CharacterList() {
 
   const handleSelectCharacter = (id: string) => {
     dispatch({ type: 'SELECT_CHARACTER', payload: id });
-  };
-
-  const handleNewCharacter = () => {
-    dispatch({ type: 'SET_VIEW', payload: 'creating' });
-    dispatch({ type: 'SELECT_CHARACTER', payload: null });
   };
   
   const handleDeleteCharacter = (id: string) => {
@@ -55,55 +51,58 @@ export default function CharacterList() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-grow overflow-y-auto space-y-2">
-        {state.characters.map(char => (
-          <div
-            key={char.id}
-            onClick={() => handleSelectCharacter(char.id)}
-            className={cn(
-              "flex items-center w-full justify-between rounded-md cursor-pointer group",
-              state.selectedCharacterId === char.id ? "bg-primary/20" : "hover:bg-secondary/50"
-            )}
-          >
+      <h3 className="text-lg font-headline pl-4 mb-2">Characters</h3>
+      <ScrollArea className="flex-grow">
+        <div className="space-y-1 pr-4">
+          {state.characters.length === 0 && (
+            <p className="text-sm text-muted-foreground px-4">No characters created yet.</p>
+          )}
+          {state.characters.map(char => (
             <div
-              className="flex-grow flex items-center justify-start text-lg h-14 px-4 rounded-md"
+              key={char.id}
+              onClick={() => handleSelectCharacter(char.id)}
+              className={cn(
+                "flex items-center w-full justify-between rounded-md cursor-pointer group",
+                state.selectedCharacterId === char.id ? "bg-primary/20" : "hover:bg-secondary/50"
+              )}
             >
-              <Image 
-                src={char.photoDataUri} 
-                alt={char.name}
-                width={40}
-                height={40}
-                className="mr-3 h-10 w-10 rounded-md object-cover"
-              />
-              <span className="truncate flex-grow text-left font-medium">{char.name}</span>
+              <div
+                className="flex-grow flex items-center justify-start text-lg h-14 px-4 rounded-md"
+              >
+                <Image 
+                  src={char.photoDataUri} 
+                  alt={char.name}
+                  width={40}
+                  height={40}
+                  className="mr-3 h-10 w-10 rounded-md object-cover"
+                />
+                <span className="truncate flex-grow text-left font-medium">{char.name}</span>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 mr-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action will permanently delete the character "{char.name}". This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDeleteCharacter(char.id)}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 mr-2 opacity-50 group-hover:opacity-100 transition-opacity">
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action will permanently delete the character "{char.name}". This cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => handleDeleteCharacter(char.id)}>
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        ))}
-      </div>
-      <Button onClick={handleNewCharacter} className="mt-4 text-lg h-12">
-        <Plus className="mr-2 h-5 w-5" /> New Character
-      </Button>
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

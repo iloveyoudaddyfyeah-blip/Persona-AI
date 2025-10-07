@@ -82,29 +82,22 @@ function characterReducer(state: State, action: Action): State {
     case 'SET_CHARACTERS':
         const characters = action.payload;
         let newView = state.view;
+        let newSelectedId = state.selectedCharacterId;
 
-        if (state.view === 'welcome' && characters.length > 0) {
-          newView = 'viewing';
-          if (!state.selectedCharacterId) {
-            return {
-                ...state,
-                characters,
-                selectedCharacterId: characters[0].id,
-                view: 'viewing',
-                isLoading: false,
-            };
-          }
+        // If we are on the welcome screen and characters load, select the first one and go to viewing.
+        if (state.isLoading && characters.length > 0) {
+          newView = 'welcome'; // change to welcome to show grid
+          newSelectedId = null; // Don't auto-select a character anymore
         } else if (characters.length === 0) {
-          return {
-            ...state,
-            characters: [],
-            selectedCharacterId: null,
-            view: 'welcome',
-            isLoading: false,
-          }
+          newView = 'welcome';
+          newSelectedId = null;
+        } else if (!characters.some(c => c.id === state.selectedCharacterId)) {
+          // If the selected character was deleted, select another or none.
+          newSelectedId = characters.length > 0 ? null : null;
+          newView = 'welcome';
         }
         
-        return { ...state, characters, view: newView, isLoading: false };
+        return { ...state, characters, view: newView, selectedCharacterId: newSelectedId, isLoading: false };
     case 'ADD_CHARACTER':
       const existing = state.characters.find(c => c.id === action.payload.id);
       if (existing) return state; // Prevent duplicates from snapshot listeners
@@ -125,13 +118,8 @@ function characterReducer(state: State, action: Action): State {
         let deletedView = state.view;
 
         if (state.selectedCharacterId === action.payload) {
-            if (remainingCharacters.length > 0) {
-                deletedSelectedId = remainingCharacters[0].id;
-                deletedView = 'viewing';
-            } else {
-                deletedSelectedId = null;
-                deletedView = 'welcome';
-            }
+            deletedSelectedId = null;
+            deletedView = 'welcome'; // Go back to the grid
         }
       return {
         ...state,
@@ -143,11 +131,14 @@ function characterReducer(state: State, action: Action): State {
       return {
         ...state,
         selectedCharacterId: action.payload,
-        view: action.payload ? 'viewing' : state.view,
+        view: action.payload ? 'viewing' : 'welcome',
       };
     case 'SET_VIEW':
         if (action.payload === 'creating') {
             return { ...state, view: 'creating', selectedCharacterId: null };
+        }
+        if (action.payload === 'welcome') {
+            return { ...state, view: 'welcome', selectedCharacterId: null };
         }
         return {
             ...state,
@@ -169,7 +160,7 @@ function characterReducer(state: State, action: Action): State {
         return { 
             ...state, 
             selectedPersonaIdToEdit: action.payload,
-            view: action.payload ? 'editing_persona' : state.view
+            view: action.payload ? 'editing_persona' : 'persona_manager'
         };
     case 'RESET_STATE':
         return {...initialState, isLoading: false };

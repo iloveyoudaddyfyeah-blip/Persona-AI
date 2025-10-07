@@ -8,7 +8,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Pencil, Home } from 'lucide-react';
+import { Plus, Trash2, Pencil } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -82,10 +82,6 @@ export default function UserPersonaManager() {
                     </CardDescription>
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={() => dispatch({ type: 'SET_VIEW', payload: 'welcome' })} size="lg" className="text-lg" variant="outline">
-                        <Home className="mr-2 h-5 w-5" />
-                        Back to Home
-                    </Button>
                     <Button onClick={() => dispatch({ type: 'SET_VIEW', payload: 'creating_persona' })} size="lg" className="text-lg">
                         <Plus className="mr-2 h-5 w-5" />
                         New Persona
