@@ -13,6 +13,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { GeneratePersonalityProfileOutputSchema, GeneratePersonalityProfileInputSchema } from '@/ai/schemas';
 
+
 export type GeneratePersonalityProfileInput = z.infer<
   typeof GeneratePersonalityProfileInputSchema
 >;

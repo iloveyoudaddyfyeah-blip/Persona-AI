@@ -10,7 +10,7 @@ import { modifyPersonalityProfile } from '@/ai/flows/modify-personality-profile'
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
 import { generateUserPersona } from '@/ai/flows/generate-user-persona';
 import type { Character, ChatMessage, UserPersona } from '@/lib/types';
-import { generateInitialChatMessage } from '@/ai_flows/generate-initial-chat-message';
+import { generateInitialChatMessage } from '@/ai/flows/generate-initial-chat-message';
 
 function formatProfile(
   name: string,
