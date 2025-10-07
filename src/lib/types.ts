@@ -1,5 +1,4 @@
 
-
 import type { z } from 'genkit';
 import type { GeneratePersonalityProfileOutputSchema } from '@/ai/schemas';
 import type { Settings } from '@/context/CharacterContext';
@@ -26,6 +25,7 @@ export type Character = {
   profileData?: GeneratePersonalityProfileOutput;
   chatSessions: ChatSession[];
   activeChatId: string | null;
+  initialMessage?: string;
 };
 
 export type UserPersona = {

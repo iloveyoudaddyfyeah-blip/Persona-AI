@@ -7,7 +7,7 @@ import { useCharacter } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ChatMessage from './ChatMessage';
-import { getChatResponse, generateInitialChatMessage } from '@/app/actions';
+import { getChatResponse } from '@/app/actions';
 import { Loader2, Plus, Send, Trash2, RotateCcw } from 'lucide-react';
 import { Card } from '../ui/card';
 import { useUser, useFirestore } from '@/firebase';
@@ -63,16 +63,15 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
   }, [activeChat, isTyping, chatHistory.length]);
   
   const handleNewChat = async () => {
-    if (!user || !firestore || isSessionLoading) return;
+    if (!user || !firestore || isSessionLoading || !character.initialMessage) return;
     setIsSessionLoading(true);
     try {
-        const initialMessage = await generateInitialChatMessage(character);
         const newChatId = uuidv4();
         const newChatSession: ChatSession = {
             id: newChatId,
             name: `Chat ${chatSessions.length + 1}`,
             createdAt: Date.now(),
-            messages: [{ role: 'character', content: initialMessage }],
+            messages: [{ role: 'character', content: character.initialMessage }],
         };
         const updatedSessions = [...chatSessions, newChatSession];
         const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
@@ -95,12 +94,11 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
   }
 
   const handleResetChat = async () => {
-    if (!user || !firestore || !activeChat || isSessionLoading) return;
+    if (!user || !firestore || !activeChat || isSessionLoading || !character.initialMessage) return;
     setIsSessionLoading(true);
     try {
-        const initialMessage = await generateInitialChatMessage(character);
         const updatedSessions = chatSessions.map(cs => 
-            cs.id === activeChat.id ? { ...cs, messages: [{ role: 'character', content: initialMessage }] } : cs
+            cs.id === activeChat.id ? { ...cs, messages: [{ role: 'character', content: character.initialMessage! }] } : cs
         );
 
         const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);

@@ -36,13 +36,33 @@
             "dislikes": {"type": "array", "items": {"type": "string"}}
           }
         },
-        "chatHistory": {
+        "initialMessage": {
+            "type": "string",
+            "description": "The first message a character says when a chat is initiated."
+        },
+        "activeChatId": {
+          "type": "string",
+          "description": "The ID of the currently active chat session for this character."
+        },
+        "chatSessions": {
             "type": "array",
+            "description": "An array of chat sessions with this character.",
             "items": {
                 "type": "object",
                 "properties": {
-                    "role": {"type": "string", "enum": ["user", "character"]},
-                    "content": {"type": "string"}
+                    "id": {"type": "string"},
+                    "name": {"type": "string"},
+                    "createdAt": {"type": "number"},
+                    "messages": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "role": {"type": "string", "enum": ["user", "character"]},
+                                "content": {"type": "string"}
+                            }
+                        }
+                    }
                 }
             }
         }

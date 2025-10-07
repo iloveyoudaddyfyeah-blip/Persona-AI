@@ -118,6 +118,7 @@ export default function CharacterCreator() {
           profileData: profileData,
           chatSessions: [firstChatSession],
           activeChatId: newChatId,
+          initialMessage: initialMessage,
       };
 
       const characterRef = doc(firestore, `users/${user.uid}/characters/${newCharacterId}`);
