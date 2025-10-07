@@ -23,7 +23,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
 import ReactCrop, { type Crop } from 'react-image-crop';
@@ -172,7 +171,7 @@ export default function CharacterCreator() {
       
       const newCharacter: Character = {
           id: newCharacterId,
-          name: formState.name,
+          name: formState.name!,
           photoDataUri: croppedPhotoDataUri,
           profile: profile,
           profileData: profileData,
@@ -252,12 +251,10 @@ export default function CharacterCreator() {
                 }
                  <div className='flex-grow'>
                     <p className={descriptionClass}>Use [focus] to adjust the image to the best viewing angle.</p>
-                     <DialogTrigger asChild>
-                        <Button type='button' variant="outline" className="mt-2" onClick={() => document.getElementById('photo-upload')?.click() }>
-                            <Focus className="mr-2" />
-                            Focus
-                        </Button>
-                    </DialogTrigger>
+                    <Button type='button' variant="outline" className="mt-2" onClick={() => document.getElementById('photo-upload')?.click() }>
+                        <Focus className="mr-2" />
+                        Focus
+                    </Button>
                     <Input id="photo-upload" type="file" accept="image/*" onChange={handleFileChange} required className="hidden"/>
                  </div>
               </div>
