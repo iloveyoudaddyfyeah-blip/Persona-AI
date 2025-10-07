@@ -9,8 +9,9 @@ import { collection, onSnapshot, doc } from 'firebase/firestore';
 import { updateUser, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { v4 as uuidv4 } from 'uuid';
+import type { DashboardTab } from '@/app/_components/Dashboard';
 
-type View = 'welcome' | 'creating' | 'viewing' | 'persona_manager' | 'creating_persona' | 'editing_persona';
+type View = 'dashboard' | 'creating' | 'viewing' | 'creating_persona' | 'editing_persona';
 
 export type Tone = 
   | "default" | "joyful" | "anxious" | "angry" | "serene" | "passionate" 
@@ -34,6 +35,7 @@ type State = {
   userPersonas: UserPersona[];
   activePersonaId: string | null;
   selectedPersonaIdToEdit: string | null;
+  activeTab: DashboardTab;
 };
 
 type Action =
@@ -51,13 +53,14 @@ type Action =
   | { type: 'SET_ACTIVE_PERSONA', payload: string | null }
   | { type: 'SET_CHARACTERS', payload: Character[] }
   | { type: 'EDIT_PERSONA', payload: string | null }
-  | { type: 'RESET_STATE' };
+  | { type: 'RESET_STATE' }
+  | { type: 'SET_ACTIVE_TAB', payload: DashboardTab };
 
 
 const initialState: State = {
   characters: [],
   selectedCharacterId: null,
-  view: 'welcome',
+  view: 'dashboard',
   isGenerating: false,
   isLoading: true,
   settings: {
@@ -67,6 +70,7 @@ const initialState: State = {
   userPersonas: [],
   activePersonaId: null,
   selectedPersonaIdToEdit: null,
+  activeTab: 'characters',
 };
 
 const CharacterContext = createContext<{
@@ -76,6 +80,8 @@ const CharacterContext = createContext<{
 
 function characterReducer(state: State, action: Action): State {
   switch (action.type) {
+    case 'SET_ACTIVE_TAB':
+        return { ...state, activeTab: action.payload };
     case 'LOAD_SETTINGS':
         const loadedSettings = action.payload;
         return { ...state, settings: { ...state.settings, ...loadedSettings }};
@@ -84,23 +90,21 @@ function characterReducer(state: State, action: Action): State {
         let newView = state.view;
         let newSelectedId = state.selectedCharacterId;
 
-        // If we are on the welcome screen and characters load, select the first one and go to viewing.
         if (state.isLoading && characters.length > 0) {
-          newView = 'welcome'; // change to welcome to show grid
-          newSelectedId = null; // Don't auto-select a character anymore
+          newView = 'dashboard';
+          newSelectedId = null;
         } else if (characters.length === 0) {
-          newView = 'welcome';
+          newView = 'dashboard';
           newSelectedId = null;
         } else if (!characters.some(c => c.id === state.selectedCharacterId)) {
-          // If the selected character was deleted, select another or none.
-          newSelectedId = characters.length > 0 ? null : null;
-          newView = 'welcome';
+          newSelectedId = null;
+          newView = 'dashboard';
         }
         
         return { ...state, characters, view: newView, selectedCharacterId: newSelectedId, isLoading: false };
     case 'ADD_CHARACTER':
       const existing = state.characters.find(c => c.id === action.payload.id);
-      if (existing) return state; // Prevent duplicates from snapshot listeners
+      if (existing) return state;
       return { 
         ...state, 
         characters: [...state.characters, action.payload],
@@ -119,7 +123,7 @@ function characterReducer(state: State, action: Action): State {
 
         if (state.selectedCharacterId === action.payload) {
             deletedSelectedId = null;
-            deletedView = 'welcome'; // Go back to the grid
+            deletedView = 'dashboard';
         }
       return {
         ...state,
@@ -131,14 +135,14 @@ function characterReducer(state: State, action: Action): State {
       return {
         ...state,
         selectedCharacterId: action.payload,
-        view: action.payload ? 'viewing' : 'welcome',
+        view: action.payload ? 'viewing' : 'dashboard',
       };
     case 'SET_VIEW':
         if (action.payload === 'creating') {
             return { ...state, view: 'creating', selectedCharacterId: null };
         }
-        if (action.payload === 'welcome') {
-            return { ...state, view: 'welcome', selectedCharacterId: null };
+        if (action.payload === 'dashboard') {
+            return { ...state, view: 'dashboard', selectedCharacterId: null };
         }
         return {
             ...state,
@@ -160,7 +164,7 @@ function characterReducer(state: State, action: Action): State {
         return { 
             ...state, 
             selectedPersonaIdToEdit: action.payload,
-            view: action.payload ? 'editing_persona' : 'persona_manager'
+            view: action.payload ? 'editing_persona' : 'dashboard'
         };
     case 'RESET_STATE':
         return {...initialState, isLoading: false };

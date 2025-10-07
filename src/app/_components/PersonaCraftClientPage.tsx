@@ -5,18 +5,18 @@ import { useCharacter } from '@/context/CharacterContext';
 import Header from '@/components/layout/Header';
 import CharacterCreator from '@/components/characters/CharacterCreator';
 import CharacterProfile from '@/components/characters/CharacterProfile';
-import CharacterGrid from '@/components/characters/CharacterGrid';
 import { Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import LoginScreen from './LoginScreen';
-import UserPersonaManager from '@/components/user/UserPersonaManager';
 import CreatePersona from '@/components/user/CreatePersona';
 import EditPersona from '@/components/user/EditPersona';
 import Sidebar from '@/components/layout/Sidebar';
+import Dashboard from './Dashboard';
+import type { DashboardTab } from './Dashboard';
 
 export default function PersonaCraftClientPage() {
   const { state } = useCharacter();
-  const { view, characters, selectedCharacterId, isGenerating, isLoading, selectedPersonaIdToEdit } = state;
+  const { view, characters, selectedCharacterId, isGenerating, isLoading, selectedPersonaIdToEdit, activeTab } = state;
   const { user, isUserLoading } = useUser();
 
   const selectedCharacter = characters.find(c => c.id === selectedCharacterId);
@@ -53,19 +53,17 @@ export default function PersonaCraftClientPage() {
         if (selectedCharacter) {
           return <CharacterProfile character={selectedCharacter} />;
         }
-        return <CharacterGrid />; // Fallback if no character is selected
-      case 'persona_manager':
-        return <UserPersonaManager />;
+        return <Dashboard activeTab={activeTab} />; // Fallback
       case 'creating_persona':
         return <CreatePersona />;
       case 'editing_persona':
         if (personaToEdit) {
             return <EditPersona persona={personaToEdit} />;
         }
-        return <UserPersonaManager />; // Fallback
-      case 'welcome':
+        return <Dashboard activeTab={activeTab} />; // Fallback
+      case 'dashboard':
       default:
-        return <CharacterGrid />;
+        return <Dashboard activeTab={activeTab} />;
     }
   };
 
