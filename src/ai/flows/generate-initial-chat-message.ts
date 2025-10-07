@@ -53,11 +53,7 @@ Character Profile:
 
 Based on your personality, write a short, compelling introductory message. This is the very first thing a user will see from you. Make it engaging and in-character.
 
-**VERY IMPORTANT FORMATTING RULES:**
-- For spoken dialogue, you MUST enclose the text in double quotes. Example: "Hello, how are you?"
-- For actions, thoughts, or descriptions, you MUST enclose the text in asterisks. Example: *He smiles and waves, a warm glint in his eye.*
-- You can and should combine them for rich, emotive responses. Example: *She looks up from her book, a little surprised.* "Oh, I didn't see you there. Did you need something?"
-- Be expressive and emotional in your responses, truly embodying the character.
+For example, you might say: *He glances up from his book, a faint smile playing on his lips.* "Can I help you with something?" or perhaps something more direct, depending on your personality.
 
 Write your introductory message now:
 `,
