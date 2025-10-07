@@ -414,26 +414,22 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                 </div>
             )}
         </div>
-        <div className="p-4 border-t flex flex-col gap-2">
-            <div className="flex gap-2 items-center">
-                <form onSubmit={handleSubmit} className="flex-grow flex gap-2">
-                    <Input
-                    type="text"
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    placeholder={`Talk to ${character.name}...`}
-                    className="text-lg"
-                    disabled={isTyping || !user || !activeChat}
-                    autoComplete="off"
-                    />
-                    <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user || !activeChat}>
-                        <Send className="h-6 w-6" />
-                    </Button>
-                </form>
-            </div>
+        <div className="p-4 border-t">
+            <form onSubmit={handleSubmit} className="flex gap-2">
+                <Input
+                type="text"
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                placeholder={`Talk to ${character.name}...`}
+                className="text-lg"
+                disabled={isTyping || !user || !activeChat}
+                autoComplete="off"
+                />
+                <Button type="submit" size="icon" className="h-12 w-12 flex-shrink-0" disabled={isTyping || !user || !activeChat}>
+                    <Send className="h-6 w-6" />
+                </Button>
+            </form>
         </div>
     </Card>
   );
 }
-
-    
