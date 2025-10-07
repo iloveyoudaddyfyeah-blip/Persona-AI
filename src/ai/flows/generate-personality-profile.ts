@@ -44,13 +44,14 @@ const prompt = ai.definePrompt({
   system: `You are an AI that crafts highly detailed, emotionally resonant, and rich personality profiles based on uploaded photos. You are a master storyteller and character creator.`,
   prompt: `The character's name is {{{name}}}. 
 
-Your response MUST be in a {{{tone}}} tone. This should heavily influence your word choice, sentence structure, and overall style. For example, 'noir' should be gritty and shadow-filled, while 'whimsical' should be light and fanciful. 'Lovecraftian' should be filled with cosmic dread, and 'Cyberpunk' should be cynical and high-tech.
+Your response MUST be in a {{{tone}}} tone. This should heavily influence your word choice, sentence structure, and overall style.
 
 Analyze the photo and create an exceptionally detailed and compelling profile for the character named {{{name}}}. 
 
 The total length of your entire response (biography, traits, hobbies, etc. combined) must be at least {{{charLimit}}} characters.
 
-- **Biography**: Weave a complex and compelling narrative about {{{name}}}.
+- **Biography**: Write a compelling narrative about {{{name}}}. It should feel personal and human, not like a formal summary. Tell their story.
+- **Daily Wear**: Based on the photo, describe what this person's typical daily clothing style is like.
 - **Traits**: Describe their key personality traits with nuance and depth. Avoid one-word answers.
 - **Hobbies**: List hobbies that feel specific and revealing about the character. These should be more than simple activities; they should tell a story.
 - **Motivations**: What are their deepest drivers, fears, and secret desires? What do they truly want?

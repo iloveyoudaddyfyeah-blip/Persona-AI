@@ -8,6 +8,7 @@ export const GeneratePersonalityProfileOutputSchema = z.object({
   biography: z
     .string()
     .describe('A detailed biography for the character, at least 3000 characters long.'),
+  dailyWear: z.string().describe("A description of the character's typical daily clothing style."),
   traits: z.string().describe('The key personality traits of the character.'),
   hobbies: z.string().describe('The hobbies and interests of the character.'),
   motivations: z

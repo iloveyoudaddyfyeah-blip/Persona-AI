@@ -17,12 +17,15 @@ function formatProfile(
   name: string,
   profileData: GeneratePersonalityProfileOutput
 ): string {
-  const { biography, traits, hobbies, motivations, likes, dislikes } =
+  const { biography, dailyWear, traits, hobbies, motivations, likes, dislikes } =
     profileData;
   return `**Name:** ${name}
 
 **Biography:**
 ${biography}
+
+**Daily Wear:**
+${dailyWear}
 
 **Personality Traits:**
 ${traits}
