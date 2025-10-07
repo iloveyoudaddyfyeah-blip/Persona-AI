@@ -49,39 +49,43 @@ const EmphasizedText = ({ text }: { text: string }) => {
 };
 
 const FormattedContent = ({ content, isCharacter }: { content: string, isCharacter: boolean }) => {
-    const regex = /(\*[^*]*\*|"[^"]*"|[^"*]+)/g;
+    // This regex is designed to handle all the complex cases:
+    // 1. Quoted strings: "..."
+    // 2. Italicized actions (that might contain quotes): *...*
+    // 3. Plain text
+    const regex = /(".*?")|(\*.*?\*)|([^"*]+)/g;
     const parts = content.match(regex)?.filter(Boolean) || [];
 
     return (
         <div className="whitespace-pre-wrap break-words">
             {parts.map((part, index) => {
-                if (part.startsWith('*') && part.endsWith('*')) {
-                    const innerContent = part.slice(1, -1);
-                    const innerRegex = /("[^"]*")/g;
-                    const innerParts = innerContent.split(innerRegex).filter(Boolean);
-
-                    return (
-                        <em key={index} className={cn("not-italic", isCharacter ? "ai-action-text" : "user-action-text")}>
-                            {innerParts.map((innerPart, innerIndex) => {
-                                if (innerPart.startsWith('"') && innerPart.endsWith('"')) {
-                                    return (
-                                        <span key={innerIndex} className={cn("mx-1", isCharacter ? "text-accent ai-quote" : "user-quote-text")}>
-                                          <EmphasizedText text={`"${innerPart.slice(1, -1)}"`} />
-                                        </span>
-                                    );
-                                }
-                                return <EmphasizedText key={innerIndex} text={innerPart} />;
-                            })}
-                        </em>
-                    );
-                }
+                // Rule 4: "dialogue with *emphasis*"
                 if (part.startsWith('"') && part.endsWith('"')) {
                     return (
                         <span key={index} className={cn(isCharacter ? "text-accent ai-quote" : "user-quote-text")}>
-                           <EmphasizedText text={part} />
+                            <EmphasizedText text={part} />
                         </span>
                     );
                 }
+                // Rule 1, 2, 3: *action*, *action with "dialogue"*, plain text
+                if (part.startsWith('*') && part.endsWith('*')) {
+                    const innerContent = part.slice(1, -1);
+                    // Check for quotes inside the action
+                    const innerRegex = /(".*?")|([^"]+)/g;
+                    const innerParts = innerContent.match(innerRegex)?.filter(Boolean) || [];
+                    
+                    return (
+                        <em key={index} className={cn(isCharacter ? "ai-action-text" : "user-action-text")}>
+                           {innerParts.map((innerPart, innerIndex) => {
+                                if (innerPart.startsWith('"') && innerPart.endsWith('"')) {
+                                    return <span key={innerIndex} className={cn("mx-1", isCharacter ? "text-accent ai-quote" : "user-quote-text")}><EmphasizedText text={innerPart} /></span>
+                                }
+                                return <EmphasizedText key={innerIndex} text={innerPart} />
+                           })}
+                        </em>
+                    );
+                }
+                // Plain text
                 return <span key={index}>{part}</span>;
             })}
         </div>
