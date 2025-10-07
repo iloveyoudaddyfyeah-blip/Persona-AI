@@ -30,7 +30,7 @@ export default function WelcomeScreen() {
                     />
                 )}
                 <h1 className="text-5xl md:text-6xl font-headline font-bold mb-4 tracking-tight">
-                    Welcome to <span className="text-primary">PersonaCraft AI</span>
+                    Welcome to <span className="text-primary">Persona AI</span>
                 </h1>
                 <p className="text-xl md:text-2xl max-w-3xl mb-8 text-muted-foreground leading-relaxed">
                     You have no characters yet. Create one to get started.

@@ -1,9 +1,9 @@
 
 
-import PersonaCraftClientPage from "./_components/PersonaCraftClientPage";
+import PersonaAIClientPage from "./_components/PersonaAIClientPage";
 
 export default function Home() {
   return (
-    <PersonaCraftClientPage />
+    <PersonaAIClientPage />
   );
 }

@@ -13,7 +13,7 @@ import EditPersona from '@/components/user/EditPersona';
 import Dashboard from './Dashboard';
 import type { DashboardTab } from './Dashboard';
 
-export default function PersonaCraftClientPage() {
+export default function PersonaAIClientPage() {
   const { state } = useCharacter();
   const { view, characters, selectedCharacterId, isGenerating, isLoading, selectedPersonaIdToEdit, activeTab } = state;
   const { user, isUserLoading } = useUser();

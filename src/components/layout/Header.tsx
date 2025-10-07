@@ -45,7 +45,7 @@ export default function Header() {
       <div className="flex items-center gap-2 min-w-[150px] justify-start">
         {renderAuthButton()}
       </div>
-      <h1 className="text-3xl text-foreground font-headline font-bold text-center">PersonaCraft</h1>
+      <h1 className="text-3xl text-foreground font-headline font-bold text-center">Persona AI</h1>
       <div className="flex items-center gap-2 min-w-[150px] justify-end">
         <SettingsDialog />
       </div>

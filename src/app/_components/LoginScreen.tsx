@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -47,7 +48,7 @@ export default function LoginScreen() {
             unoptimized
           />
         )}
-        <h1 className="text-5xl font-headline mb-2">Welcome to PersonaCraft</h1>
+        <h1 className="text-5xl font-headline mb-2">Welcome to Persona AI</h1>
         <p className="text-2xl max-w-2xl mb-8 text-muted-foreground">
           Login or create an account to begin.
         </p>
