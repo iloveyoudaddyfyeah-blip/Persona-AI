@@ -20,7 +20,6 @@ export type Tone =
   | "humble" | "playful" | "reserved";
 
 export type Settings = {
-  theme: "light" | "dark";
   aiTone: Tone;
   aiCharLimit: number;
 }
@@ -45,7 +44,6 @@ type Action =
   | { type: 'SET_IS_GENERATING', payload: boolean }
   | { type: 'SET_IS_LOADING', payload: boolean }
   | { type: 'LOAD_SETTINGS', payload: Partial<Settings> }
-  | { type: 'SET_THEME', payload: Settings['theme'] }
   | { type: 'SET_AI_TONE', payload: Tone }
   | { type: 'SET_AI_CHAR_LIMIT', payload: number }
   | { type: 'SET_USER_PERSONAS', payload: UserPersona[] }
@@ -61,7 +59,6 @@ const initialState: State = {
   isGenerating: false,
   isLoading: true,
   settings: {
-    theme: 'dark',
     aiTone: 'default',
     aiCharLimit: 1000,
   },
@@ -78,10 +75,6 @@ function characterReducer(state: State, action: Action): State {
   switch (action.type) {
     case 'LOAD_SETTINGS':
         const loadedSettings = action.payload;
-        // When loading, default to dark if theme is system
-        if (loadedSettings && (loadedSettings.theme as any) === 'system') {
-            loadedSettings.theme = 'dark';
-        }
         return { ...state, settings: { ...state.settings, ...loadedSettings }};
     case 'SET_CHARACTERS':
         const characters = action.payload;
@@ -163,8 +156,6 @@ function characterReducer(state: State, action: Action): State {
       return { ...state, isGenerating: action.payload };
     case 'SET_IS_LOADING':
       return { ...state, isLoading: action.payload };
-    case 'SET_THEME':
-        return { ...state, settings: { ...state.settings, theme: action.payload }};
     case 'SET_AI_TONE':
         return { ...state, settings: { ...state.settings, aiTone: action.payload }};
     case 'SET_AI_CHAR_LIMIT':
@@ -318,19 +309,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     });
     return () => personasUnsub();
   }, [user, firestore, personasColRef, userData]);
-
-
-  // Apply theme to HTML element
-  useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    if (state.settings.theme !== 'system') {
-        root.classList.add(state.settings.theme);
-    } else {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        root.classList.add(systemTheme);
-    }
-  }, [state.settings.theme]);
 
 
   return (

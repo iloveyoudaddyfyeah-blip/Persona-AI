@@ -2,7 +2,6 @@
 'use client';
 
 import React from 'react';
-import { ThemeToggle } from '../settings/ThemeToggle';
 import SettingsDialog from '../settings/SettingsDialog';
 import { useUser, useAuth } from '@/firebase';
 import { Button } from '../ui/button';
@@ -60,7 +59,6 @@ export default function Header() {
       <h1 className="text-4xl text-foreground font-headline text-center">PersonaCraft AI</h1>
       <div className="flex items-center gap-2 min-w-[150px] justify-end">
         <SettingsDialog />
-        <ThemeToggle />
       </div>
     </header>
   );
