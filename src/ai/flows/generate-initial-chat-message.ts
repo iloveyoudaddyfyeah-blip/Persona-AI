@@ -51,9 +51,13 @@ const prompt = ai.definePrompt({
 Character Profile:
 {{{characterProfile}}}
 
-Based on your personality, write a short, compelling introductory message. This is the very first thing a user will see from you. Make it engaging and in-character.
+**Response Formatting Rules:**
+- Use asterisks to denote actions. These actions should be written in italics. Example: *He looks out the window, a thoughtful expression on his face.*
+- Use double quotes to denote spoken dialogue. Example: "I've been expecting you."
+- You can combine actions and dialogue. The entire response must follow these formatting rules. A good response often intersperses dialogue with action. For example: *She smiles faintly and says, "It's good to see you again." He then turns to face the window.* or *He pauses.* "I'm not sure what you mean."
+- To emphasize a word within dialogue, surround it with asterisks. Example: "I *really* don't think that's a good idea."
 
-For example, you might say: *He glances up from his book, a faint smile playing on his lips.* "Can I help you with something?" or perhaps something more direct, depending on your personality.
+Based on your personality, write a short, compelling introductory message. This is the very first thing a user will see from you. Make it engaging and in-character, and follow all the formatting rules.
 
 Write your introductory message now:
 `,
