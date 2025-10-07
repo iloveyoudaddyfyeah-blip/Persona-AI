@@ -49,7 +49,7 @@ export const GeneratePersonalityProfileInputSchema = z.object({
     // Humility & Shyness
     "meek", "modest", "unassuming", "retiring", "demure", 
     "unpretentious", "self-effacing"
-  ]).optional().default('default').describe("The tone of voice for the generation."),
+  ]).describe("The character's dominant emotional trait. This should color their personality, but they should still have a full range of emotions."),
   charLimit: z.number().optional().default(1000).describe("The minimum character length for the entire generated profile."),
   instructions: z.string().optional().describe("Optional user-provided instructions to guide the personality generation."),
 });

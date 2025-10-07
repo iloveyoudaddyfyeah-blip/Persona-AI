@@ -169,6 +169,9 @@ function characterReducer(state: State, action: Action): State {
         if (action.payload === 'dashboard') {
             return { ...state, view: 'dashboard', selectedCharacterId: null };
         }
+        if (action.payload === 'creating_persona') {
+             return { ...state, view: 'creating_persona', activeTab: 'personas' };
+        }
         return {
             ...state,
             view: action.payload,
