@@ -8,8 +8,8 @@ import {
 import { modifyPersonalityProfile } from '@/ai/flows/modify-personality-profile';
 import { interactiveChatWithCharacter } from '@/ai/flows/interactive-chat-with-character';
 import { generateUserPersona } from '@/ai/flows/generate-user-persona';
-import type { Character, ChatMessage, UserPersona, ChatSession, GenerateCharacterFromFormInput } from '@/lib/types';
-import { generateCharacterFromForm } from '@/ai/flows/generate-character-from-form';
+import type { Character, ChatMessage, UserPersona, ChatSession } from '@/lib/types';
+import { generateCharacterFromForm, type GenerateCharacterFromFormInput } from '@/ai/flows/generate-character-from-form';
 
 function formatProfile(
   name: string,
@@ -88,8 +88,10 @@ export async function createCharacterFromPhoto(
   const profileData = await generateCharacterFromForm(input);
   const profile = formatProfile(input.name, profileData);
   
+  // The welcome message from the form is now the initial message.
   return { profileData, profile, initialMessage: input.welcomeMessage };
 }
+
 
 export async function regenerateCharacterProfile(
   character: Character,

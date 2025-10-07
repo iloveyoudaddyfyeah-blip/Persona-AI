@@ -12,8 +12,6 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { GeneratePersonalityProfileOutputSchema } from '@/ai/schemas';
-import type { GenerateCharacterFromFormInput as FormInput } from '@/lib/types';
-
 
 const GenerateCharacterFromFormInputSchema = z.object({
   name: z.string().describe("The character's name."),
@@ -33,7 +31,7 @@ export type GenerateCharacterFromFormOutput = z.infer<
 >;
 
 export async function generateCharacterFromForm(
-  input: FormInput & { photoDataUri: string }
+  input: GenerateCharacterFromFormInput
 ): Promise<GenerateCharacterFromFormOutput> {
   return generateCharacterFromFormFlow(input);
 }
