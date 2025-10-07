@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -6,7 +5,7 @@ import type { ChatMessage as ChatMessageType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Button } from '../ui/button';
-import { Pencil, Check, X, History, Play, Shuffle, Copy, Trash2 } from 'lucide-react';
+import { Pencil, Copy, Trash2, History, Play, Shuffle } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -116,7 +115,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
   }
 
   const showActionButtons = isCharacter && isLastMessage && !isTyping;
-  const showRewindButton = isCharacter && isNotLastAIMessage;
+  const showRewindInMenu = isCharacter && isNotLastAIMessage;
 
   return (
     <div className={cn("flex flex-col gap-1 group", isCharacter ? 'items-start' : 'items-end')}>
@@ -164,6 +163,12 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                     <Copy className="mr-2 h-4 w-4" />
                     <span>Copy</span>
                 </DropdownMenuItem>
+                {showRewindInMenu && (
+                    <DropdownMenuItem onSelect={onRewind}>
+                        <History className="mr-2 h-4 w-4" />
+                        <span>Rewind to here</span>
+                    </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onSelect={onDelete} className="text-destructive">
                     <Trash2 className="mr-2 h-4 w-4" />
                     <span>Delete</span>
@@ -174,13 +179,8 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
 
        <div className={cn("flex items-center gap-1 transition-opacity pr-0", 
         isCharacter ? 'pl-16' : 'pr-0',
-        showActionButtons || showRewindButton ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        showActionButtons ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
       )}>
-            {showRewindButton && (
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRewind} title="Rewind to here">
-                    <History className="h-4 w-4" />
-                </Button>
-            )}
             {showActionButtons && (
                 <>
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRegenerate} title="Regenerate">
