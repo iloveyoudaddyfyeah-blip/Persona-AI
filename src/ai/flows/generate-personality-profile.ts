@@ -21,7 +21,7 @@ const GeneratePersonalityProfileInputSchema = z.object({
       "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
   tone: z.string().optional().default('default').describe("The tone of voice for the generation. Can be 'witty', 'serious', 'whimsical', 'poetic', 'epic', 'noir', 'comedic', 'dramatic', 'sarcastic', 'inspirational', or 'default'"),
-  charLimit: z.number().optional().default(3000).describe("The minimum character length for the biography.")
+  charLimit: z.number().optional().default(3000).describe("The minimum character length for the entire generated profile.")
 });
 export type GeneratePersonalityProfileInput = z.infer<
   typeof GeneratePersonalityProfileInputSchema
@@ -41,12 +41,20 @@ const prompt = ai.definePrompt({
   name: 'generatePersonalityProfilePrompt',
   input: {schema: GeneratePersonalityProfileInputSchema},
   output: {schema: GeneratePersonalityProfileOutputSchema},
-  system: `You are an AI that crafts highly detailed and rich personality profiles based on uploaded photos. You are a master storyteller and character creator.`,
+  system: `You are an AI that crafts highly detailed, emotionally resonant, and rich personality profiles based on uploaded photos. You are a master storyteller and character creator.`,
   prompt: `The character's name is {{{name}}}. 
 
-Your response should be in a {{{tone}}} tone.
+Your response MUST be in a {{{tone}}} tone. This should heavily influence your word choice, sentence structure, and overall style. For example, 'noir' should be gritty and shadow-filled, while 'whimsical' should be light and fanciful.
 
-Analyze the photo and create an exceptionally detailed profile for the character named {{{name}}}. The biography must be at least {{{charLimit}}} characters long, weaving a complex and compelling narrative about {{{name}}}. Also include traits, hobbies, motivations, and a list of 5 likes and 5 dislikes for {{{name}}}.
+Analyze the photo and create an exceptionally detailed and compelling profile for the character named {{{name}}}. 
+
+The total length of your entire response (biography, traits, hobbies, etc. combined) must be at least {{{charLimit}}} characters.
+
+- **Biography**: Weave a complex and compelling narrative about {{{name}}}.
+- **Traits**: Describe their key personality traits with nuance and depth.
+- **Hobbies**: List hobbies that feel specific and revealing about the character.
+- **Motivations**: What are their deepest drivers? What do they truly want?
+- **Likes & Dislikes**: Provide a list of 5 specific and interesting likes and 5 dislikes. Avoid generic answers. Instead of "food", try "the smell of rain on hot asphalt" or "the texture of a perfectly ripe avocado".
 
 Photo: {{media url=photoDataUri}}`,
 });
@@ -62,3 +70,4 @@ const generatePersonalityProfileFlow = ai.defineFlow(
     return output!;
   }
 );
+
