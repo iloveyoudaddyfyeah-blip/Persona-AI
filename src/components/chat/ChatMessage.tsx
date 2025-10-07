@@ -98,10 +98,20 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
           className="rounded-full border-2 border-primary pixel-art object-cover aspect-square"
         />
       )}
-      <div className="flex-col items-center gap-2 max-w-[75%]">
+      <div className="flex items-center gap-2 max-w-[75%]">
+         <div className="flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {!isCharacter && (
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditing(true)}>
+                    <Pencil className="h-4 w-4" />
+                </Button>
+            )}
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRewind}>
+                <RotateCcw className="h-4 w-4" />
+            </Button>
+        </div>
         <div
           className={cn(
-            "rounded-lg p-3 relative",
+            "rounded-lg p-3",
             isCharacter
               ? "bg-secondary text-secondary-foreground"
               : "bg-primary text-primary-foreground"
@@ -120,19 +130,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
               <Button size="icon" variant="ghost" onClick={handleCancel} className="h-8 w-8"><X className="h-4 w-4" /></Button>
             </div>
           ) : (
-             <>
-                <div className="absolute top-1 -left-10 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {!isCharacter && (
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditing(true)}>
-                            <Pencil className="h-4 w-4" />
-                        </Button>
-                    )}
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRewind}>
-                        <RotateCcw className="h-4 w-4" />
-                    </Button>
-                </div>
-                <FormattedContent content={content} isCharacter={isCharacter} />
-             </>
+             <FormattedContent content={content} isCharacter={isCharacter} />
           )}
 
           {isReceiving && content.length < message.content.length && (
@@ -143,3 +141,4 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
     </div>
   );
 }
+
