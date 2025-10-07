@@ -9,6 +9,12 @@ import { Button } from '../ui/button';
 import { Pencil, Check, X, History, Play, Shuffle, Copy, Trash2 } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -21,6 +27,7 @@ interface ChatMessageProps {
   onContinue: () => void;
   onRegenerate: () => void;
   onDelete: () => void;
+  isNotLastAIMessage: boolean;
 }
 
 const FormattedContent = ({ content }: { content:string }) => {
@@ -51,7 +58,7 @@ const FormattedContent = ({ content }: { content:string }) => {
 };
 
 
-export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping, onEdit, onRewind, onContinue, onRegenerate, onDelete }: ChatMessageProps) {
+export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping, onEdit, onRewind, onContinue, onRegenerate, onDelete, isNotLastAIMessage }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
   const { toast } = useToast();
 
@@ -108,13 +115,12 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
     });
   }
 
-  const showContinueButton = isCharacter && isLastMessage && !isTyping;
-  const showRegenerateButton = isLastMessage && !isTyping && message.role === 'character';
-
+  const showActionButtons = isCharacter && isLastMessage && !isTyping;
+  const showRewindButton = isCharacter && isNotLastAIMessage;
 
   return (
     <div className={cn("flex flex-col gap-1 group", isCharacter ? 'items-start' : 'items-end')}>
-      <div className={cn("flex items-start gap-4 text-xl w-full", isCharacter ? 'justify-start' : 'justify-end')}>
+       <div className={cn("flex items-start gap-4 text-xl", isCharacter ? 'justify-start' : 'justify-end')}>
         {isCharacter && (
           <Image
             src={characterPhoto}
@@ -125,70 +131,67 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
             className="rounded-full border-2 border-primary pixel-art object-cover aspect-square"
           />
         )}
-        <div
-          className={cn(
-            "rounded-lg p-3 max-w-[75%]",
-            isCharacter
-              ? "bg-secondary text-secondary-foreground"
-              : "bg-primary text-primary-foreground"
-          )}
-        >
-          {isEditing ? (
-             <Textarea
-                ref={textareaRef}
-                value={editedContent}
-                onChange={handleContentChange}
-                onKeyDown={handleKeyDown}
-                onBlur={handleSave}
-                className="text-lg bg-background/80 resize-none overflow-hidden w-full min-w-[200px]"
-            />
-          ) : (
-             <FormattedContent content={message.content} />
-          )}
-        </div>
+         <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <div
+                    className={cn(
+                        "rounded-lg p-3 max-w-[75%] cursor-pointer",
+                        isCharacter
+                        ? "bg-secondary text-secondary-foreground"
+                        : "bg-primary text-primary-foreground"
+                    )}
+                    >
+                    {isEditing ? (
+                        <Textarea
+                            ref={textareaRef}
+                            value={editedContent}
+                            onChange={handleContentChange}
+                            onKeyDown={handleKeyDown}
+                            onBlur={handleSave}
+                            className="text-lg bg-background/80 resize-none overflow-hidden w-full min-w-[200px]"
+                        />
+                    ) : (
+                        <FormattedContent content={message.content} />
+                    )}
+                </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+                <DropdownMenuItem onSelect={() => setIsEditing(true)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    <span>Edit</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={handleCopy}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    <span>Copy</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={onDelete} className="text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    <span>Delete</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      <div className={cn("flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity", 
-        isCharacter ? 'pl-16' : 'pr-0'
+
+       <div className={cn("flex items-center gap-1 transition-opacity pr-0", 
+        isCharacter ? 'pl-16' : 'pr-0',
+        showActionButtons || showRewindButton ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
       )}>
-        {isEditing ? (
-            <>
-                <Button size="sm" onClick={handleSave} className="h-7 text-xs">
-                    <Check className="h-3 w-3 mr-1" /> Save
+            {showRewindButton && (
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRewind} title="Rewind to here">
+                    <History className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={handleCancel} className="h-7 text-xs">
-                    <X className="h-3 w-3 mr-1" /> Cancel
-                </Button>
-            </>
-        ) : (
-            <>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditing(true)} title="Edit">
-                    <Pencil className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopy} title="Copy">
-                    <Copy className="h-4 w-4" />
-                </Button>
-                {isCharacter && (
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRewind} title="Rewind to here">
-                        <History className="h-4 w-4" />
-                    </Button>
-                )}
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete} title="Delete">
-                    <Trash2 className="h-4 w-4 text-destructive/70" />
-                </Button>
-                {showContinueButton && (
-                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onContinue} title="Continue">
-                        <Play className="h-4 w-4" />
-                    </Button>
-                )}
-                 {showRegenerateButton && (
+            )}
+            {showActionButtons && (
+                <>
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRegenerate} title="Regenerate">
                         <Shuffle className="h-4 w-4" />
                     </Button>
-                )}
-            </>
-        )}
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onContinue} title="Continue">
+                        <Play className="h-4 w-4" />
+                    </Button>
+                </>
+            )}
         </div>
     </div>
   );
 }
-

@@ -226,17 +226,17 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
   const handleRewind = async (index: number) => {
     if (!user || !firestore || !activeChat) return;
     
-    const newHistory = activeChat.messages.slice(0, index + 1);
+    // We only ever rewind to just before an AI message. So we slice up to its index.
+    const newHistory = activeChat.messages.slice(0, index);
 
+    // Optimistically update UI
     const updatedSessions = chatSessions.map(cs =>
       cs.id === activeChat.id ? { ...cs, messages: newHistory } : cs
     );
-    // Optimistically update UI
     dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessions }});
 
-    const lastMessage = newHistory[newHistory.length - 1];
-    // We only re-run AI if the rewind point was a user message.
-    if(lastMessage.role === 'user') {
+    // After rewinding, the last message should be a user message, so we can regenerate from it.
+    if (newHistory.length > 0 && newHistory[newHistory.length - 1].role === 'user') {
        await getAIResponse(newHistory);
     }
   };
@@ -244,18 +244,22 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
   const handleDeleteMessage = async (index: number) => {
     if (!user || !firestore || !activeChat) return;
 
-    const truncatedHistory = activeChat.messages.slice(0, index);
+    const newHistory = activeChat.messages.filter((_, i) => i !== index);
 
     // Optimistically update UI
     const updatedSessionsForUI = chatSessions.map(cs =>
-        cs.id === activeChat.id ? { ...cs, messages: truncatedHistory } : cs
+        cs.id === activeChat.id ? { ...cs, messages: newHistory } : cs
     );
     dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessionsForUI }});
+    
+    // Persist the change
+    const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+    const finalSessions = chatSessions.map(cs =>
+      cs.id === activeChat.id ? { ...cs, messages: newHistory } : cs
+    );
+    updateDocumentNonBlocking(characterRef, { chatSessions: finalSessions });
 
-    // We only re-run AI if we delete a message and the last one remaining is a user's.
-    if (truncatedHistory.length > 0 && truncatedHistory[truncatedHistory.length -1].role === 'user') {
-      await getAIResponse(truncatedHistory);
-    }
+    // The AI does not need to re-run after a simple deletion. The conversation state is just... shorter.
   };
 
 
@@ -382,6 +386,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                     onContinue={handleContinue}
                     onRegenerate={handleRegenerate}
                     onDelete={() => handleDeleteMessage(index)}
+                    isNotLastAIMessage={msg.role === 'character' && index < chatHistory.length -1}
                 />
             ))}
             {isTyping && (
