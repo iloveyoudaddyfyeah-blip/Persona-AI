@@ -168,11 +168,25 @@ export default function CharacterCreator() {
                         <SelectItem value="dramatic">Dramatic</SelectItem>
                         <SelectItem value="sarcastic">Sarcastic</SelectItem>
                         <SelectItem value="inspirational">Inspirational</SelectItem>
+                        <SelectItem value="melancholic">Melancholic</SelectItem>
+                        <SelectItem value="cynical">Cynical</SelectItem>
+                        <SelectItem value="optimistic">Optimistic</SelectItem>
+                        <SelectItem value="philosophical">Philosophical</SelectItem>
+                        <SelectItem value="existential">Existential</SelectItem>
+                        <SelectItem value="stoic">Stoic</SelectItem>
+                        <SelectItem value="lovecraftian">Lovecraftian</SelectItem>
+                        <SelectItem value="shakespearean">Shakespearean</SelectItem>
+                        <SelectItem value="hemingway-esque">Hemingway-esque</SelectItem>
+                        <SelectItem value="cyberpunk">Cyberpunk</SelectItem>
+                        <SelectItem value="steampunk">Steampunk</SelectItem>
+                        <SelectItem value="high-fantasy">High Fantasy</SelectItem>
+                        <SelectItem value="gritty-realism">Gritty Realism</SelectItem>
+                        <SelectItem value="absurdist">Absurdist</SelectItem>
                     </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="char-limit" className="text-xl flex items-center gap-2">Biography Length</Label>
+                <Label htmlFor="char-limit" className="text-xl flex items-center gap-2">Overall Length</Label>
                 <div className='flex items-center gap-4'>
                     <Slider
                         id="char-limit"

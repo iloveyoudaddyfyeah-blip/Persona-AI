@@ -20,7 +20,7 @@ const GeneratePersonalityProfileInputSchema = z.object({
     .describe(
       "A photo of a person, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
-  tone: z.string().optional().default('default').describe("The tone of voice for the generation. Can be 'witty', 'serious', 'whimsical', 'poetic', 'epic', 'noir', 'comedic', 'dramatic', 'sarcastic', 'inspirational', or 'default'"),
+  tone: z.string().optional().default('default').describe("The tone of voice for the generation. Can be one of: 'default', 'witty', 'serious', 'whimsical', 'poetic', 'epic', 'noir', 'comedic', 'dramatic', 'sarcastic', 'inspirational', 'melancholic', 'cynical', 'optimistic', 'philosophical', 'existential', 'stoic', 'lovecraftian', 'shakespearean', 'hemingway-esque', 'cyberpunk', 'steampunk', 'high-fantasy', 'gritty-realism', 'absurdist'"),
   charLimit: z.number().optional().default(3000).describe("The minimum character length for the entire generated profile.")
 });
 export type GeneratePersonalityProfileInput = z.infer<
@@ -44,17 +44,17 @@ const prompt = ai.definePrompt({
   system: `You are an AI that crafts highly detailed, emotionally resonant, and rich personality profiles based on uploaded photos. You are a master storyteller and character creator.`,
   prompt: `The character's name is {{{name}}}. 
 
-Your response MUST be in a {{{tone}}} tone. This should heavily influence your word choice, sentence structure, and overall style. For example, 'noir' should be gritty and shadow-filled, while 'whimsical' should be light and fanciful.
+Your response MUST be in a {{{tone}}} tone. This should heavily influence your word choice, sentence structure, and overall style. For example, 'noir' should be gritty and shadow-filled, while 'whimsical' should be light and fanciful. 'Lovecraftian' should be filled with cosmic dread, and 'Cyberpunk' should be cynical and high-tech.
 
 Analyze the photo and create an exceptionally detailed and compelling profile for the character named {{{name}}}. 
 
 The total length of your entire response (biography, traits, hobbies, etc. combined) must be at least {{{charLimit}}} characters.
 
 - **Biography**: Weave a complex and compelling narrative about {{{name}}}.
-- **Traits**: Describe their key personality traits with nuance and depth.
-- **Hobbies**: List hobbies that feel specific and revealing about the character.
-- **Motivations**: What are their deepest drivers? What do they truly want?
-- **Likes & Dislikes**: Provide a list of 5 specific and interesting likes and 5 dislikes. Avoid generic answers. Instead of "food", try "the smell of rain on hot asphalt" or "the texture of a perfectly ripe avocado".
+- **Traits**: Describe their key personality traits with nuance and depth. Avoid one-word answers.
+- **Hobbies**: List hobbies that feel specific and revealing about the character. These should be more than simple activities; they should tell a story.
+- **Motivations**: What are their deepest drivers, fears, and secret desires? What do they truly want?
+- **Likes & Dislikes**: Provide a list of 5 specific and interesting likes and 5 dislikes. Avoid generic answers. Instead of "food", try "the taste of ozone after a thunderstorm" or "the specific silence of a library just before closing". These should be deeply personal to the character.
 
 Photo: {{media url=photoDataUri}}`,
 });
@@ -70,4 +70,3 @@ const generatePersonalityProfileFlow = ai.defineFlow(
     return output!;
   }
 );
-

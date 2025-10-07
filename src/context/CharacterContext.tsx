@@ -12,7 +12,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 type View = 'welcome' | 'creating' | 'viewing';
 
-export type Tone = "default" | "witty" | "serious" | "whimsical" | "poetic" | "epic" | "noir" | "comedic" | "dramatic" | "sarcastic" | "inspirational";
+export type Tone = 
+  | "default" | "witty" | "serious" | "whimsical" | "poetic" | "epic" | "noir" 
+  | "comedic" | "dramatic" | "sarcastic" | "inspirational" | "melancholic" 
+  | "cynical" | "optimistic" | "philosophical" | "existential" | "stoic" 
+  | "lovecraftian" | "shakespearean" | "hemingway-esque" | "cyberpunk" 
+  | "steampunk" | "high-fantasy" | "gritty-realism" | "absurdist";
 
 export type Settings = {
   theme: "light" | "dark";
@@ -342,5 +347,3 @@ export function useCharacter() {
   }
   return context;
 }
-
-    
