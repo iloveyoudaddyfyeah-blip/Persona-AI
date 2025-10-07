@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ChatMessage from './ChatMessage';
 import { getChatResponse } from '@/app/actions';
-import { Loader2, Plus, Send, Trash2, RotateCcw, ChevronRight } from 'lucide-react';
+import { Loader2, Plus, Send, Trash2, RotateCcw, RotateCw } from 'lucide-react';
 import { Card } from '../ui/card';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -153,12 +153,14 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
 
     const userMessage = { role: 'user' as const, content: userInput };
     const updatedMessages = [...activeChat.messages, userMessage];
-    const updatedSessions = chatSessions.map(cs => 
-      cs.id === activeChat.id ? { ...cs, messages: updatedMessages } : cs
-    );
     
     setUserInput('');
-    dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessions } });
+    // Optimistically update the UI before waiting for the AI
+    const updatedSessionsForUI = chatSessions.map(cs =>
+      cs.id === activeChat.id ? { ...cs, messages: updatedMessages } : cs
+    );
+    dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessionsForUI }});
+
     await getAIResponse(updatedMessages);
   };
   
@@ -174,7 +176,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
       const updatedSessions = chatSessions.map(cs =>
         cs.id === activeChat.id ? { ...cs, messages: newHistory } : cs
       );
-      // We only update firestore, the local state is already updated via dispatch
+      // We only update firestore, the local state is updated via snapshot listener
       const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
       updateDocumentNonBlocking(characterRef, { chatSessions: updatedSessions });
       return;
@@ -182,10 +184,12 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
 
     // If it's a user message, truncate and regenerate
     const truncatedHistory = newHistory.slice(0, index + 1);
-    const updatedSessions = chatSessions.map(cs =>
+    
+    // Optimistically update UI
+    const updatedSessionsForUI = chatSessions.map(cs =>
       cs.id === activeChat.id ? { ...cs, messages: truncatedHistory } : cs
     );
-    dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessions }});
+    dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessionsForUI }});
 
     await getAIResponse(truncatedHistory);
   };
@@ -198,6 +202,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     const updatedSessions = chatSessions.map(cs =>
       cs.id === activeChat.id ? { ...cs, messages: newHistory } : cs
     );
+    // Optimistically update UI
     dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessions }});
 
     const lastMessage = newHistory[newHistory.length - 1];
@@ -212,6 +217,23 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     const continueMessage = { role: 'user' as const, content: '' };
     const currentHistory = activeChat.messages;
     await getAIResponse([...currentHistory, continueMessage]);
+  };
+
+  const handleRegenerate = async () => {
+    if (!user || !firestore || !activeChat) return;
+
+    const lastUserMessageIndex = chatHistory.slice().reverse().findIndex(m => m.role === 'user');
+    if (lastUserMessageIndex === -1) return; // No user message to respond to
+
+    const historyToRegen = chatHistory.slice(0, chatHistory.length - lastUserMessageIndex);
+
+    // Optimistically remove AI responses from UI
+    const updatedSessionsForUI = chatSessions.map(cs =>
+      cs.id === activeChat.id ? { ...cs, messages: historyToRegen } : cs
+    );
+    dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessionsForUI }});
+    
+    await getAIResponse(historyToRegen);
   };
 
 
@@ -299,6 +321,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                     onEdit={(newContent) => handleEditMessage(index, newContent)}
                     onRewind={() => handleRewind(index)}
                     onContinue={handleContinue}
+                    onRegenerate={handleRegenerate}
                 />
             ))}
             {isTyping && (
@@ -344,5 +367,3 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     </Card>
   );
 }
-
-    

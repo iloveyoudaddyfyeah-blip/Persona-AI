@@ -2,12 +2,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useTypewriter } from '@/hooks/use-typewriter';
 import type { ChatMessage as ChatMessageType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Button } from '../ui/button';
-import { Pencil, Check, X, RotateCcw, ChevronRight } from 'lucide-react';
+import { Pencil, Check, X, RotateCcw, ChevronRight, RotateCw } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 
 interface ChatMessageProps {
@@ -19,6 +18,7 @@ interface ChatMessageProps {
   onEdit: (newContent: string) => void;
   onRewind: () => void;
   onContinue: () => void;
+  onRegenerate: () => void;
 }
 
 const FormattedContent = ({ content, isCharacter }: { content:string, isCharacter: boolean }) => {
@@ -49,16 +49,14 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
 };
 
 
-export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping, onEdit, onRewind, onContinue }: ChatMessageProps) {
+export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping, onEdit, onRewind, onContinue, onRegenerate }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
-  const isReceiving = isCharacter && isLastMessage && isTyping;
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const typedText = useTypewriter(message.content, 20);
-  const content = isReceiving ? typedText : message.content;
+  const content = message.content;
   
   useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -99,6 +97,8 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
   };
 
   const showContinueButton = isCharacter && isLastMessage && !isTyping;
+  const showRegenerateButton = isCharacter && isLastMessage && !isTyping;
+
 
   return (
     <div className={cn("flex flex-col gap-1 group", isCharacter ? 'items-start' : 'items-end')}>
@@ -133,10 +133,6 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
           ) : (
              <FormattedContent content={content} isCharacter={isCharacter} />
           )}
-
-          {isReceiving && content.length < message.content.length && (
-              <span className="inline-block w-0.5 h-5 bg-foreground animate-[blink_1s_step-end_infinite] -mb-1 ml-1" />
-          )}
         </div>
       </div>
       <div className={cn("flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity", 
@@ -162,6 +158,11 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                 {showContinueButton && (
                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onContinue} title="Continue">
                         <ChevronRight className="h-4 w-4" />
+                    </Button>
+                )}
+                 {showRegenerateButton && (
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRegenerate} title="Regenerate">
+                        <RotateCw className="h-4 w-4" />
                     </Button>
                 )}
             </>
