@@ -7,7 +7,7 @@ import type { ChatMessage as ChatMessageType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Button } from '../ui/button';
-import { Pencil, Check, X, RotateCcw } from 'lucide-react';
+import { Pencil, Check, X, RotateCcw, ChevronRight } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 
 interface ChatMessageProps {
@@ -18,7 +18,7 @@ interface ChatMessageProps {
   isTyping: boolean;
   onEdit: (newContent: string) => void;
   onRewind: () => void;
-  messageIndex: number;
+  onContinue: () => void;
 }
 
 const FormattedContent = ({ content, isCharacter }: { content:string, isCharacter: boolean }) => {
@@ -49,7 +49,7 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
 };
 
 
-export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping, onEdit, onRewind }: ChatMessageProps) {
+export default function ChatMessage({ message, characterPhoto, characterName, isLastMessage, isTyping, onEdit, onRewind, onContinue }: ChatMessageProps) {
   const isCharacter = message.role === 'character';
   const isReceiving = isCharacter && isLastMessage && isTyping;
 
@@ -98,6 +98,8 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
     }
   };
 
+  const showContinueButton = isCharacter && isLastMessage && !isTyping;
+
   return (
     <div className={cn("flex flex-col gap-1 group", isCharacter ? 'items-start' : 'items-end')}>
       <div className={cn("flex items-start gap-4 text-xl w-full", isCharacter ? 'justify-start' : 'justify-end')}>
@@ -125,7 +127,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                 value={editedContent}
                 onChange={handleContentChange}
                 onKeyDown={handleKeyDown}
-                className="text-lg bg-background/80 resize-none overflow-hidden"
+                className="text-lg bg-background/80 resize-none overflow-hidden w-full"
                 rows={1}
             />
           ) : (
@@ -138,7 +140,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
         </div>
       </div>
       <div className={cn("flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity", 
-        isCharacter ? 'pl-16' : 'pr-4'
+        isCharacter ? 'pl-16' : 'pr-0'
       )}>
         {isEditing ? (
             <>
@@ -157,9 +159,16 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRewind} title="Rewind to here">
                     <RotateCcw className="h-4 w-4" />
                 </Button>
+                {showContinueButton && (
+                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onContinue} title="Continue">
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                )}
             </>
         )}
         </div>
     </div>
   );
 }
+
+    

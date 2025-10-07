@@ -125,6 +125,8 @@ export async function getChatResponse(
   const personaDescription = userPersona?.description || 'A curious individual trying to get to know the characters.';
   
   const historyString = currentMessages
+    // Filter out empty 'continue' messages before sending to AI
+    .filter(msg => msg.content !== '' || msg.role !== 'user')
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)
     .join('\n');
   
@@ -150,3 +152,5 @@ export async function generatePersonaFromPrompt(prompt: string): Promise<string>
   const { persona } = await generateUserPersona({ prompt });
   return persona;
 }
+
+    

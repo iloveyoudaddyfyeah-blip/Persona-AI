@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ChatMessage from './ChatMessage';
 import { getChatResponse } from '@/app/actions';
-import { Loader2, Plus, Send, Trash2, RotateCcw } from 'lucide-react';
+import { Loader2, Plus, Send, Trash2, RotateCcw, ChevronRight } from 'lucide-react';
 import { Card } from '../ui/card';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -165,16 +165,29 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
   const handleEditMessage = async (index: number, newContent: string) => {
     if (!user || !firestore || !activeChat) return;
 
-    const truncatedMessages = activeChat.messages.slice(0, index);
-    const updatedMessage = { ...activeChat.messages[index], content: newContent };
-    const newHistory = [...truncatedMessages, updatedMessage];
+    const originalMessage = activeChat.messages[index];
+    const newHistory = [...activeChat.messages];
+    newHistory[index] = { ...newHistory[index], content: newContent };
 
+    // Just update the message locally if it's an AI message
+    if (originalMessage.role === 'character') {
+      const updatedSessions = chatSessions.map(cs =>
+        cs.id === activeChat.id ? { ...cs, messages: newHistory } : cs
+      );
+      // We only update firestore, the local state is already updated via dispatch
+      const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+      updateDocumentNonBlocking(characterRef, { chatSessions: updatedSessions });
+      return;
+    }
+
+    // If it's a user message, truncate and regenerate
+    const truncatedHistory = newHistory.slice(0, index + 1);
     const updatedSessions = chatSessions.map(cs =>
-      cs.id === activeChat.id ? { ...cs, messages: newHistory } : cs
+      cs.id === activeChat.id ? { ...cs, messages: truncatedHistory } : cs
     );
     dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessions }});
 
-    await getAIResponse(newHistory);
+    await getAIResponse(truncatedHistory);
   };
 
   const handleRewind = async (index: number) => {
@@ -187,11 +200,18 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     );
     dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessions }});
 
-    // Optionally, if the last message is a user message, you might want to regenerate the AI response.
     const lastMessage = newHistory[newHistory.length - 1];
     if(lastMessage.role === 'user') {
        await getAIResponse(newHistory);
     }
+  };
+
+  const handleContinue = async () => {
+    if (!user || !firestore || !activeChat) return;
+    // An empty user message can signal the AI to continue.
+    const continueMessage = { role: 'user' as const, content: '' };
+    const currentHistory = activeChat.messages;
+    await getAIResponse([...currentHistory, continueMessage]);
   };
 
 
@@ -278,7 +298,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                     isTyping={isTyping}
                     onEdit={(newContent) => handleEditMessage(index, newContent)}
                     onRewind={() => handleRewind(index)}
-                    messageIndex={index}
+                    onContinue={handleContinue}
                 />
             ))}
             {isTyping && (
@@ -324,3 +344,5 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     </Card>
   );
 }
+
+    
