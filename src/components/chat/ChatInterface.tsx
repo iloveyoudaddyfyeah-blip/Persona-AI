@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ChatMessage from './ChatMessage';
 import { getChatResponse } from '@/app/actions';
-import { Loader2, Plus, Send, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Send, Trash2, RotateCcw } from 'lucide-react';
 import { Card } from '../ui/card';
 import { useUser, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -81,6 +81,17 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
     updateDocumentNonBlocking(characterRef, { activeChatId: chatId });
   }
+
+  const handleResetChat = () => {
+    if (!user || !firestore || !activeChat) return;
+
+    const updatedSessions = chatSessions.map(cs => 
+        cs.id === activeChat.id ? { ...cs, messages: [] } : cs
+    );
+
+    const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+    updateDocumentNonBlocking(characterRef, { chatSessions: updatedSessions });
+  };
   
   const handleDeleteChat = () => {
     if (!user || !firestore || !character.activeChatId) return;
@@ -185,6 +196,26 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
+                         <Button variant="outline" className="text-lg" disabled={!activeChat || activeChat.messages.length === 0}>
+                            <RotateCcw className="mr-2 h-5 w-5" />
+                            Reset Chat
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete all messages in the chat session "{activeChat?.name}". This action cannot be undone.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleResetChat}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
                          <Button variant="destructive" className="text-lg" disabled={chatSessions.length <= 1}>
                             <Trash2 className="mr-2 h-5 w-5" />
                             Delete Chat
@@ -259,3 +290,5 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     </Card>
   );
 }
+
+    

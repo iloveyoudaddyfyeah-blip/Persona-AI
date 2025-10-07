@@ -23,7 +23,7 @@ const FormattedContent = ({ content, isCharacter }: { content:string, isCharacte
       {parts.map((part, index) => {
         if (part.startsWith('*') && part.endsWith('*')) {
           return (
-            <em key={index}>
+            <em key={index} className="text-muted-foreground">
               {part.slice(1, -1)}
             </em>
           );
@@ -80,3 +80,5 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
     </div>
   );
 }
+
+    
