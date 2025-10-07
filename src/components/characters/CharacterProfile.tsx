@@ -29,11 +29,11 @@ const FormattedProfile = ({ content }: { content: string }) => {
     const parts = content.split(regex).filter(Boolean);
 
     return (
-        <div className="whitespace-pre-wrap break-words text-lg leading-relaxed p-4 rounded-md bg-secondary/30 h-full">
+        <div className="whitespace-pre-wrap break-words text-lg leading-relaxed p-4 rounded-md bg-secondary/30 h-full text-muted-foreground">
             {parts.map((part, index) => {
                 if (part.startsWith('**') && part.endsWith('**')) {
                     return (
-                        <strong key={index} className="font-bold text-xl inline-block">
+                        <strong key={index} className="font-bold text-xl inline-block text-foreground/90">
                             {part.slice(2, -2)}
                         </strong>
                     );
@@ -203,3 +203,5 @@ export default function CharacterProfile({ character }: CharacterProfileProps) {
     </Tabs>
   );
 }
+
+    
