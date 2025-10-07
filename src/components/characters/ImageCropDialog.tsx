@@ -85,7 +85,7 @@ export default function ImageCropDialog({ open, onOpenChange, imgSrc, onCropComp
       crop.height
     );
 
-    onCropComplete(canvas.toDataURL('image/jpeg'));
+    onCropComplete(canvas.toDataURL('image/jpeg', 0.95));
   };
 
   return (
