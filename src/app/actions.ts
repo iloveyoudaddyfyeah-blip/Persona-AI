@@ -119,15 +119,12 @@ export async function regenerateCharacterProfile(
 
 export async function getChatResponse(
   character: Character,
-  activeChat: ChatSession | undefined,
-  userMessage: string,
+  currentMessages: ChatMessage[],
   userPersona: UserPersona | null
 ): Promise<ChatMessage> {
   const personaDescription = userPersona?.description || 'A curious individual trying to get to know the characters.';
   
-  let history = activeChat?.messages || [];
-
-  const historyString = history
+  const historyString = currentMessages
     .map((msg) => `${msg.role === 'user' ? 'User' : 'Character'}: ${msg.content}`)
     .join('\n');
   
@@ -136,9 +133,11 @@ export async function getChatResponse(
     ? historyString.slice(-maxHistoryLength) 
     : historyString;
 
+  const lastMessage = currentMessages[currentMessages.length - 1];
+
   const { response } = await interactiveChatWithCharacter({
     characterProfile: character.profile,
-    userMessage,
+    userMessage: lastMessage.role === 'user' ? lastMessage.content : '',
     chatHistory: truncatedHistory,
     userPersona: personaDescription,
   });

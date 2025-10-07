@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import type { Character, ChatSession } from '@/lib/types';
+import type { Character, ChatSession, ChatMessage as ChatMessageType } from '@/lib/types';
 import { useCharacter } from '@/context/CharacterContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,7 +57,7 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
-  }, [activeChat, isTyping]);
+  }, [activeChat, isTyping, chatHistory.length]);
   
   const handleNewChat = () => {
     if (!user || !firestore) return;
@@ -121,48 +121,79 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     });
   };
 
+  const getAIResponse = async (messages: ChatMessageType[]) => {
+    if (!user || !firestore || !activeChat) return;
+
+    setIsTyping(true);
+    try {
+        const characterMessage = await getChatResponse(character, messages, activePersona);
+        const finalMessages = [...messages, characterMessage];
+        const finalSessions = chatSessions.map(cs => 
+            cs.id === activeChat.id ? { ...cs, messages: finalMessages } : cs
+        );
+        const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+        updateDocumentNonBlocking(characterRef, { chatSessions: finalSessions });
+    } catch (error) {
+        console.error("Error getting chat response:", (error as Error).message);
+        const errorMessage = { role: 'character' as const, content: "I'm sorry, I'm having trouble thinking right now." };
+        const finalMessages = [...messages, errorMessage];
+        const finalSessions = chatSessions.map(cs => 
+            cs.id === activeChat.id ? { ...cs, messages: finalMessages } : cs
+        );
+        const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
+        updateDocumentNonBlocking(characterRef, { chatSessions: finalSessions });
+    } finally {
+        setIsTyping(false);
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userInput.trim() || isTyping || !user || !firestore || !activeChat) return;
 
     const userMessage = { role: 'user' as const, content: userInput };
-    
-    // Optimistically update UI
     const updatedMessages = [...activeChat.messages, userMessage];
     const updatedSessions = chatSessions.map(cs => 
       cs.id === activeChat.id ? { ...cs, messages: updatedMessages } : cs
     );
     
     setUserInput('');
-    setIsTyping(true);
-
-    // This updates the local state immediately for a responsive feel
     dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessions } });
+    await getAIResponse(updatedMessages);
+  };
+  
+  const handleEditMessage = async (index: number, newContent: string) => {
+    if (!user || !firestore || !activeChat) return;
 
-    try {
-      const characterMessage = await getChatResponse(character, activeChat, userInput, activePersona);
-      
-      const finalMessages = [...updatedMessages, characterMessage];
-      const finalSessions = chatSessions.map(cs => 
-        cs.id === activeChat.id ? { ...cs, messages: finalMessages } : cs
-      );
+    const truncatedMessages = activeChat.messages.slice(0, index);
+    const updatedMessage = { ...activeChat.messages[index], content: newContent };
+    const newHistory = [...truncatedMessages, updatedMessage];
 
-      const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
-      updateDocumentNonBlocking(characterRef, { chatSessions: finalSessions });
+    const updatedSessions = chatSessions.map(cs =>
+      cs.id === activeChat.id ? { ...cs, messages: newHistory } : cs
+    );
+    dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessions }});
 
-    } catch (error) {
-      console.error("Error getting chat response:", (error as Error).message);
-      const errorMessage = { role: 'character' as const, content: "I'm sorry, I'm having trouble thinking right now." };
-      const finalMessages = [...updatedMessages, errorMessage];
-      const finalSessions = chatSessions.map(cs => 
-        cs.id === activeChat.id ? { ...cs, messages: finalMessages } : cs
-      );
-      const characterRef = doc(firestore, `users/${user.uid}/characters/${character.id}`);
-      updateDocumentNonBlocking(characterRef, { chatSessions: finalSessions });
-    } finally {
-      setIsTyping(false);
+    await getAIResponse(newHistory);
+  };
+
+  const handleRewind = async (index: number) => {
+    if (!user || !firestore || !activeChat) return;
+    
+    const newHistory = activeChat.messages.slice(0, index + 1);
+
+    const updatedSessions = chatSessions.map(cs =>
+      cs.id === activeChat.id ? { ...cs, messages: newHistory } : cs
+    );
+    dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, chatSessions: updatedSessions }});
+
+    // Optionally, if the last message is a user message, you might want to regenerate the AI response.
+    const lastMessage = newHistory[newHistory.length - 1];
+    if(lastMessage.role === 'user') {
+       await getAIResponse(newHistory);
     }
   };
+
 
   return (
     <Card className="flex flex-col h-full border-0 shadow-none rounded-t-none">
@@ -245,6 +276,9 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
                     characterName={character.name}
                     isLastMessage={index === chatHistory.length - 1}
                     isTyping={isTyping}
+                    onEdit={(newContent) => handleEditMessage(index, newContent)}
+                    onRewind={() => handleRewind(index)}
+                    messageIndex={index}
                 />
             ))}
             {isTyping && (
@@ -290,5 +324,3 @@ export default function ChatInterface({ character }: ChatInterfaceProps) {
     </Card>
   );
 }
-
-    
