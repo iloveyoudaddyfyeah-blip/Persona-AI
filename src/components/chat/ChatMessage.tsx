@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -119,7 +120,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
 
   return (
     <div className={cn("flex flex-col gap-1 group", isCharacter ? 'items-start' : 'items-end')}>
-       <div className={cn("flex items-start gap-4 text-xl", isCharacter ? 'justify-start' : 'justify-end')}>
+       <div className={cn("flex w-full items-start gap-4 text-xl", isCharacter ? 'justify-start' : 'justify-end')}>
         {isCharacter && (
           <Image
             src={characterPhoto}
@@ -130,7 +131,7 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
             className="rounded-full border-2 border-primary pixel-art object-cover aspect-square"
           />
         )}
-         <DropdownMenu>
+         <DropdownMenu onOpenChange={(open) => { if (!open && isEditing) handleSave()}}>
             <DropdownMenuTrigger asChild>
                 <div
                     className={cn(
@@ -154,30 +155,30 @@ export default function ChatMessage({ message, characterPhoto, characterName, is
                     )}
                 </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
-                <DropdownMenuItem onSelect={() => setIsEditing(true)}>
-                    <Pencil className="mr-2 h-4 w-4" />
+            <DropdownMenuContent align={isCharacter ? 'start' : 'end'}>
+                <DropdownMenuItem onSelect={() => setIsEditing(true)} className="text-base py-2">
+                    <Pencil className="mr-2 h-5 w-5" />
                     <span>Edit</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={handleCopy}>
-                    <Copy className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onSelect={handleCopy} className="text-base py-2">
+                    <Copy className="mr-2 h-5 w-5" />
                     <span>Copy</span>
                 </DropdownMenuItem>
                 {showRewindInMenu && (
-                    <DropdownMenuItem onSelect={onRewind}>
-                        <History className="mr-2 h-4 w-4" />
+                    <DropdownMenuItem onSelect={onRewind} className="text-base py-2">
+                        <History className="mr-2 h-5 w-5" />
                         <span>Rewind to here</span>
                     </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onSelect={onDelete} className="text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onSelect={onDelete} className="text-destructive text-base py-2">
+                    <Trash2 className="mr-2 h-5 w-5" />
                     <span>Delete</span>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-       <div className={cn("flex items-center gap-1 transition-opacity pr-0", 
+       <div className={cn("flex items-center gap-1 transition-opacity", 
         isCharacter ? 'pl-16' : 'pr-0',
         showActionButtons ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
       )}>
