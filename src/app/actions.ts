@@ -40,10 +40,7 @@ function formatProfile(
 **Appearance:** ${appearance}
 
 **Biography:**
-- **Early Life:** ${biography.earlyLife}
-- **Turning Points:** ${biography.turningPoints}
-- **Education/Training:** ${biography.education}
-- **Present Circumstances:** ${biography.presentCircumstances}
+${biography}
 
 **Significant Relationships:**
 ${significantRelationships}
@@ -152,5 +149,3 @@ export async function generatePersonaFromPrompt(prompt: string): Promise<string>
   const { persona } = await generateUserPersona({ prompt });
   return persona;
 }
-
-    

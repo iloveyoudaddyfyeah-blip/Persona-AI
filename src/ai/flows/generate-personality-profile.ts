@@ -59,11 +59,7 @@ Fill out the following template with rich, detailed information.
 - **Age**: Estimate the character's actual age, apparent age, and stage of life based on the photo.
 - **Height**: Estimate the character's height, perceived height, build, and posture.
 - **Appearance**: Provide a brief overview of their appearance, including key identifiers, notable features, distinguishing marks, overall attractiveness, grooming habits, and any prosthetics or modifications.
-- **Biography**:
-  - **Early Life**: Describe their birthplace, family background, socioeconomic status, significant childhood events, and early influences. Write this in a narrative, storytelling style.
-  - **Turning Points**: Detail key events that shaped their personality and goals, major life decisions, and moments of crisis or revelation.
-  - **Education/Training**: Cover their formal schooling, self-taught skills, apprenticeships, mentors, and areas of expertise.
-  - **Present Circumstances**: Explain their current location, occupation, social standing, key relationships, and immediate goals.
+- **Biography**: Write a single, cohesive, narrative biography of at least 300 words. It must cover their Early Life (birthplace, family, childhood), key Turning Points (major life events that shaped them), their Education/Training, and their Present Circumstances (current life, occupation, goals).
 - **Significant Relationships**: Detail their key relationships (family, friends, enemies, allies) and how these relationships influence them.
 - **Personality**:
   - **Core Traits**: Describe their dominant personality aspects and general temperament. How are they perceived by others?

@@ -59,18 +59,14 @@ You have been given a photo and several pieces of information to build a deep, c
 - **Welcome Message**: The 'Welcome Message' provides a strong hint about the character's speaking style (cadence, vocabulary, tone). Use it to inform the 'Speech Patterns' section.
 - **Intro Field**: The 'Intro' field is for display purposes only. DO NOT use it to generate the profile.
 
-Now, generate the full character profile. The entire response must be written in the third person. The biography sections should be narrative and at least 300 words combined.
+Now, generate the full character profile. The entire response must be written in the third person.
 
 Fill out the following template with rich, detailed information derived from the provided sources.
 
 - **Age**: Estimate the character's actual age, apparent age, and stage of life based on the photo.
 - **Height**: Estimate the character's height, perceived height, build, and posture from the photo.
 - **Appearance**: Provide a brief overview of their appearance based on the photo, including key identifiers, notable features, distinguishing marks, overall attractiveness, grooming habits, and any prosthetics or modifications.
-- **Biography**:
-  - **Early Life**: Based on the **Personality** description and visual cues, invent a compelling backstory. Describe their birthplace, family background, socioeconomic status, significant childhood events, and early influences. Write this in a narrative, storytelling style.
-  - **Turning Points**: Based on the **Personality** description, invent key events that shaped their personality and goals, major life decisions, and moments of crisis or revelation.
-  - **Education/Training**: Infer their formal schooling, self-taught skills, apprenticeships, mentors, and areas of expertise from the **Personality** description.
-  - **Present Circumstances**: Based on the **Personality** description and photo, explain their current location, occupation, social standing, key relationships, and immediate goals.
+- **Biography**: Based on the **Personality** description and visual cues, invent a compelling backstory. Write a single cohesive narrative biography of at least 300 words. Cover their Early Life (birthplace, family background), key Turning Points (major life events), their Education/Training, and their Present Circumstances (current life, occupation, goals).
 - **Significant Relationships**: Based on the **Personality** description, invent key relationships (family, friends, enemies, allies) and how these relationships influence them.
 - **Personality**:
   - **Core Traits**: Use the provided **Personality** description as the source of truth. Describe their dominant personality aspects and general temperament. How are they perceived by others?

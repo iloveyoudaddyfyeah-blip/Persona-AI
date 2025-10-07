@@ -18,12 +18,7 @@ export const GeneratePersonalityProfileInputSchema = z.object({
 
 export const GeneratePersonalityProfileOutputSchema = z.object({
   appearance: z.string().describe("Brief overview of appearance, key identifiers, notable features, distinguishing marks, grooming habits, and any modifications."),
-  biography: z.object({
-    earlyLife: z.string().describe("Birthplace, Family Background, Socioeconomic Status, Significant Childhood Events, early traumas, influences."),
-    turningPoints: z.string().describe("Key events that shaped the character's personality and goals, major life decisions, moments of crisis or revelation."),
-    education: z.string().describe("Formal schooling, self-taught skills, apprenticeships, mentors, areas of expertise."),
-    presentCircumstances: z.string().describe("Current location, occupation, social standing, current relationships, immediate goals."),
-  }),
+  biography: z.string().describe("A single, cohesive narrative biography covering Early Life, Turning Points, Education, and Present Circumstances."),
   significantRelationships: z.string().describe("Details of key relationships (family, friends, enemies, allies) and how they influence the character."),
   personality: z.object({
       coreTraits: z.string().describe("Dominant personality aspects, general temperament, how they are perceived by others."),
