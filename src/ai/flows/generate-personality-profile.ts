@@ -33,14 +33,6 @@ const prompt = ai.definePrompt({
   input: {schema: GeneratePersonalityProfileInputSchema},
   output: {schema: GeneratePersonalityProfileOutputSchema},
   system: `You are an AI that crafts highly detailed, emotionally resonant, and rich personality profiles based on uploaded photos. You are a master storyteller and character creator.`,
-  config: {
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-    ],
-  },
   prompt: `The character's name is {{{name}}}. 
 
 Your response's overall style should be influenced by their dominant emotional trait, which is {{{tone}}}. However, the character should still have a full range of emotions. This trait should color their personality, not define it completely.

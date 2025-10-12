@@ -41,14 +41,6 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateCharacterFromFormInputSchema},
   output: {schema: GeneratePersonalityProfileOutputSchema},
   system: `You are an AI that crafts highly detailed, emotionally resonant, and rich personality profiles for characters. You are a master storyteller and character creator.`,
-  config: {
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-    ],
-  },
   prompt: `The character's name is {{{name}}}. 
 
 You have been given a photo and several pieces of information to build a deep, compelling character profile.
