@@ -30,6 +30,8 @@ export default function PersonaAIClientPage() {
     )
   }
 
+  // A login screen is shown only if the user is explicitly trying to log in (or if anonymous auth fails)
+  // but by default, the app should now show content for anonymous users.
   if (!user) {
     return <LoginScreen />;
   }
