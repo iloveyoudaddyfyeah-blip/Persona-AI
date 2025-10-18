@@ -50,8 +50,9 @@ You have been given a photo and several pieces of information to build a deep, c
 - **Photo Analysis**: Analyze the photo to determine the character's physical appearance (age, height, build, distinguishing marks), their typical clothing style (daily wear), and estimate their background from visual cues.
 - **Welcome Message**: The 'Welcome Message' provides a strong hint about the character's speaking style (cadence, vocabulary, tone). Use it to inform the 'Speech Patterns' section.
 - **Intro Field**: The 'Intro' field is for display purposes only. DO NOT use it to generate the profile.
+- **Third-Person Narrative**: The entire response MUST be written in the third person.
 
-Now, generate the full character profile. The entire response must be written in the third person.
+Now, generate the full character profile.
 
 Fill out the following template with rich, detailed information derived from the provided sources.
 

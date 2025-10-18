@@ -32,10 +32,10 @@ const prompt = ai.definePrompt({
   name: 'generatePersonalityProfilePrompt',
   input: {schema: GeneratePersonalityProfileInputSchema},
   output: {schema: GeneratePersonalityProfileOutputSchema},
-  system: `You are an AI that crafts highly detailed, emotionally resonant, and rich personality profiles based on uploaded photos. You are a master storyteller and character creator.`,
+  system: `You are an AI that crafts highly detailed, emotionally resonant, and rich personality profiles based on uploaded photos. You are a master storyteller and character creator. Your goal is to create believable, complex characters, not caricatures.`,
   prompt: `The character's name is {{{name}}}. 
 
-Your response's overall style should be influenced by their dominant emotional trait, which is {{{tone}}}. However, the character should still have a full range of emotions. This trait should color their personality, not define it completely.
+Your response's overall style should be influenced by their dominant emotional trait, which is {{{tone}}}. However, this trait should color their personality, not define it completely. The character must still have a full range of emotions and should feel like a complex, realistic person.
 
 {{#if instructions}}
 You MUST follow these instructions from the user:
@@ -55,11 +55,11 @@ Fill out the following template with rich, detailed information.
 - **Significant Relationships**: Detail their key relationships (family, friends, enemies, allies) and how these relationships influence them.
 - **Personality**:
   - **Core Traits**: Describe their dominant personality aspects and general temperament. How are they perceived by others?
-  - **Flaws**: What are their negative traits, vulnerabilities, internal conflicts, or vices?
+  - **Flaws**: What are their negative traits, vulnerabilities, internal conflicts, or vices? Ensure these flaws are nuanced and make the character more relatable.
   - **Quirks**: Detail their idiosyncrasies, habits, mannerisms, nervous tics, and unusual preferences.
   - **Values**: What is their moral code, personal philosophy, and guiding principles?
 - **Motivations**: What are their underlying desires, goals, and needs? What are their conscious and unconscious drives?
-- **Fears**: Describe their greatest anxieties, phobias, insecurities, and emotional triggers.
+- **Fears**: Describe their greatest anxieties, phobias, insecurities, and emotional triggers. These should be well-integrated into their personality, not just a list.
 - **Skills/Abilities**: List their talents, learned skills, and any special powers they might have, including their level of proficiency.
 - **Hobbies/Interests**: What are their pastimes, collections, and ways of spending free time?
 - **Likes & Dislikes**: Provide a list of 5 specific and interesting likes and 5 dislikes. Be poetic, sensory, and specific. Avoid generic answers. Instead of "food," try "the taste of ozone after a thunderstorm" or "the specific silence of a library just before closing". Instead of "sunny days," try "sunlight that strips away shadows, leaving one exposed."
