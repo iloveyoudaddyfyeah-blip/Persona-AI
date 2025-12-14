@@ -5,8 +5,11 @@ jobs:
     if: '${{ github.event.pull_request.head.repo.full_name == github.repository }}'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
+      checks: write
+      actions: write
+      deployments: write
     steps:
       - uses: actions/checkout@v2
       - run: npm ci && npm run build
@@ -16,3 +19,5 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PERSONA_AI_C9E45 }}'
           projectId: persona-ai-c9e45
           channelId: preview
+          target: persona-ai
+          entryPoint: .next
