@@ -19,3 +19,5 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PERSONA_AI_C9E45 }}'
           projectId: persona-ai-c9e45
           channelId: preview
+          target: persona-ai
+          entryPoint: .next
