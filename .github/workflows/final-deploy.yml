@@ -20,4 +20,4 @@ jobs:
           projectId: persona-ai-c9e45
           channelId: preview
           target: persona-ai
-          entryPoint: .next
+          entryPoint: out
